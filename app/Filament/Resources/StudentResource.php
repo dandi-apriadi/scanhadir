@@ -6,12 +6,16 @@ use App\Filament\Resources\StudentResource\Pages;
 use App\Models\Student;
 use App\Models\StudentClass;
 use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class StudentResource extends Resource
 {
@@ -21,6 +25,10 @@ class StudentResource extends Resource
     protected static ?string $navigationGroup = 'Master Data';
     protected static ?string $modelLabel = 'Siswa';
     protected static ?string $pluralModelLabel = 'Data Siswa';
+    public static function canAccess(): bool
+    {
+        return auth()->check() && (auth()->user()->isAdmin() || auth()->user()->isTeacher());
+    }
 
     public static function form(Form $form): Form
     {
@@ -112,11 +120,48 @@ class StudentResource extends Resource
                     ->relationship('class', 'name'),
             ])
             ->actions([
+                Tables\Actions\Action::make('download_qr')
+                    ->label('Download QR')
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->url(fn (Student $record): string => route('students.qrcode', ['student' => $record->id, 'download' => 1]))
+                    ->openUrlInNewTab(),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\BulkAction::make('generate_qr_pdf')
+                        ->label('Generate QR PDF')
+                        ->icon('heroicon-o-document-arrow-down')
+                        ->action(function (Collection $records) {
+                            $students = $records->map(function (Student $student) {
+                                $filename = "qrcodes/student-{$student->id}.svg";
+
+                                if (!Storage::disk('local')->exists($filename)) {
+                                    Storage::disk('local')->makeDirectory('qrcodes');
+                                    $image = QrCode::format('svg')->size(400)->margin(1)->generate($student->qr_code);
+                                    Storage::disk('local')->put($filename, $image);
+                                }
+
+                                $imageBinary = Storage::disk('local')->get($filename);
+
+                                return [
+                                    'name' => $student->user?->name ?? 'Siswa',
+                                    'nisn' => $student->nisn,
+                                    'class_name' => $student->class?->name ?? '-',
+                                    'qr_code' => $student->qr_code,
+                                    'image' => 'data:image/svg+xml;base64,' . base64_encode($imageBinary),
+                                ];
+                            });
+
+                            $pdf = Pdf::loadView('pdf.student-qr-codes', ['students' => $students]);
+
+                            return response()->streamDownload(
+                                static fn () => print($pdf->output()),
+                                'student-qr-codes.pdf'
+                            );
+                        })
+                        ->deselectRecordsAfterCompletion(),
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);

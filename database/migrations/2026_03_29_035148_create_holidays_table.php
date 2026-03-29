@@ -13,6 +13,11 @@ return new class extends Migration
     {
         Schema::create('holidays', function (Blueprint $table) {
             $table->id();
+            $table->string('name');
+            $table->date('start_date');
+            $table->date('end_date');
+            $table->enum('type', ['national', 'school', 'exam_break'])->default('national');
+            $table->text('description')->nullable();
             $table->timestamps();
         });
     }

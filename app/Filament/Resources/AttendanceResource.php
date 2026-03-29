@@ -21,6 +21,10 @@ class AttendanceResource extends Resource
     protected static ?string $navigationGroup = 'Sistem Presensi';
     protected static ?string $modelLabel = 'Presensi';
     protected static ?string $pluralModelLabel = 'Data Presensi';
+    public static function canAccess(): bool
+    {
+        return auth()->check() && (auth()->user()->isAdmin() || auth()->user()->isTeacher());
+    }
 
     public static function form(Form $form): Form
     {

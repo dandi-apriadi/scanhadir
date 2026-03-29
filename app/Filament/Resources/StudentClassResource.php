@@ -18,6 +18,10 @@ class StudentClassResource extends Resource
     protected static ?string $navigationGroup = 'Master Data';
     protected static ?string $modelLabel = 'Kelas';
     protected static ?string $pluralModelLabel = 'Data Kelas';
+    public static function canAccess(): bool
+    {
+        return auth()->check() && (auth()->user()->isAdmin() || auth()->user()->isTeacher());
+    }
 
     public static function form(Form $form): Form
     {

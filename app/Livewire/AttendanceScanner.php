@@ -2,8 +2,11 @@
 
 namespace App\Livewire;
 
+use App\Http\Requests\ScanAttendanceRequest;
 use App\Models\Attendance;
+use App\Models\Holiday;
 use App\Models\Student;
+use Illuminate\Support\Facades\Validator;
 use Livewire\Component;
 
 class AttendanceScanner extends Component
@@ -13,6 +16,20 @@ class AttendanceScanner extends Component
 
     public function processScan($code)
     {
+        $validation = Validator::make(
+            ['code' => $code],
+            (new ScanAttendanceRequest())->rules(),
+            (new ScanAttendanceRequest())->messages()
+        );
+
+        if ($validation->fails()) {
+            $this->message = $validation->errors()->first('code');
+            $this->status = 'error';
+            $this->dispatch('scan-failed');
+
+            return;
+        }
+
         $student = Student::with('user', 'class')->where('qr_code', $code)->first();
 
         if (!$student) {
@@ -23,6 +40,15 @@ class AttendanceScanner extends Component
         }
 
         $today = now()->toDateString();
+
+        // Check if today is a holiday
+        if (Holiday::isHoliday($today)) {
+            $this->message = "Hari libur - Absensi ditutup";
+            $this->status = 'error';
+            $this->dispatch('scan-failed');
+            return;
+        }
+
         $now = now()->toTimeString();
 
         $attendance = Attendance::firstOrCreate(

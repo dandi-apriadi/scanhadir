@@ -54,6 +54,29 @@ POST /logout
 
 **Response**: Redirect to `/login`
 
+### Validation Error Contract
+
+Backend menggunakan format error terstruktur agar frontend bisa render pesan secara konsisten:
+
+```json
+{
+  "success": false,
+  "code": "VALIDATION_ERROR",
+  "message": "Input tidak valid.",
+  "errors": {
+    "identifier": ["Email atau NISN harus diisi."],
+    "password": ["Password minimal 6 karakter."],
+    "code": ["Format kode QR tidak valid."],
+    "nisn": ["NISN harus terdiri dari 13 digit angka."]
+  }
+}
+```
+
+Catatan implementasi:
+- `identifier` digunakan untuk login (email atau NISN).
+- `code` digunakan pada proses scan QR.
+- `nisn` wajib 13 digit.
+
 ---
 
 ## 📱 Student Endpoints
