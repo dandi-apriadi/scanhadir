@@ -56,7 +56,8 @@ class AttendanceScannerTest extends TestCase
         ]);
 
         Livewire::test('attendance-scanner')
-            ->call('processScan', $this->student->qr_code);
+            ->call('processScan', $this->student->qr_code)
+            ->call('confirmStudent');
 
         $this->assertDatabaseHas('attendances', [
             'student_id' => $this->student->id,
@@ -104,11 +105,13 @@ class AttendanceScannerTest extends TestCase
     {
         // First scan (check-in)
         Livewire::test('attendance-scanner')
-            ->call('processScan', $this->student->qr_code);
+            ->call('processScan', $this->student->qr_code)
+            ->call('confirmStudent');
 
         // Second scan (check-out)
         Livewire::test('attendance-scanner')
             ->call('processScan', $this->student->qr_code)
+            ->call('confirmStudent')
             ->assertSet('status', 'success')
             ->assertSee('Absen Pulang');
     }
@@ -117,7 +120,8 @@ class AttendanceScannerTest extends TestCase
     public function scanner_records_check_in_time()
     {
         Livewire::test('attendance-scanner')
-            ->call('processScan', $this->student->qr_code);
+            ->call('processScan', $this->student->qr_code)
+            ->call('confirmStudent');
 
         $attendance = Attendance::where('student_id', $this->student->id)
             ->where('date', now()->toDateString())
@@ -132,11 +136,13 @@ class AttendanceScannerTest extends TestCase
     {
         // First scan
         Livewire::test('attendance-scanner')
-            ->call('processScan', $this->student->qr_code);
+            ->call('processScan', $this->student->qr_code)
+            ->call('confirmStudent');
 
         // Second scan
         Livewire::test('attendance-scanner')
-            ->call('processScan', $this->student->qr_code);
+            ->call('processScan', $this->student->qr_code)
+            ->call('confirmStudent');
 
         $attendance = Attendance::where('student_id', $this->student->id)
             ->where('date', now()->toDateString())
@@ -153,13 +159,14 @@ class AttendanceScannerTest extends TestCase
         Carbon::setTestNow(now()->setHour(7)->setMinute(45));
 
         Livewire::test('attendance-scanner')
-            ->call('processScan', $this->student->qr_code);
+            ->call('processScan', $this->student->qr_code)
+            ->call('confirmStudent');
 
         $attendance = Attendance::where('student_id', $this->student->id)
             ->where('date', now()->toDateString())
             ->first();
 
-        $this->assertEqual('late', $attendance->status);
+        $this->assertEquals('late', $attendance->status);
     }
 
     /** @test */
@@ -169,13 +176,14 @@ class AttendanceScannerTest extends TestCase
         Carbon::setTestNow(now()->setHour(7)->setMinute(15));
 
         Livewire::test('attendance-scanner')
-            ->call('processScan', $this->student->qr_code);
+            ->call('processScan', $this->student->qr_code)
+            ->call('confirmStudent');
 
         $attendance = Attendance::where('student_id', $this->student->id)
             ->where('date', now()->toDateString())
             ->first();
 
-        $this->assertEqual('present', $attendance->status);
+        $this->assertEquals('present', $attendance->status);
     }
 
     /** @test */
@@ -183,8 +191,10 @@ class AttendanceScannerTest extends TestCase
     {
         Livewire::test('attendance-scanner')
             ->call('processScan', $this->student->qr_code)
+            ->call('confirmStudent')
             ->assertSet('scanCount', 1)
             ->call('processScan', $this->student->qr_code)
+            ->call('confirmStudent')
             ->assertSet('scanCount', 2);
     }
 
@@ -193,6 +203,7 @@ class AttendanceScannerTest extends TestCase
     {
         Livewire::test('attendance-scanner')
             ->call('processScan', $this->student->qr_code)
+            ->call('confirmStudent')
             ->assertDispatched('scan-success');
     }
 
@@ -209,6 +220,7 @@ class AttendanceScannerTest extends TestCase
     {
         Livewire::test('attendance-scanner')
             ->call('processScan', $this->student->qr_code)
+            ->call('confirmStudent')
             ->assertDispatched('scan-success', function ($event) {
                 return $event['name'] === $this->student->user->name;
             });
@@ -219,6 +231,7 @@ class AttendanceScannerTest extends TestCase
     {
         Livewire::test('attendance-scanner')
             ->call('processScan', $this->student->qr_code)
+            ->call('confirmStudent')
             ->assertDispatched('scan-success', function ($event) {
                 return $event['class'] === $this->class->name;
             });
@@ -257,10 +270,12 @@ class AttendanceScannerTest extends TestCase
         $student2 = Student::factory()->create(['class_id' => $this->class->id]);
 
         Livewire::test('attendance-scanner')
-            ->call('processScan', $this->student->qr_code);
+            ->call('processScan', $this->student->qr_code)
+            ->call('confirmStudent');
 
         Livewire::test('attendance-scanner')
-            ->call('processScan', $student2->qr_code);
+            ->call('processScan', $student2->qr_code)
+            ->call('confirmStudent');
 
         $this->assertDatabaseHas('attendances', [
             'student_id' => $this->student->id,
@@ -276,7 +291,8 @@ class AttendanceScannerTest extends TestCase
     {
         // First scan
         Livewire::test('attendance-scanner')
-            ->call('processScan', $this->student->qr_code);
+            ->call('processScan', $this->student->qr_code)
+            ->call('confirmStudent');
 
         $firstAttendance = Attendance::where('student_id', $this->student->id)
             ->where('date', now()->toDateString())
@@ -284,15 +300,16 @@ class AttendanceScannerTest extends TestCase
 
         // Second scan for same student same day
         Livewire::test('attendance-scanner')
-            ->call('processScan', $this->student->qr_code);
+            ->call('processScan', $this->student->qr_code)
+            ->call('confirmStudent');
 
         $secondAttendance = Attendance::where('student_id', $this->student->id)
             ->where('date', now()->toDateString())
             ->count();
 
         // Should still be 1 (same record)
-        $this->assertEqual(1, $secondAttendance);
-        $this->assertEqual(1, $firstAttendance);
+        $this->assertEquals(1, $secondAttendance);
+        $this->assertEquals(1, $firstAttendance);
     }
 
     /** @test */
@@ -300,33 +317,34 @@ class AttendanceScannerTest extends TestCase
     {
         // Scan today
         Livewire::test('attendance-scanner')
-            ->call('processScan', $this->student->qr_code);
+            ->call('processScan', $this->student->qr_code)
+            ->call('confirmStudent');
 
         // Scan yesterday
         Carbon::setTestNow(now()->subDay());
         $yesterday = now()->toDateString();
 
         Livewire::test('attendance-scanner')
-            ->call('processScan', $this->student->qr_code);
+            ->call('processScan', $this->student->qr_code)
+            ->call('confirmStudent');
 
         Carbon::setTestNow(null); // Reset
 
         $attendances = Attendance::where('student_id', $this->student->id)->count();
 
-        $this->assertEqual(2, $attendances);
+        $this->assertEquals(2, $attendances);
     }
 
     /** @test */
     public function scanner_shows_stats()
     {
-        $component = Livewire::test('attendance-scanner')
+        Livewire::test('attendance-scanner')
             ->call('processScan', $this->student->qr_code)
-            ->call('processScan', $this->student->qr_code);
-
-        $stats = $component->call('getScanStats');
-
-        // Should contain total_scans, last_scan, status, message
-        // This is more of a data retrieval test
+            ->call('confirmStudent')
+            ->call('processScan', $this->student->qr_code)
+            ->call('confirmStudent')
+            ->assertSet('scanCount', 2)
+            ->assertSet('status', 'success');
     }
 
     /** @test */

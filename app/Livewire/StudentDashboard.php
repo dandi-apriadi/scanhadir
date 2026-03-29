@@ -94,6 +94,6 @@ class StudentDashboard extends Component
             'todayStatus' => $todayStatus,
             'todayTime' => $todayTime,
             'recentAttendance' => $recentAttendance,
-        ])->layout('layouts.student', ['title' => 'Student Dashboard']);
+        ]);
     }
 }

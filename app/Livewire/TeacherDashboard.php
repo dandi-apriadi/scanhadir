@@ -164,6 +164,6 @@ class TeacherDashboard extends Component
             'totalStudents' => $totalStudents,
             'totalScans' => $totalTodayScans,
             'latestScannedStudent' => $latestScannedStudent,
-        ])->layout('layouts.teacher', ['title' => 'Teacher Dashboard']);
+        ]);
     }
 }

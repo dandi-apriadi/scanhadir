@@ -93,23 +93,50 @@
         <!-- Main Content -->
         <main class="flex-1 min-h-screen transition-all duration-300" :class="sidebarCollapsed ? 'md:ml-20' : 'md:ml-64'">
             <!-- Header -->
-            <header class="h-16 border-b border-slate-100 bg-white/80 backdrop-blur-md sticky top-0 z-40 px-8 flex items-center justify-between">
-                <div class="flex items-center gap-4">
-                    <div class="relative group">
-                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
-                            <span class="material-symbols-outlined text-xl">search</span>
+            <header class="w-full sticky top-0 z-40 flex justify-between items-center px-8 py-4 bg-white/80 backdrop-blur-md border-b border-slate-100 shadow-sm transition-all duration-300">
+                <div class="flex flex-col">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="text-[9px] font-extrabold text-slate-400 uppercase tracking-[0.2em] font-headline">
+                            @if(Request::is('teacher/dashboard'))
+                                TEACHER PORTAL / OVERVIEW
+                            @else
+                                TEACHER PORTAL
+                            @endif
                         </span>
-                        <input type="text" class="bg-slate-50 border-none rounded-full py-2 pl-10 pr-4 w-64 text-sm focus:ring-2 focus:ring-primary/20 transition-all font-medium" placeholder="Cari data...">
                     </div>
+                    <h2 class="text-2xl font-extrabold text-indigo-900 font-headline tracking-tight">{{ $title ?? 'Teacher Dashboard' }}</h2>
                 </div>
-                <div class="flex items-center gap-4">
-                    <button class="p-2 rounded-full text-slate-400 hover:bg-slate-50 transition-colors relative">
-                        <span class="material-symbols-outlined">notifications</span>
-                        <span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full border-2 border-white"></span>
-                    </button>
-                    <button class="p-2 rounded-full text-slate-400 hover:bg-slate-50 transition-colors">
-                        <span class="material-symbols-outlined">settings</span>
-                    </button>
+
+                <div class="flex items-center gap-6">
+                    <!-- Modern Search Bar Placeholder -->
+                    <div class="hidden lg:flex items-center gap-3 px-4 py-2 bg-slate-100/50 border border-slate-200/50 rounded-2xl w-64 focus-within:w-80 focus-within:bg-white focus-within:border-primary/20 transition-all duration-300 group shadow-inner">
+                        <span class="material-symbols-outlined text-slate-400 text-xl group-focus-within:text-primary transition-colors">search</span>
+                        <input type="text" placeholder="Cari data siswa atau jadwal..." class="bg-transparent border-none text-sm outline-none w-full font-medium placeholder:text-slate-400 focus:ring-0 shadow-none"/>
+                    </div>
+
+                    <div class="flex items-center gap-4">
+                        <button class="w-10 h-10 flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-primary rounded-xl transition-all relative">
+                            <span class="material-symbols-outlined">notifications</span>
+                            <span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full border-2 border-white"></span>
+                        </button>
+                        
+                        <div class="h-8 w-px bg-slate-200"></div>
+
+                        <div class="flex items-center gap-3 pl-2">
+                            <div class="text-right hidden sm:block">
+                                <p class="text-sm font-bold text-on-surface leading-tight">Budi Santoso, S.Pd</p>
+                                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Senior Teacher</p>
+                            </div>
+                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=teacher" alt="Teacher" class="w-10 h-10 rounded-xl bg-primary/10 border border-primary/10 shadow-sm">
+                        </div>
+
+                        <form action="{{ route('auth.logout') }}" method="POST">
+                            @csrf
+                            <button type="submit" class="w-10 h-10 flex items-center justify-center text-slate-400 hover:bg-rose-50 hover:text-rose-500 rounded-xl transition-all" title="Logout">
+                                <span class="material-symbols-outlined">logout</span>
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </header>
 

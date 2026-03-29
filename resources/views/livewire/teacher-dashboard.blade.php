@@ -124,8 +124,8 @@
                     <div class="p-6 space-y-3 max-h-64 overflow-y-auto">
                         @foreach($lateStudents as $student)
                             <div class="p-3 bg-amber-50 rounded-lg border border-amber-200">
-                                <p class="text-sm font-semibold text-on-surface">{{ $student->user->name }}</p>
-                                <p class="text-xs text-slate-500">{{ $student->class->name }}</p>
+                                <p class="text-sm font-semibold text-on-surface">{{ $student->student->user->name }}</p>
+                                <p class="text-xs text-slate-500">{{ $student->student->class->name }}</p>
                             </div>
                         @endforeach
                     </div>

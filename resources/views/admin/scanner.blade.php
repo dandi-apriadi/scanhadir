@@ -58,6 +58,12 @@
         </div>
     </nav>
 
+    <!-- Hidden NISN Input Form for Scanner -->
+    <form id="scanForm" method="POST" action="{{ route('admin.attendance.scan') }}" style="display: none;">
+        @csrf
+        <input id="nisnInput" type="text" name="nisn" autofocus>
+    </form>
+
     <main class="flex h-[calc(100vh-76px)] p-8 gap-8">
         <!-- Scanner Viewport -->
         <div class="flex-1 relative bg-black rounded-[40px] overflow-hidden border border-white/10 shadow-2xl flex items-center justify-center">
@@ -81,11 +87,11 @@
 
             <!-- Bottom Controls -->
             <div class="absolute bottom-10 flex items-center gap-4">
-                <button class="px-6 py-3 bg-white/10 backdrop-blur-xl rounded-full text-xs font-bold uppercase tracking-widest hover:bg-white/20 transition-all flex items-center gap-2">
-                    <span class="material-symbols-outlined text-lg">videocam</span> Ganti Kamera
+                <button type="button" onclick="document.getElementById('nisnInput').focus()" class="px-6 py-3 bg-white/10 backdrop-blur-xl rounded-full text-xs font-bold uppercase tracking-widest hover:bg-white/20 transition-all flex items-center gap-2">
+                    <span class="material-symbols-outlined text-lg">videocam</span> Focus
                 </button>
-                <button class="px-6 py-3 bg-white/10 backdrop-blur-xl rounded-full text-xs font-bold uppercase tracking-widest hover:bg-white/20 transition-all flex items-center gap-2">
-                    <span class="material-symbols-outlined text-lg">flashlight_on</span> Flash
+                <button type="button" onclick="clearScannedData()" class="px-6 py-3 bg-white/10 backdrop-blur-xl rounded-full text-xs font-bold uppercase tracking-widest hover:bg-white/20 transition-all flex items-center gap-2">
+                    <span class="material-symbols-outlined text-lg">restart_alt</span> Reset
                 </button>
             </div>
         </div>
@@ -99,21 +105,21 @@
                 <div class="relative w-32 h-32 mb-6">
                     <div class="absolute inset-0 rounded-full border-2 border-primary animate-pulse"></div>
                     <div class="w-full h-full rounded-full bg-slate-800 flex items-center justify-center overflow-hidden border-4 border-slate-900">
-                        <span class="material-symbols-outlined text-5xl text-slate-600">person</span>
+                        <span class="material-symbols-outlined text-5xl text-slate-600" id="studentIcon">person</span>
                     </div>
                 </div>
 
-                <h4 class="text-2xl font-black font-headline text-white mb-1">Rizki Ramadhan</h4>
-                <p class="text-xs font-bold text-indigo-400 uppercase tracking-widest mb-8">XII RPL 1</p>
+                <h4 class="text-2xl font-black font-headline text-white mb-1" id="studentName">-</h4>
+                <p class="text-xs font-bold text-indigo-400 uppercase tracking-widest mb-8" id="studentClass">-</p>
 
                 <div class="w-full grid grid-cols-2 gap-4">
                     <div class="p-4 bg-white/5 rounded-2xl text-left border border-white/5">
                         <p class="text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-1">Waktu</p>
-                        <p class="text-lg font-black font-headline">07:24 AM</p>
+                        <p class="text-lg font-black font-headline" id="checkInTime">--:--</p>
                     </div>
                     <div class="p-4 bg-white/5 rounded-2xl text-left border border-white/5">
                         <p class="text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-1">Status</p>
-                        <p class="text-lg font-black font-headline text-emerald-400">HADIR</p>
+                        <p class="text-lg font-black font-headline" id="statusDisplay" style="color: #9ca3af;">SIAP</p>
                     </div>
                 </div>
             </div>
@@ -121,28 +127,140 @@
             <!-- Quick Logs -->
             <div class="flex-1 bg-white/5 border border-white/5 rounded-[32px] p-8 overflow-hidden flex flex-col">
                 <h3 class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-6 px-1">Log Sesi Ini</h3>
-                <div class="space-y-4 overflow-y-auto">
-                    <div class="flex items-center gap-4 p-3 rounded-2xl hover:bg-white/5 transition-colors group">
-                        <div class="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-400 shrink-0">
-                            <span class="material-symbols-outlined text-lg">check_circle</span>
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <p class="text-sm font-bold text-white truncate">Siti Aminah</p>
-                            <p class="text-[10px] font-medium text-slate-500">07:22 AM · XI TKJ 2</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-4 p-3 rounded-2xl hover:bg-white/5 transition-colors group">
-                        <div class="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-400 shrink-0">
-                            <span class="material-symbols-outlined text-lg">check_circle</span>
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <p class="text-sm font-bold text-white truncate">Budi Santoso</p>
-                            <p class="text-[10px] font-medium text-slate-500">07:18 AM · XII MM 1</p>
-                        </div>
-                    </div>
+                <div id="scanLogs" class="space-y-4 overflow-y-auto">
+                    <p class="text-center text-sm text-slate-400 py-8">Belum ada scan dalam sesi ini</p>
                 </div>
             </div>
         </div>
     </main>
+
+    <script>
+        const nisnInput = document.getElementById('nisnInput');
+        const studentName = document.getElementById('studentName');
+        const studentClass = document.getElementById('studentClass');
+        const checkInTime = document.getElementById('checkInTime');
+        const statusDisplay = document.getElementById('statusDisplay');
+        const scanLogs = document.getElementById('scanLogs');
+        let scannedStudents = [];
+
+        // Focus on page load
+        window.addEventListener('load', () => {
+            nisnInput.focus();
+        });
+
+        // Handle NISN input
+        nisnInput.addEventListener('keypress', async (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const nisn = nisnInput.value.trim();
+                
+                if (!nisn) return;
+
+                try {
+                    const response = await fetch("{{ route('admin.attendance.scan') }}", {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
+                        },
+                        body: JSON.stringify({ nisn: nisn })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        updateLatestScanned(data.data);
+                        addToLog(data.data);
+                        showSuccessAnimation();
+                    } else {
+                        showErrorMessage(data.message);
+                    }
+                } catch (error) {
+                    showErrorMessage('Terjadi kesalahan: ' + error.message);
+                }
+
+                nisnInput.value = '';
+            }
+        });
+
+        function updateLatestScanned(data) {
+            studentName.textContent = data.student_name || '-';
+            studentClass.textContent = data.class_name || '-';
+            checkInTime.textContent = data.check_in.substring(0, 5) || '--:--';
+            
+            const statusColor = {
+                'present': '#10b981',
+                'late': '#f59e0b',
+                'absent': '#ef4444'
+            };
+            
+            statusDisplay.textContent = data.status.toUpperCase();
+            statusDisplay.style.color = statusColor[data.status] || '#9ca3af';
+        }
+
+        function addToLog(data) {
+            const statusIcon = {
+                'present': 'check_circle',
+                'late': 'schedule',
+                'absent': 'cancel'
+            };
+            
+            const statusColorClass = {
+                'present': 'emerald',
+                'late': 'amber',
+                'absent': 'red'
+            };
+
+            const icon = statusIcon[data.status] || 'help';
+            const colorClass = statusColorClass[data.status] || 'slate';
+
+            const logEntry = document.createElement('div');
+            logEntry.className = 'flex items-center gap-4 p-3 rounded-2xl hover:bg-white/5 transition-colors group';
+            logEntry.innerHTML = `
+                <div class="w-10 h-10 rounded-full bg-${colorClass}-500/10 flex items-center justify-center text-${colorClass}-400 shrink-0">
+                    <span class="material-symbols-outlined text-lg">${icon}</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-bold text-white truncate">${data.student_name}</p>
+                    <p class="text-[10px] font-medium text-slate-500">${data.timestamp} · ${data.class_name}</p>
+                </div>
+            `;
+
+            if (scanLogs.querySelector('p:contains("Belum ada")')) {
+                scanLogs.innerHTML = '';
+            }
+
+            scanLogs.insertAdjacentElement('afterbegin', logEntry);
+        }
+
+        function showSuccessAnimation() {
+            const icon = document.getElementById('studentIcon');
+            icon.textContent = 'check_circle';
+            icon.style.color = '#10b981';
+            
+            setTimeout(() => {
+                icon.textContent = 'person';
+                icon.style.color = '#cbd5e1';
+            }, 2000);
+
+            nisnInput.focus();
+        }
+
+        function showErrorMessage(message) {
+            alert(message);
+            nisnInput.focus();
+        }
+
+        function clearScannedData() {
+            scanLogs.innerHTML = '<p class="text-center text-sm text-slate-400 py-8">Belum ada scan dalam sesi ini</p>';
+            studentName.textContent = '-';
+            studentClass.textContent = '-';
+            checkInTime.textContent = '--:--';
+            statusDisplay.textContent = 'SIAP';
+            statusDisplay.style.color = '#9ca3af';
+            nisnInput.value = '';
+            nisnInput.focus();
+        }
+    </script>
 </body>
 </html>

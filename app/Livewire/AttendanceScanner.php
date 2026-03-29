@@ -18,6 +18,11 @@ class AttendanceScanner extends Component
     public $scanCount = 0;
     public $lastScanTime = null;
     
+    // Student Verification Feature
+    public $pendingStudent = null;
+    public $pendingStudentDetails = null;
+    public $awaitingConfirmation = false;
+    
     // Configuration
     protected const SCHOOL_START_TIME = '07:00:00';      // Jam masuk
     protected const LATE_THRESHOLD = '07:30:00';          // Terlambat setelah jam ini
@@ -66,8 +71,8 @@ class AttendanceScanner extends Component
                 return;
             }
 
-            // Process check-in/check-out
-            $this->processAttendance($student, $today);
+            // STUDENT VERIFICATION: Show confirmation dialog instead of direct processing
+            $this->showStudentVerification($student);
 
         } catch (\Exception $e) {
             Log::error('Attendance scan error', [
@@ -76,6 +81,71 @@ class AttendanceScanner extends Component
             ]);
             $this->handleError('Terjadi kesalahan sistem. Coba lagi.');
         }
+    }
+
+    /**
+     * Show student verification dialog
+     */
+    private function showStudentVerification($student)
+    {
+        $this->pendingStudent = $student;
+        $this->awaitingConfirmation = true;
+        $this->message = "Apakah ini siswa yang benar? Pastikan identitas sebelum lanjut.";
+        $this->status = 'info';
+
+        // Prepare student details for display
+        $this->pendingStudentDetails = [
+            'id' => $student->id,
+            'name' => $student->user->name,
+            'class' => $student->class?->name,
+            'nisn' => $student->nisn,
+            'photo_url' => $student->photo_path ? asset('storage/' . $student->photo_path) : null,
+            'has_photo' => !empty($student->photo_path),
+        ];
+    }
+
+    /**
+     * Confirm student identity and process attendance
+     */
+    public function confirmStudent()
+    {
+        if (!$this->pendingStudent) {
+            $this->handleError('Tidak ada siswa yang menunggu konfirmasi.');
+            return;
+        }
+
+        try {
+            $today = now()->toDateString();
+
+            // Process attendance now that student is confirmed
+            $this->processAttendance($this->pendingStudent, $today);
+
+            // Clear pending state
+            $this->clearPendingStudent();
+        } catch (\Exception $e) {
+            Log::error('Attendance confirm error', ['error' => $e->getMessage()]);
+            $this->handleError('Gagal memproses kehadiran. Coba lagi.');
+        }
+    }
+
+    /**
+     * Cancel student verification and reset for next scan
+     */
+    public function cancelStudent()
+    {
+        $this->message = 'Pembacaan dibatalkan. Siap untuk memindai ulang.';
+        $this->status = 'info';
+        $this->clearPendingStudent();
+    }
+
+    /**
+     * Clear pending student data
+     */
+    private function clearPendingStudent()
+    {
+        $this->pendingStudent = null;
+        $this->pendingStudentDetails = null;
+        $this->awaitingConfirmation = false;
     }
 
     /**

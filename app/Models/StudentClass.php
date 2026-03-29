@@ -29,4 +29,9 @@ class StudentClass extends Model
         return $this->belongsToMany(User::class, 'class_teacher', 'class_id', 'teacher_id')
             ->withTimestamps();
     }
+
+    public function schedules(): HasMany
+    {
+        return $this->hasMany(Schedule::class, 'class_id');
+    }
 }

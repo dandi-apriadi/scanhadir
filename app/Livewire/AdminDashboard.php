@@ -129,6 +129,6 @@ class AdminDashboard extends Component
             'totalStudents' => $totalStudents,
             'totalTeachers' => $totalTeachers,
             'totalClasses' => $totalClasses,
-        ])->layout('layouts.admin', ['title' => 'Admin Dashboard']);
+        ]);
     }
 }

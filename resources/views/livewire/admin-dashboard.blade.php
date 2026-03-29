@@ -150,8 +150,8 @@
                 <div class="p-6 space-y-3">
                     @forelse($lateStudents as $student)
                         <div class="p-3 bg-amber-50 rounded-lg border border-amber-200">
-                            <p class="text-sm font-semibold text-on-surface">{{ $student->user->name }}</p>
-                            <p class="text-xs text-slate-500">{{ $student->class->name }} • {{ $student->attendance->first()?->check_in }}</p>
+                            <p class="text-sm font-semibold text-on-surface">{{ $student->student->user->name }}</p>
+                            <p class="text-xs text-slate-500">{{ $student->student->class->name }} • {{ $student->check_in }}</p>
                         </div>
                     @empty
                         <p class="text-sm text-slate-500 text-center py-4">Tidak ada siswa terlambat</p>

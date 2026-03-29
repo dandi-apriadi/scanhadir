@@ -98,6 +98,73 @@
         </div>
     </div>
 
+    <!-- Student Verification Modal (NEW: Priority 1 Feature) -->
+    @if($awaitingConfirmation && $pendingStudentDetails)
+    <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/95 backdrop-blur-sm animate-in fade-in duration-200">
+        <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl shadow-2xl max-w-md w-full p-8 animate-in zoom-in-50 duration-300">
+            <!-- Header -->
+            <div class="text-center mb-6">
+                <h2 class="text-2xl font-bold text-white mb-2">Verifikasi Identitas</h2>
+                <p class="text-sm text-slate-400">Pastikan ini adalah siswa yang benar sebelum melanjutkan</p>
+            </div>
+
+            <!-- Student Photo (if available) -->
+            @if($pendingStudentDetails['has_photo'])
+            <div class="mb-6">
+                <img src="{{ $pendingStudentDetails['photo_url'] }}" 
+                     alt="{{ $pendingStudentDetails['name'] }}"
+                     class="w-40 h-40 rounded-2xl object-cover mx-auto border-4 border-indigo-500/50 shadow-[0_0_30px_rgba(99,102,241,0.3)]">
+            </div>
+            @else
+            <div class="mb-6 flex justify-center">
+                <div class="w-40 h-40 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center border-4 border-indigo-500/50 shadow-[0_0_30px_rgba(99,102,241,0.3)]">
+                    <svg class="w-20 h-20 text-white opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                </div>
+            </div>
+            @endif
+
+            <!-- Student Details -->
+            <div class="space-y-4 mb-6 p-4 bg-white/5 rounded-2xl border border-white/10">
+                <div>
+                    <p class="text-xs text-slate-400 uppercase font-bold mb-1">Nama Siswa</p>
+                    <p class="text-lg font-bold text-white">{{ $pendingStudentDetails['name'] }}</p>
+                </div>
+                <div>
+                    <p class="text-xs text-slate-400 uppercase font-bold mb-1">Kelas</p>
+                    <p class="text-base font-semibold text-indigo-300">{{ $pendingStudentDetails['class'] ?? '-' }}</p>
+                </div>
+                <div>
+                    <p class="text-xs text-slate-400 uppercase font-bold mb-1">NISN</p>
+                    <p class="text-sm font-mono text-slate-300">{{ $pendingStudentDetails['nisn'] }}</p>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="grid grid-cols-2 gap-3">
+                <button wire:click="cancelStudent" 
+                        class="px-4 py-3 bg-red-500/20 hover:bg-red-500/30 border border-red-500/50 text-red-300 font-bold rounded-xl transition-all active:scale-95 flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    Batal
+                </button>
+                <button wire:click="confirmStudent" 
+                        class="px-4 py-3 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/50 text-emerald-300 font-bold rounded-xl transition-all active:scale-95 flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    Benar
+                </button>
+            </div>
+
+            <!-- Warning -->
+            <p class="text-center text-xs text-amber-400 mt-4">⚠️ Pastikan identitas sebelum menekan tombol "Benar"</p>
+        </div>
+    </div>
+    @endif
+
     <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
     <script>
