@@ -170,22 +170,33 @@
     <script>
         let qrScanner = null;
         let isProcessing = false;
+        let activeCameraIsFront = false;
         const SCAN_COOLDOWN = 1500; // ms
+        const reader = document.getElementById('reader');
 
         document.addEventListener('livewire:navigated', () => {
             initQrScanner();
             startTimeClock();
         });
 
-        function initQrScanner() {
+        async function initQrScanner() {
             const html5QrCode = new Html5Qrcode("reader");
             qrScanner = html5QrCode;
-            const config = { fps: 15, qrbox: { width: 280, height: 280 } };
+            const config = { fps: 15, qrbox: { width: 280, height: 280 }, rememberLastUsedCamera: true };
+
+            const cameras = await Html5Qrcode.getCameras();
+            const rearRegex = /(rear|back|environment|traseira|tr\u00e1s)/i;
+            const frontRegex = /(front|user|facetime|webcam|integrated)/i;
+            const selectedCamera = cameras.find((camera) => rearRegex.test(camera.label || '')) || cameras[0] || null;
+            if (selectedCamera) {
+                activeCameraIsFront = frontRegex.test(selectedCamera.label || '');
+                applyMirrorFix(activeCameraIsFront);
+            }
 
             const successAudio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
             const errorAudio = new Audio('https://assets.mixkit.co/active_storage/sfx/2873/2873-preview.mp3');
 
-            html5QrCode.start({ facingMode: "environment" }, config, (decodedText) => {
+            const onScanSuccess = (decodedText) => {
                 if (isProcessing) return;
                 isProcessing = true;
 
@@ -196,7 +207,19 @@
                     html5QrCode.resume();
                     isProcessing = false;
                 }, SCAN_COOLDOWN);
-            });
+            };
+
+            try {
+                await html5QrCode.start(selectedCamera ? selectedCamera.id : { facingMode: { exact: "environment" } }, config, onScanSuccess);
+            } catch (envError) {
+                try {
+                    activeCameraIsFront = true;
+                    applyMirrorFix(true);
+                    await html5QrCode.start({ facingMode: "user" }, config, onScanSuccess);
+                } catch (fallbackError) {
+                    @this.dispatch('scan-failed');
+                }
+            }
 
             Livewire.on('scan-success', (data) => {
                 successAudio.play();
@@ -240,6 +263,16 @@
             }, 3500);
         }
 
+        function applyMirrorFix(isFrontCamera) {
+            if (!reader) return;
+
+            if (isFrontCamera) {
+                reader.classList.add('camera-unmirror');
+            } else {
+                reader.classList.remove('camera-unmirror');
+            }
+        }
+
         function startTimeClock() {
             setInterval(() => {
                 const now = new Date();
@@ -259,8 +292,16 @@
         .animate-blob { animation: blob 7s infinite; }
         .animation-delay-2000 { animation-delay: 2s; }
         .animation-delay-4000 { animation-delay: 4s; }
-        #reader { border: none !important; }
+        #reader { border: none !important; width: 100% !important; height: 100% !important; }
+        #reader > div,
+        #reader__scan_region { width: 100% !important; height: 100% !important; }
+        #reader__scan_region { display: flex !important; align-items: center; justify-content: center; overflow: hidden; }
         #reader__dashboard { display: none !important; }
-        #reader video { border-radius: 1rem; }
+        #reader video,
+        #reader__scan_region video,
+        #reader__scan_region img { border-radius: 1rem; width: 100% !important; height: 100% !important; object-fit: cover; }
+        #reader.camera-unmirror video,
+        #reader.camera-unmirror #reader__scan_region video,
+        #reader.camera-unmirror #reader__scan_region img { transform: scaleX(-1); }
     </style>
 </div>

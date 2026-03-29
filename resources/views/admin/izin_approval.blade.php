@@ -1,129 +1,125 @@
 @extends('layouts.admin')
 
 @section('content')
-<div class="flex flex-1 overflow-hidden -m-8 h-[calc(100vh-64px)]">
-    <!-- Main Content Area -->
-    <div class="flex-1 p-8 overflow-y-auto">
-        <div class="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">
-            Halaman persetujuan saat ini masih mode preview (read-only).
+<div class="space-y-8">
+    @if (session('status'))
+        <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">
+            {{ session('status') }}
         </div>
+    @endif
 
-        <!-- Breadcrumbs -->
-        <nav class="flex items-center gap-2 text-xs font-medium text-slate-500 mb-2 uppercase tracking-widest">
-            <span>Dashboard</span>
-            <span class="material-symbols-outlined text-[14px]">chevron_right</span>
-            <span class="text-primary">Persetujuan</span>
-        </nav>
-        <h2 class="text-3xl font-bold font-headline text-on-surface mb-8 tracking-tight">Persetujuan Ketidakhadiran</h2>
-
-        <!-- Tabs Section -->
-        <div class="flex items-center gap-8 border-b border-outline-variant/15 mb-8 overflow-x-auto pb-1">
-            <button type="button" onclick="alert('Filter tab approval belum diaktifkan.')" class="pb-4 text-sm font-semibold text-primary border-b-2 border-primary whitespace-nowrap">
-                Semua
-            </button>
-            <button type="button" onclick="alert('Filter tab approval belum diaktifkan.')" class="pb-4 text-sm font-medium text-slate-500 hover:text-primary transition-colors flex items-center gap-2 whitespace-nowrap">
-                Pending
-                <span class="bg-primary-container text-white px-2 py-0.5 rounded-full text-[10px] font-bold">12</span>
-            </button>
-            <button type="button" onclick="alert('Filter tab approval belum diaktifkan.')" class="pb-4 text-sm font-medium text-slate-500 hover:text-primary transition-colors whitespace-nowrap">
-                Disetujui
-            </button>
-            <button type="button" onclick="alert('Filter tab approval belum diaktifkan.')" class="pb-4 text-sm font-medium text-slate-500 hover:text-primary transition-colors whitespace-nowrap">
-                Ditolak
-            </button>
+    @if ($errors->any())
+        <div class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700">
+            {{ $errors->first() }}
         </div>
+    @endif
 
-        <!-- Table Container -->
-        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 overflow-hidden shadow-sm">
-            <table class="w-full text-left border-collapse">
-                <thead>
-                    <tr class="bg-slate-50">
-                        <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider">No</th>
-                        <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Siswa</th>
-                        <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Jenis</th>
-                        <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Tanggal</th>
-                        <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100">
-                    <tr class="hover:bg-primary/5 transition-colors bg-primary/5 border-l-4 border-l-primary">
-                        <td class="px-6 py-4 text-sm text-slate-600">01</td>
-                        <td class="px-6 py-4">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center text-primary font-bold text-xs">RR</div>
-                                <div>
-                                    <p class="text-sm font-bold text-on-surface">Rizki Ramadhan</p>
-                                    <p class="text-[10px] text-slate-500">XII IPA 1</p>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4">
-                            <span class="px-3 py-1 bg-amber-50 text-amber-700 text-[10px] font-bold rounded-full border border-amber-100 uppercase">Sakit</span>
-                        </td>
-                        <td class="px-6 py-4 text-sm text-slate-600">12 Mar 2024</td>
-                        <td class="px-6 py-4 text-right">
-                            <div class="flex items-center justify-end gap-2">
-                                <button type="button" onclick="alert('Aksi setujui belum diaktifkan pada mode preview.')" class="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg">
-                                    <span class="material-symbols-outlined text-[18px]">check_circle</span>
-                                </button>
-                                <button type="button" onclick="alert('Aksi tolak belum diaktifkan pada mode preview.')" class="p-2 text-rose-600 hover:bg-rose-50 rounded-lg">
-                                    <span class="material-symbols-outlined text-[18px]">cancel</span>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                    <!-- More rows... -->
-                </tbody>
-            </table>
+    <div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+            <p class="text-sm text-slate-500">Kelola pengajuan izin dan sakit siswa secara terpusat.</p>
         </div>
+        <form method="GET" class="grid w-full gap-3 sm:grid-cols-3 lg:w-auto">
+            <input type="text" name="q" value="{{ $q }}" placeholder="Cari nama, NISN, alasan" class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm focus:border-primary focus:outline-none" />
+            <select name="class_id" class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm focus:border-primary focus:outline-none">
+                <option value="0">Semua kelas</option>
+                @foreach($classOptions as $classOption)
+                    <option value="{{ $classOption->id }}" @selected($classId === $classOption->id)>{{ $classOption->name }}</option>
+                @endforeach
+            </select>
+            <button class="rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white" type="submit">Terapkan Filter</button>
+            <input type="hidden" name="approval" value="{{ $approval }}">
+        </form>
     </div>
 
-    <!-- Right Side Preview Panel -->
-    <aside class="w-96 bg-white border-l border-slate-100 p-6 overflow-y-auto hidden xl:block shadow-[-4px_0_12px_rgba(0,0,0,0.02)]">
-        <h3 class="font-headline font-bold text-lg mb-8">Detail Pengajuan</h3>
-        
-        <div class="flex flex-col items-center mb-8 text-center">
-            <div class="relative mb-4">
-                <img alt="Detail Avatar" class="w-24 h-24 rounded-full object-cover ring-4 ring-primary/10" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDaD3d_yRLQmJhU9YgacSCCRcRG_8Y3uYfscHFoxdXF__2MXQqcs2oMbVvH60j9m2CtTLqxCtBWNIY9-_weuXdn9hKH96bWJmuGDDTAbEAi_uqXoqKaXkPru7p5Uxu8eIRM1ArWYfgqngWW-cVTffFLt-BqCGe_UTdaOcBmxo66YyZ05Q_KvVddNiehIWM3Ni91KgrSjDds-q8QqIvhMwz-_4ea0YA1N9YSt5PioCsRvoBLl9Dku1gEL9aNwS57I-XsEv2o-HiiPd8o"/>
-                <span class="absolute bottom-1 right-1 bg-amber-500 border-2 border-white w-6 h-6 rounded-full flex items-center justify-center text-white">
-                    <span class="material-symbols-outlined text-[14px]">medical_services</span>
-                </span>
-            </div>
-            <h4 class="text-xl font-bold text-on-surface">Rizki Ramadhan</h4>
-            <p class="text-sm font-medium text-slate-500">Kelas XII - IPA 1</p>
-            <div class="mt-4 flex items-center gap-2">
-                <span class="px-4 py-1.5 bg-amber-50 text-amber-700 text-xs font-bold rounded-full border border-amber-100 uppercase">Sakit</span>
-                <span class="px-4 py-1.5 bg-slate-100 text-slate-600 text-xs font-bold rounded-full uppercase">Pending</span>
-            </div>
-        </div>
+    <div class="flex flex-wrap items-center gap-3 border-b border-outline-variant/15 pb-2">
+        @php
+            $tabs = [
+                'all' => 'Semua',
+                'pending' => 'Pending',
+                'approved' => 'Disetujui',
+                'rejected' => 'Ditolak',
+            ];
+        @endphp
+        @foreach($tabs as $key => $label)
+            <a href="{{ route('admin.izin_approval', array_merge(request()->query(), ['approval' => $key])) }}"
+               class="rounded-full px-4 py-2 text-sm font-semibold {{ $approval === $key ? 'bg-primary text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' }} transition-colors">
+                {{ $label }}
+                <span class="ml-1 text-xs">({{ $counts[$key] ?? 0 }})</span>
+            </a>
+        @endforeach
+    </div>
 
-        <div class="space-y-6">
-            <div>
-                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2">Alasan</p>
-                <div class="bg-slate-50 p-4 rounded-xl text-sm leading-relaxed text-slate-600 border border-slate-100 italic">
-                    "Demam tinggi disertai flu berat sejak malam hari. Surat dokter terlampir. Memerlukan istirahat selama 3 hari."
-                </div>
-            </div>
-            <div>
-                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2">Dokumen Pendukung</p>
-                <div class="group relative aspect-[4/3] rounded-xl overflow-hidden cursor-pointer border-2 border-dashed border-slate-200 bg-slate-50 flex items-center justify-center hover:border-primary/40 transition-all">
-                    <span class="material-symbols-outlined text-slate-300 text-4xl group-hover:text-primary/40 transition-colors">description</span>
-                    <div class="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
-                        <span class="material-symbols-outlined">zoom_in</span>
-                    </div>
-                </div>
-                <p class="text-[10px] text-center mt-2 text-slate-400 italic">Surat_Dokter_Rizki.pdf</p>
-            </div>
-            
-            <div class="pt-6 grid grid-cols-2 gap-3">
-                <button type="button" onclick="alert('Aksi tolak belum diaktifkan pada mode preview.')" class="py-3 px-4 bg-rose-50 text-rose-600 border border-rose-100 rounded-xl font-bold text-xs uppercase hover:bg-rose-600 hover:text-white transition-all">
-                    Tolak
-                </button>
-                <button type="button" onclick="alert('Aksi setujui belum diaktifkan pada mode preview.')" class="py-3 px-4 bg-primary text-white rounded-xl font-bold text-xs uppercase shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all">
-                    Setujui
-                </button>
-            </div>
-        </div>
-    </aside>
+    <div class="overflow-hidden rounded-xl border border-outline-variant/10 bg-surface-container-lowest shadow-sm">
+        <table class="w-full border-collapse text-left">
+            <thead>
+                <tr class="bg-slate-50">
+                    <th class="px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-500">No</th>
+                    <th class="px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-500">Siswa</th>
+                    <th class="px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-500">Jenis</th>
+                    <th class="px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-500">Tanggal</th>
+                    <th class="px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-500">Status</th>
+                    <th class="px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-500">Alasan</th>
+                    <th class="px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-500 text-right">Aksi</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+                @forelse($submissions as $index => $submission)
+                    <tr class="hover:bg-slate-50/80">
+                        <td class="px-5 py-4 text-sm text-slate-600">{{ $submissions->firstItem() + $index }}</td>
+                        <td class="px-5 py-4">
+                            <p class="text-sm font-bold text-on-surface">{{ $submission->student?->user?->name ?? '-' }}</p>
+                            <p class="text-[11px] text-slate-500">{{ $submission->student?->class?->name ?? '-' }} | NISN {{ $submission->student?->nisn ?? '-' }}</p>
+                        </td>
+                        <td class="px-5 py-4">
+                            <span class="rounded-full px-3 py-1 text-[10px] font-bold uppercase {{ $submission->status === 'sick' ? 'border border-amber-100 bg-amber-50 text-amber-700' : 'border border-sky-100 bg-sky-50 text-sky-700' }}">
+                                {{ $submission->status === 'sick' ? 'Sakit' : 'Izin' }}
+                            </span>
+                        </td>
+                        <td class="px-5 py-4 text-sm text-slate-600">{{ \Illuminate\Support\Carbon::parse($submission->date)->format('d M Y') }}</td>
+                        <td class="px-5 py-4">
+                            @if($submission->approval_status === 'approved')
+                                <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">Disetujui</span>
+                            @elseif($submission->approval_status === 'rejected')
+                                <span class="rounded-full bg-rose-50 px-3 py-1 text-xs font-bold text-rose-700">Ditolak</span>
+                            @else
+                                <span class="rounded-full bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700">Pending</span>
+                            @endif
+                        </td>
+                        <td class="px-5 py-4">
+                            <p class="max-w-[260px] truncate text-sm text-slate-600" title="{{ $submission->notes ?? '-' }}">{{ $submission->notes ?? '-' }}</p>
+                            @if($submission->rejection_reason)
+                                <p class="mt-1 text-[11px] text-rose-600">Alasan tolak: {{ $submission->rejection_reason }}</p>
+                            @endif
+                        </td>
+                        <td class="px-5 py-4">
+                            @if($submission->approval_status === 'pending' || $submission->approval_status === null)
+                                <div class="flex items-center justify-end gap-2">
+                                    <form method="POST" action="{{ route('admin.izin_approval.approve', $submission) }}">
+                                        @csrf
+                                        <button type="submit" class="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700">Setujui</button>
+                                    </form>
+                                    <form method="POST" action="{{ route('admin.izin_approval.reject', $submission) }}" class="flex items-center gap-2">
+                                        @csrf
+                                        <input type="text" name="rejection_reason" placeholder="Opsional" class="w-28 rounded-lg border border-slate-200 px-2 py-1 text-xs focus:border-primary focus:outline-none" />
+                                        <button type="submit" class="rounded-lg bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-rose-700">Tolak</button>
+                                    </form>
+                                </div>
+                            @else
+                                <p class="text-right text-xs font-semibold text-slate-500">Selesai diproses</p>
+                            @endif
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="7" class="px-5 py-10 text-center text-sm text-slate-500">Tidak ada data pengajuan untuk filter saat ini.</td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+
+    <div>
+        {{ $submissions->links() }}
+    </div>
 </div>
 @endsection

@@ -10,6 +10,7 @@ use OpenSpout\Common\Entity\Style\Border;
 use OpenSpout\Common\Entity\Style\BorderPart;
 use OpenSpout\Common\Entity\Style\Color;
 use OpenSpout\Common\Entity\Style\Fill;
+use OpenSpout\Common\Entity\Row;
 use OpenSpout\Writer\Common\Entity\Style\CellAlignment;
 
 class AttendanceExportService
@@ -57,22 +58,20 @@ class AttendanceExportService
      */
     private function writeHeader($writer, array $options)
     {
-        $sheet = $writer->getCurrentSheet();
-
         // Title row
-        $sheet->addRow(['ATTENDANCE REPORT']);
+        $writer->addRow(Row::fromValues(['ATTENDANCE REPORT']));
 
         // Metadata rows
-        $sheet->addRow(["Report Date: " . now()->format('Y-m-d H:i:s')]);
+        $writer->addRow(Row::fromValues(["Report Date: " . now()->format('Y-m-d H:i:s')]));
         if (isset($options['date_from']) && isset($options['date_to'])) {
-            $sheet->addRow(["Period: " . $options['date_from'] . " to " . $options['date_to']]);
+            $writer->addRow(Row::fromValues(["Period: " . $options['date_from'] . " to " . $options['date_to']]));
         }
         if (isset($options['class_name'])) {
-            $sheet->addRow(["Class: " . $options['class_name']]);
+            $writer->addRow(Row::fromValues(["Class: " . $options['class_name']]));
         }
 
         // Empty row
-        $sheet->addRow([]);
+        $writer->addRow(Row::fromValues([]));
 
         // Column headers
         $headers = [
@@ -85,7 +84,7 @@ class AttendanceExportService
             'Status',
             'Created At',
         ];
-        $sheet->addRow($headers);
+        $writer->addRow(Row::fromValues($headers));
     }
 
     /**
@@ -96,21 +95,22 @@ class AttendanceExportService
         $i = 0;
         foreach ($attendances as $attendance) {
             $i++;
-            $row = [
+            $data = [
                 $attendance->student?->user?->name ?? 'N/A',
                 $attendance->student?->nisn ?? 'N/A',
                 $attendance->student?->class?->name ?? 'N/A',
-                $attendance->date ? $attendance->date->format('Y-m-d') : 'N/A',
-                $attendance->check_in ? $attendance->check_in->format('H:i:s') : '-',
-                $attendance->check_out ? $attendance->check_out->format('H:i:s') : '-',
+                $attendance->date ? ($attendance->date instanceof \Carbon\Carbon ? $attendance->date->format('Y-m-d') : $attendance->date) : 'N/A',
+                $attendance->check_in ? ($attendance->check_in instanceof \Carbon\Carbon ? $attendance->check_in->format('H:i:s') : $attendance->check_in) : '-',
+                $attendance->check_out ? ($attendance->check_out instanceof \Carbon\Carbon ? $attendance->check_out->format('H:i:s') : $attendance->check_out) : '-',
                 strtoupper($attendance->status),
                 $attendance->created_at ? $attendance->created_at->format('Y-m-d H:i:s') : 'N/A',
             ];
-            $writer->getCurrentSheet()->addRow($row);
+            $writer->addRow(Row::fromValues($data));
 
             // Limit rows per batch to prevent memory issues
             if ($i % 1000 === 0) {
-                $writer->getCurrentSheet()->addRow([]);
+                // No need for empty row in batch but kept for spacing if desired
+                // $writer->addRow(Row::fromValues([]));
             }
         }
     }
@@ -120,11 +120,9 @@ class AttendanceExportService
      */
     private function writeSummary($writer, $attendances)
     {
-        $sheet = $writer->getCurrentSheet();
-
         // Summary title
-        $sheet->addRow(['SUMMARY STATISTICS']);
-        $sheet->addRow([]);
+        $writer->addRow(Row::fromValues(['SUMMARY STATISTICS']));
+        $writer->addRow(Row::fromValues([]));
 
         // Total counts
         $totalAttendances = $attendances->count();
@@ -135,44 +133,44 @@ class AttendanceExportService
         $absentCount = $attendances->where('status', 'absent')->count();
 
         // Summary rows
-        $sheet->addRow(['Metric', 'Count', 'Percentage']);
-        $sheet->addRow(['Total', $totalAttendances, '100%']);
-        $sheet->addRow(['Present', $presentCount, $totalAttendances > 0 ? round(($presentCount / $totalAttendances) * 100, 2) . '%' : '0%']);
-        $sheet->addRow(['Late', $lateCount, $totalAttendances > 0 ? round(($lateCount / $totalAttendances) * 100, 2) . '%' : '0%']);
-        $sheet->addRow(['Sick', $sickCount, $totalAttendances > 0 ? round(($sickCount / $totalAttendances) * 100, 2) . '%' : '0%']);
-        $sheet->addRow(['Excused', $excusedCount, $totalAttendances > 0 ? round(($excusedCount / $totalAttendances) * 100, 2) . '%' : '0%']);
-        $sheet->addRow(['Absent', $absentCount, $totalAttendances > 0 ? round(($absentCount / $totalAttendances) * 100, 2) . '%' : '0%']);
+        $writer->addRow(Row::fromValues(['Metric', 'Count', 'Percentage']));
+        $writer->addRow(Row::fromValues(['Total', $totalAttendances, '100%']));
+        $writer->addRow(Row::fromValues(['Present', $presentCount, $totalAttendances > 0 ? round(($presentCount / $totalAttendances) * 100, 2) . '%' : '0%']));
+        $writer->addRow(Row::fromValues(['Late', $lateCount, $totalAttendances > 0 ? round(($lateCount / $totalAttendances) * 100, 2) . '%' : '0%']));
+        $writer->addRow(Row::fromValues(['Sick', $sickCount, $totalAttendances > 0 ? round(($sickCount / $totalAttendances) * 100, 2) . '%' : '0%']));
+        $writer->addRow(Row::fromValues(['Excused', $excusedCount, $totalAttendances > 0 ? round(($excusedCount / $totalAttendances) * 100, 2) . '%' : '0%']));
+        $writer->addRow(Row::fromValues(['Absent', $absentCount, $totalAttendances > 0 ? round(($absentCount / $totalAttendances) * 100, 2) . '%' : '0%']));
 
         // Group by date
-        $sheet->addRow([]);
-        $sheet->addRow(['ATTENDANCE BY DATE']);
-        $sheet->addRow(['Date', 'Present', 'Late', 'Absent', 'Sick', 'Excused']);
+        $writer->addRow(Row::fromValues([]));
+        $writer->addRow(Row::fromValues(['ATTENDANCE BY DATE']));
+        $writer->addRow(Row::fromValues(['Date', 'Present', 'Late', 'Absent', 'Sick', 'Excused']));
 
         $dateGroups = $attendances->groupBy('date')->sortBy(function($item, $key) {
             return $key;
         });
 
         foreach ($dateGroups as $date => $records) {
-            $sheet->addRow([
+            $writer->addRow(Row::fromValues([
                 $date,
                 $records->where('status', 'present')->count(),
                 $records->where('status', 'late')->count(),
                 $records->where('status', 'absent')->count(),
                 $records->where('status', 'sick')->count(),
                 $records->where('status', 'excused')->count(),
-            ]);
+            ]));
         }
 
         // Group by class (if multiple classes)
         $classes = $attendances->groupBy('student.class_id');
         if ($classes->count() > 1) {
-            $sheet->addRow([]);
-            $sheet->addRow(['ATTENDANCE BY CLASS']);
-            $sheet->addRow(['Class', 'Total', 'Present', 'Late', 'Absent', 'Sick', 'Excused']);
+            $writer->addRow(Row::fromValues([]));
+            $writer->addRow(Row::fromValues(['ATTENDANCE BY CLASS']));
+            $writer->addRow(Row::fromValues(['Class', 'Total', 'Present', 'Late', 'Absent', 'Sick', 'Excused']));
 
             foreach ($classes as $classRecords) {
                 $className = $classRecords->first()?->student?->class?->name ?? 'N/A';
-                $sheet->addRow([
+                $writer->addRow(Row::fromValues([
                     $className,
                     $classRecords->count(),
                     $classRecords->where('status', 'present')->count(),
@@ -180,7 +178,7 @@ class AttendanceExportService
                     $classRecords->where('status', 'absent')->count(),
                     $classRecords->where('status', 'sick')->count(),
                     $classRecords->where('status', 'excused')->count(),
-                ]);
+                ]));
             }
         }
     }

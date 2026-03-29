@@ -116,10 +116,22 @@
                                 <p class="text-sm text-slate-600 truncate max-w-[320px]">{{ $history->notes ?? '-' }}</p>
                             </td>
                             <td class="px-8 py-6">
-                                <span class="flex items-center gap-1.5 text-emerald-600 text-xs font-bold">
-                                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                                    Tercatat
-                                </span>
+                                @if(($history->approval_status ?? 'pending') === 'approved')
+                                    <span class="flex items-center gap-1.5 text-emerald-600 text-xs font-bold">
+                                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                        Disetujui
+                                    </span>
+                                @elseif(($history->approval_status ?? 'pending') === 'rejected')
+                                    <span class="flex items-center gap-1.5 text-rose-600 text-xs font-bold">
+                                        <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+                                        Ditolak
+                                    </span>
+                                @else
+                                    <span class="flex items-center gap-1.5 text-amber-600 text-xs font-bold">
+                                        <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                                        Menunggu Persetujuan
+                                    </span>
+                                @endif
                             </td>
                         </tr>
                     @empty

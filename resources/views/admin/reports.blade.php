@@ -5,11 +5,17 @@
     <div class="flex items-center justify-between">
         <div>
             <h1 class="text-2xl font-bold text-slate-900">Laporan Presensi</h1>
-            <p class="text-sm text-slate-500">Daily summary dan export data ke CSV/PDF.</p>
+            <p class="text-sm text-slate-500">Daily summary dan export data ke Excel/PDF.</p>
         </div>
         <div class="flex gap-2">
-            <a href="{{ route('admin.reports.export.csv') }}" class="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-semibold">Export CSV</a>
-            <a href="{{ route('admin.reports.export.pdf') }}" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold">Export PDF</a>
+            <a href="{{ route('admin.reports.export.excel') }}" download="laporan-presensi-{{ now()->format('Y-m-d') }}.xlsx" class="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-semibold flex items-center gap-2">
+                <span class="material-symbols-outlined text-sm">download</span>
+                Export Excel
+            </a>
+            <a href="{{ route('admin.reports.export.pdf') }}" download="laporan-presensi-{{ now()->format('Y-m-d') }}.pdf" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold flex items-center gap-2">
+                <span class="material-symbols-outlined text-sm">picture_as_pdf</span>
+                Export PDF
+            </a>
         </div>
     </div>
 

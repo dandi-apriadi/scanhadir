@@ -7,7 +7,9 @@
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script defer src="https://unpkg.com/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    @livewireStyles
     <script>
         tailwind.config = {
             darkMode: "class",
@@ -43,10 +45,37 @@
         .material-symbols-outlined {
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
         }
+
+        .custom-scrollbar {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(129, 140, 248, 0.55) transparent;
+            scrollbar-gutter: stable;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: rgba(129, 140, 248, 0.55);
+            border-radius: 9999px;
+            border: 2px solid transparent;
+            background-clip: content-box;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-button {
+            display: none;
+            width: 0;
+            height: 0;
+        }
     </style>
 </head>
-<body class="bg-surface font-body text-on-surface antialiased" x-data="{ sidebarCollapsed: false }">
-    <aside class="hidden md:flex flex-col h-screen fixed left-0 top-0 bg-indigo-950 text-white z-50 py-8 gap-2 transition-all duration-300" :class="sidebarCollapsed ? 'w-20' : 'w-72'">
+<body class="bg-surface font-body text-on-surface antialiased" x-data="{ sidebarCollapsed: false, activeGroups: { main: true, master: true, system: true } }">
+    <aside class="hidden md:flex flex-col h-screen fixed left-0 top-0 bg-indigo-950 text-white z-50 py-8 gap-2 transition-all duration-300 overflow-hidden" :class="sidebarCollapsed ? 'w-20' : 'w-72'">
         <div class="mb-10 flex flex-col items-center gap-6" :class="sidebarCollapsed ? 'px-2' : 'px-6 items-stretch'">
             <div class="flex items-center justify-between w-full" :class="sidebarCollapsed ? 'flex-col gap-4' : ''">
                 <div class="flex items-center gap-3">
@@ -63,60 +92,93 @@
                 </button>
             </div>
         </div>
-        <nav class="flex-1 flex flex-col gap-1 px-3">
-            <p x-show="!sidebarCollapsed" class="text-[10px] uppercase tracking-[0.2em] text-indigo-400 font-bold mb-2 px-4 whitespace-nowrap">Main Menu</p>
-            <a class="flex items-center gap-4 {{ request()->routeIs('admin.dashboard') ? 'bg-primary-container text-white' : 'text-indigo-200 hover:bg-white/10' }} rounded-xl px-4 py-3 transition-all" href="{{ route('admin.dashboard') }}">
-                <span class="material-symbols-outlined">dashboard</span>
-                <span class="font-medium text-sm whitespace-nowrap" x-show="!sidebarCollapsed">Dashboard</span>
-            </a>
-            <a class="flex items-center gap-4 {{ request()->routeIs('admin.analytics') ? 'bg-primary-container text-white' : 'text-indigo-200 hover:bg-white/10' }} rounded-xl px-4 py-3 transition-all" href="{{ route('admin.analytics') }}">
-                <span class="material-symbols-outlined">analytics</span>
-                <span class="font-medium text-sm whitespace-nowrap" x-show="!sidebarCollapsed">Analytics</span>
-            </a>
-            <a class="flex items-center gap-4 {{ request()->routeIs('admin.logs') ? 'bg-primary-container text-white' : 'text-indigo-200 hover:bg-white/10' }} rounded-xl px-4 py-3 transition-all" href="{{ route('admin.logs') }}">
-                <span class="material-symbols-outlined">history</span>
-                <span class="font-medium text-sm whitespace-nowrap" x-show="!sidebarCollapsed">Presensi Logs</span>
-            </a>
-            <a class="flex items-center gap-4 {{ request()->routeIs('admin.izin_approval') ? 'bg-primary-container text-white' : 'text-indigo-200 hover:bg-white/10' }} rounded-xl px-4 py-3 transition-all" href="{{ route('admin.izin_approval') }}">
-                <span class="material-symbols-outlined">assignment_turned_in</span>
-                <span class="font-medium text-sm whitespace-nowrap" x-show="!sidebarCollapsed">Izin Approval</span>
-            </a>
+        <nav class="flex-1 flex flex-col gap-1 px-3 pr-1 custom-scrollbar overflow-y-auto overflow-x-hidden">
+            <!-- Main Menu Section -->
+            <div class="mb-4">
+                <button @click="activeGroups.main = !activeGroups.main" class="w-full flex items-center justify-between px-4 py-3 text-[10px] uppercase tracking-[0.2em] text-indigo-400 font-bold hover:text-white transition-colors group">
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-sm" :class="activeGroups.main ? 'text-white' : 'text-indigo-400'">grid_view</span>
+                        <span x-show="!sidebarCollapsed">Main Menu</span>
+                    </div>
+                    <span class="material-symbols-outlined text-xs transition-transform duration-300" :class="activeGroups.main ? 'rotate-180' : ''" x-show="!sidebarCollapsed">expand_more</span>
+                </button>
+                <div x-show="activeGroups.main" x-collapse x-transition.opacity>
+                    <a class="flex items-center gap-4 {{ request()->routeIs('admin.dashboard') ? 'bg-primary-container text-white border-l-4 border-white' : 'text-indigo-200 hover:bg-white/10' }} rounded-xl px-4 py-3 transition-all mb-1" href="{{ route('admin.dashboard') }}">
+                        <span class="material-symbols-outlined">dashboard</span>
+                        <span class="font-medium text-sm whitespace-nowrap" x-show="!sidebarCollapsed">Dashboard</span>
+                    </a>
+                    <a class="flex items-center gap-4 {{ request()->routeIs('admin.analytics') ? 'bg-primary-container text-white border-l-4 border-white' : 'text-indigo-200 hover:bg-white/10' }} rounded-xl px-4 py-3 transition-all mb-1" href="{{ route('admin.analytics') }}">
+                        <span class="material-symbols-outlined">analytics</span>
+                        <span class="font-medium text-sm whitespace-nowrap" x-show="!sidebarCollapsed">Analytics</span>
+                    </a>
+                    <a class="flex items-center gap-4 {{ request()->routeIs('admin.logs') ? 'bg-primary-container text-white border-l-4 border-white' : 'text-indigo-200 hover:bg-white/10' }} rounded-xl px-4 py-3 transition-all mb-1" href="{{ route('admin.logs') }}">
+                        <span class="material-symbols-outlined">history</span>
+                        <span class="font-medium text-sm whitespace-nowrap" x-show="!sidebarCollapsed">Presensi Logs</span>
+                    </a>
+                    <a class="flex items-center gap-4 {{ request()->routeIs('admin.izin_approval') ? 'bg-primary-container text-white border-l-4 border-white' : 'text-indigo-200 hover:bg-white/10' }} rounded-xl px-4 py-3 transition-all mb-1" href="{{ route('admin.izin_approval') }}">
+                        <span class="material-symbols-outlined">assignment_turned_in</span>
+                        <span class="font-medium text-sm whitespace-nowrap" x-show="!sidebarCollapsed">Izin Approval</span>
+                    </a>
+                </div>
+            </div>
 
-            <p x-show="!sidebarCollapsed" class="text-[10px] uppercase tracking-[0.2em] text-indigo-400 font-bold mt-6 mb-2 px-4 whitespace-nowrap">Master Data</p>
-            <a class="flex items-center gap-4 {{ request()->routeIs('admin.master.guru') ? 'bg-primary-container text-white' : 'text-indigo-200 hover:bg-white/10' }} rounded-xl px-4 py-3 transition-all" href="{{ route('admin.master.guru') }}">
-                <span class="material-symbols-outlined">record_voice_over</span>
-                <span class="font-medium text-sm whitespace-nowrap" x-show="!sidebarCollapsed">Data Guru</span>
-            </a>
-            <a class="flex items-center gap-4 {{ request()->routeIs('admin.master.siswa') ? 'bg-primary-container text-white' : 'text-indigo-200 hover:bg-white/10' }} rounded-xl px-4 py-3 transition-all" href="{{ route('admin.master.siswa') }}">
-                <span class="material-symbols-outlined">group</span>
-                <span class="font-medium text-sm whitespace-nowrap" x-show="!sidebarCollapsed">Data Siswa</span>
-            </a>
-            <a class="flex items-center gap-4 {{ request()->routeIs('admin.master.kelas') ? 'bg-primary-container text-white' : 'text-indigo-200 hover:bg-white/10' }} rounded-xl px-4 py-3 transition-all" href="{{ route('admin.master.kelas') }}">
-                <span class="material-symbols-outlined">meeting_room</span>
-                <span class="font-medium text-sm whitespace-nowrap" x-show="!sidebarCollapsed">Data Kelas</span>
-            </a>
-            <a class="flex items-center gap-4 {{ request()->routeIs('admin.master.jadwal*') ? 'bg-primary-container text-white' : 'text-indigo-200 hover:bg-white/10' }} rounded-xl px-4 py-3 transition-all" href="{{ route('admin.master.jadwal') }}">
-                <span class="material-symbols-outlined">calendar_month</span>
-                <span class="font-medium text-sm whitespace-nowrap" x-show="!sidebarCollapsed">Jadwal</span>
-            </a>
-            <a class="flex items-center gap-4 {{ request()->routeIs('admin.master.mapel') ? 'bg-primary-container text-white' : 'text-indigo-200 hover:bg-white/10' }} rounded-xl px-4 py-3 transition-all" href="{{ route('admin.master.mapel') }}">
-                <span class="material-symbols-outlined">library_books</span>
-                <span class="font-medium text-sm whitespace-nowrap" x-show="!sidebarCollapsed">Mata Pelajaran</span>
-            </a>
+            <!-- Master Data Section -->
+            <div class="mb-4">
+                <button @click="activeGroups.master = !activeGroups.master" class="w-full flex items-center justify-between px-4 py-3 text-[10px] uppercase tracking-[0.2em] text-indigo-400 font-bold hover:text-white transition-colors group">
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-sm" :class="activeGroups.master ? 'text-white' : 'text-indigo-400'">database</span>
+                        <span x-show="!sidebarCollapsed">Master Data</span>
+                    </div>
+                    <span class="material-symbols-outlined text-xs transition-transform duration-300" :class="activeGroups.master ? 'rotate-180' : ''" x-show="!sidebarCollapsed">expand_more</span>
+                </button>
+                <div x-show="activeGroups.master" x-collapse x-transition.opacity>
+                    <a class="flex items-center gap-4 {{ request()->routeIs('admin.master.guru') ? 'bg-primary-container text-white border-l-4 border-white' : 'text-indigo-200 hover:bg-white/10' }} rounded-xl px-4 py-3 transition-all mb-1" href="{{ route('admin.master.guru') }}">
+                        <span class="material-symbols-outlined">record_voice_over</span>
+                        <span class="font-medium text-sm whitespace-nowrap" x-show="!sidebarCollapsed">Data Guru</span>
+                    </a>
+                    <a class="flex items-center gap-4 {{ request()->routeIs('admin.master.siswa') ? 'bg-primary-container text-white border-l-4 border-white' : 'text-indigo-200 hover:bg-white/10' }} rounded-xl px-4 py-3 transition-all mb-1" href="{{ route('admin.master.siswa') }}">
+                        <span class="material-symbols-outlined">group</span>
+                        <span class="font-medium text-sm whitespace-nowrap" x-show="!sidebarCollapsed">Data Siswa</span>
+                    </a>
+                    <a class="flex items-center gap-4 {{ request()->routeIs('admin.master.kelas') ? 'bg-primary-container text-white border-l-4 border-white' : 'text-indigo-200 hover:bg-white/10' }} rounded-xl px-4 py-3 transition-all mb-1" href="{{ route('admin.master.kelas') }}">
+                        <span class="material-symbols-outlined">meeting_room</span>
+                        <span class="font-medium text-sm whitespace-nowrap" x-show="!sidebarCollapsed">Data Kelas</span>
+                    </a>
+                    <a class="flex items-center gap-4 {{ request()->routeIs('admin.master.jadwal*') ? 'bg-primary-container text-white border-l-4 border-white' : 'text-indigo-200 hover:bg-white/10' }} rounded-xl px-4 py-3 transition-all mb-1" href="{{ route('admin.master.jadwal') }}">
+                        <span class="material-symbols-outlined">calendar_month</span>
+                        <span class="font-medium text-sm whitespace-nowrap" x-show="!sidebarCollapsed">Jadwal</span>
+                    </a>
+                    <a class="flex items-center gap-4 {{ request()->routeIs('admin.master.mapel') ? 'bg-primary-container text-white border-l-4 border-white' : 'text-indigo-200 hover:bg-white/10' }} rounded-xl px-4 py-3 transition-all mb-1" href="{{ route('admin.master.mapel') }}">
+                        <span class="material-symbols-outlined">library_books</span>
+                        <span class="font-medium text-sm whitespace-nowrap" x-show="!sidebarCollapsed">Mata Pelajaran</span>
+                    </a>
+                </div>
+            </div>
 
-            <p x-show="!sidebarCollapsed" class="text-[10px] uppercase tracking-[0.2em] text-indigo-400 font-bold mt-6 mb-2 px-4 whitespace-nowrap">System</p>
-            <a class="flex items-center gap-4 {{ request()->routeIs('admin.scanner') ? 'bg-primary-container text-white' : 'text-indigo-200 hover:bg-white/10' }} rounded-xl px-4 py-3 transition-all" href="{{ route('admin.scanner') }}">
-                <span class="material-symbols-outlined">qr_code_scanner</span>
-                <span class="font-medium text-sm whitespace-nowrap" x-show="!sidebarCollapsed">Scanner</span>
-            </a>
-            <a class="flex items-center gap-4 {{ request()->routeIs('admin.reports*') ? 'bg-primary-container text-white' : 'text-indigo-200 hover:bg-white/10' }} rounded-xl px-4 py-3 transition-all" href="{{ route('admin.reports') }}">
-                <span class="material-symbols-outlined">summarize</span>
-                <span class="font-medium text-sm whitespace-nowrap" x-show="!sidebarCollapsed">Reports</span>
-            </a>
-            <a class="flex items-center gap-4 {{ request()->routeIs('admin.settings') ? 'bg-primary-container text-white' : 'text-indigo-200 hover:bg-white/10' }} rounded-xl px-4 py-3 transition-all" href="{{ route('admin.settings') }}">
-                <span class="material-symbols-outlined">settings</span>
-                <span class="font-medium text-sm whitespace-nowrap" x-show="!sidebarCollapsed">Settings</span>
-            </a>
+            <!-- System Section -->
+            <div class="mb-12">
+                <button @click="activeGroups.system = !activeGroups.system" class="w-full flex items-center justify-between px-4 py-3 text-[10px] uppercase tracking-[0.2em] text-indigo-400 font-bold hover:text-white transition-colors group">
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-sm" :class="activeGroups.system ? 'text-white' : 'text-indigo-400'">settings_applications</span>
+                        <span x-show="!sidebarCollapsed">System</span>
+                    </div>
+                    <span class="material-symbols-outlined text-xs transition-transform duration-300" :class="activeGroups.system ? 'rotate-180' : ''" x-show="!sidebarCollapsed">expand_more</span>
+                </button>
+                <div x-show="activeGroups.system" x-collapse x-transition.opacity class="pb-10">
+                    <a class="flex items-center gap-4 {{ request()->routeIs('admin.scanner') ? 'bg-primary-container text-white border-l-4 border-white' : 'text-indigo-200 hover:bg-white/10' }} rounded-xl px-4 py-3 transition-all mb-1" href="{{ route('admin.scanner') }}">
+                        <span class="material-symbols-outlined">qr_code_scanner</span>
+                        <span class="font-medium text-sm whitespace-nowrap" x-show="!sidebarCollapsed">Scanner</span>
+                    </a>
+                    <a class="flex items-center gap-4 {{ request()->routeIs('admin.reports*') ? 'bg-primary-container text-white border-l-4 border-white' : 'text-indigo-200 hover:bg-white/10' }} rounded-xl px-4 py-3 transition-all mb-1" href="{{ route('admin.reports') }}">
+                        <span class="material-symbols-outlined">summarize</span>
+                        <span class="font-medium text-sm whitespace-nowrap" x-show="!sidebarCollapsed">Reports</span>
+                    </a>
+                    <a class="flex items-center gap-4 {{ request()->routeIs('admin.settings') ? 'bg-primary-container text-white border-l-4 border-white' : 'text-indigo-200 hover:bg-white/10' }} rounded-xl px-4 py-3 transition-all mb-1" href="{{ route('admin.settings') }}">
+                        <span class="material-symbols-outlined">settings</span>
+                        <span class="font-medium text-sm whitespace-nowrap" x-show="!sidebarCollapsed">Settings</span>
+                    </a>
+                </div>
+            </div>
         </nav>
     </aside>
 
@@ -182,5 +244,6 @@
             @endif
         </div>
     </main>
+    @livewireScripts
 </body>
 </html>

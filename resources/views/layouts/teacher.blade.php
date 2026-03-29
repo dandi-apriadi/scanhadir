@@ -7,7 +7,9 @@
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <script defer src="https://unpkg.com/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    @livewireStyles
     <script>
         tailwind.config = {
             theme: {
@@ -33,9 +35,36 @@
         .material-symbols-outlined {
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
         }
+
+        .custom-scrollbar {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(129, 140, 248, 0.55) transparent;
+            scrollbar-gutter: stable;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: rgba(129, 140, 248, 0.55);
+            border-radius: 9999px;
+            border: 2px solid transparent;
+            background-clip: content-box;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-button {
+            display: none;
+            width: 0;
+            height: 0;
+        }
     </style>
 </head>
-<body class="bg-surface text-on-surface font-body antialiased" x-data="{ sidebarCollapsed: false }">
+<body class="bg-surface text-on-surface font-body antialiased" x-data="{ sidebarCollapsed: false, activeGroups: { main: true, reports: true } }">
     <div class="flex min-h-screen">
         <!-- Sidebar -->
         <aside class="bg-white border-r border-slate-100 flex flex-col fixed h-screen z-50 transition-all duration-300 overflow-hidden" :class="sidebarCollapsed ? 'w-20' : 'w-64'">
@@ -56,23 +85,48 @@
                 </div>
             </div>
 
-            <nav class="flex-1 px-3 space-y-1 mt-4">
-                <a href="{{ route('teacher.dashboard') }}" class="flex items-center gap-3 px-4 py-3 {{ Request::routeIs('teacher.dashboard') ? 'bg-indigo-50 text-indigo-700 font-bold' : 'text-slate-600 hover:bg-slate-50' }} rounded-xl transition-all">
-                    <span class="material-symbols-outlined">dashboard</span>
-                    <span class="text-xs uppercase tracking-wider font-semibold whitespace-nowrap" x-show="!sidebarCollapsed">Dashboard</span>
-                </a>
-                <a href="{{ route('teacher.analytics') }}" class="flex items-center gap-3 px-4 py-3 {{ Request::routeIs('teacher.analytics') ? 'bg-indigo-50 text-indigo-700 font-bold' : 'text-slate-600 hover:bg-slate-50' }} rounded-xl transition-all">
-                    <span class="material-symbols-outlined">calendar_today</span>
-                    <span class="text-xs uppercase tracking-wider font-semibold whitespace-nowrap" x-show="!sidebarCollapsed">Analytics</span>
-                </a>
-                <a href="{{ route('teacher.bulk-update') }}" class="flex items-center gap-3 px-4 py-3 {{ Request::routeIs('teacher.bulk-update') ? 'bg-indigo-50 text-indigo-700 font-bold' : 'text-slate-600 hover:bg-slate-50' }} rounded-xl transition-all">
-                    <span class="material-symbols-outlined">group</span>
-                    <span class="text-xs uppercase tracking-wider font-semibold whitespace-nowrap" x-show="!sidebarCollapsed">Bulk Update</span>
-                </a>
-                <a href="{{ route('teacher.reports') }}" class="flex items-center gap-3 px-4 py-3 {{ Request::routeIs('teacher.reports') ? 'bg-indigo-50 text-indigo-700 font-bold' : 'text-slate-600 hover:bg-slate-50' }} rounded-xl transition-all">
-                    <span class="material-symbols-outlined">analytics</span>
-                    <span class="text-xs uppercase tracking-wider font-semibold whitespace-nowrap" x-show="!sidebarCollapsed">Laporan</span>
-                </a>
+            <nav class="flex-1 px-3 pr-1 space-y-1 mt-4 overflow-y-auto overflow-x-hidden custom-scrollbar">
+                <!-- Menu Utama -->
+            <div class="mb-4">
+                <button @click="activeGroups.main = !activeGroups.main" class="w-full flex items-center justify-between px-4 py-3 text-[10px] uppercase tracking-[0.2em] text-indigo-400 font-bold hover:text-white transition-colors group">
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-sm" :class="activeGroups.main ? 'text-white' : 'text-indigo-400'">apps</span>
+                        <span x-show="!sidebarCollapsed">Menu Utama</span>
+                    </div>
+                    <span class="material-symbols-outlined text-xs transition-transform duration-300" :class="activeGroups.main ? 'rotate-180' : ''" x-show="!sidebarCollapsed">expand_more</span>
+                </button>
+                <div x-show="activeGroups.main" x-collapse x-transition.opacity>
+                        <a href="{{ route('teacher.dashboard') }}" class="flex items-center gap-3 px-4 py-3 {{ Request::routeIs('teacher.dashboard') ? 'bg-indigo-50 text-indigo-700 font-bold border-l-4 border-indigo-600' : 'text-slate-600 hover:bg-slate-50' }} rounded-xl transition-all mb-1">
+                            <span class="material-symbols-outlined">dashboard</span>
+                            <span class="text-xs uppercase tracking-wider font-semibold whitespace-nowrap" x-show="!sidebarCollapsed">Dashboard</span>
+                        </a>
+                        <a href="{{ route('teacher.bulk-update') }}" class="flex items-center gap-3 px-4 py-3 {{ Request::routeIs('teacher.bulk-update') ? 'bg-indigo-50 text-indigo-700 font-bold border-l-4 border-indigo-600' : 'text-slate-600 hover:bg-slate-50' }} rounded-xl transition-all mb-1">
+                            <span class="material-symbols-outlined">group</span>
+                            <span class="text-xs uppercase tracking-wider font-semibold whitespace-nowrap" x-show="!sidebarCollapsed">Bulk Update</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Laporan & Data -->
+            <div class="mb-12">
+                <button @click="activeGroups.reports = !activeGroups.reports" class="w-full flex items-center justify-between px-4 py-3 text-[10px] uppercase tracking-[0.2em] text-indigo-400 font-bold hover:text-white transition-colors group">
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-sm" :class="activeGroups.reports ? 'text-white' : 'text-indigo-400'">analytics</span>
+                        <span x-show="!sidebarCollapsed">Laporan & Data</span>
+                    </div>
+                    <span class="material-symbols-outlined text-xs transition-transform duration-300" :class="activeGroups.reports ? 'rotate-180' : ''" x-show="!sidebarCollapsed">expand_more</span>
+                </button>
+                <div x-show="activeGroups.reports" x-collapse x-transition.opacity>
+                        <a href="{{ route('teacher.analytics') }}" class="flex items-center gap-3 px-4 py-3 {{ Request::routeIs('teacher.analytics') ? 'bg-indigo-50 text-indigo-700 font-bold border-l-4 border-indigo-600' : 'text-slate-600 hover:bg-slate-50' }} rounded-xl transition-all mb-1">
+                            <span class="material-symbols-outlined">analytics</span>
+                            <span class="text-xs uppercase tracking-wider font-semibold whitespace-nowrap" x-show="!sidebarCollapsed">Analytics</span>
+                        </a>
+                        <a href="{{ route('teacher.reports') }}" class="flex items-center gap-3 px-4 py-3 {{ Request::routeIs('teacher.reports') ? 'bg-indigo-50 text-indigo-700 font-bold border-l-4 border-indigo-600' : 'text-slate-600 hover:bg-slate-50' }} rounded-xl transition-all mb-1">
+                            <span class="material-symbols-outlined">summarize</span>
+                            <span class="text-xs uppercase tracking-wider font-semibold whitespace-nowrap" x-show="!sidebarCollapsed">Laporan Presensi</span>
+                        </a>
+                    </div>
+                </div>
             </nav>
 
             <div class="p-3 border-t border-slate-50">
@@ -153,5 +207,6 @@
             </div>
         </main>
     </div>
+    @livewireScripts
 </body>
 </html>

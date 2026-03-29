@@ -46,12 +46,15 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     Route::get('/analytics', AttendanceAnalytics::class)->name('analytics');
     Route::get('/logs', [DashboardController::class, 'adminLogs'])->name('logs');
     Route::get('/izin-approval', [DashboardController::class, 'adminIzinApproval'])->name('izin_approval');
+    Route::post('/izin-approval/{attendance}/approve', [DashboardController::class, 'approveIzinAttendance'])->name('izin_approval.approve');
+    Route::post('/izin-approval/{attendance}/reject', [DashboardController::class, 'rejectIzinAttendance'])->name('izin_approval.reject');
     Route::get('/settings', [DashboardController::class, 'adminSettings'])->name('settings');
+    Route::put('/settings', [DashboardController::class, 'updateSettings'])->name('settings.update');
     Route::get('/scanner', [DashboardController::class, 'adminScanner'])->name('scanner');
     Route::post('/attendance/scan', [DashboardController::class, 'scanAttendance'])->name('attendance.scan');
     Route::get('/report-pdf', [DashboardController::class, 'adminReportPdf'])->name('report_pdf');
     Route::get('/reports', [DashboardController::class, 'adminReports'])->name('reports');
-    Route::get('/reports/export/csv', [DashboardController::class, 'exportAttendanceCsv'])->name('reports.export.csv');
+    Route::get('/reports/export/excel', [DashboardController::class, 'exportAttendanceExcel'])->name('reports.export.excel');
     Route::get('/reports/export/pdf', [DashboardController::class, 'exportAttendancePdf'])->name('reports.export.pdf');
     
     // Admin Master Data

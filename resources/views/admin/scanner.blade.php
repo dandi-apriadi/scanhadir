@@ -37,6 +37,7 @@
             50% { top: 100%; }
         }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
 </head>
 <body class="bg-slate-950 font-body text-white overflow-hidden">
     <!-- Top Bar -->
@@ -67,13 +68,15 @@
     <main class="flex h-[calc(100vh-76px)] p-8 gap-8">
         <!-- Scanner Viewport -->
         <div class="flex-1 relative bg-black rounded-[40px] overflow-hidden border border-white/10 shadow-2xl flex items-center justify-center">
+            <div id="reader" class="absolute inset-0 z-0"></div>
+
             <!-- Simulated Video Feed -->
-            <div class="absolute inset-0 opacity-40 mix-blend-overlay grayscale">
+            <div class="absolute inset-0 opacity-25 mix-blend-overlay grayscale z-[1] pointer-events-none">
                 <div class="w-full h-full bg-gradient-to-br from-indigo-900/20 to-slate-900/20"></div>
             </div>
 
             <!-- Focus Box -->
-            <div class="relative w-80 h-80 z-10">
+            <div class="relative w-80 h-80 z-10 pointer-events-none">
                 <div class="absolute top-0 left-0 w-16 h-16 border-t-4 border-l-4 border-primary rounded-tl-2xl"></div>
                 <div class="absolute top-0 right-0 w-16 h-16 border-t-4 border-r-4 border-primary rounded-tr-2xl"></div>
                 <div class="absolute bottom-0 left-0 w-16 h-16 border-b-4 border-l-4 border-primary rounded-bl-2xl"></div>
@@ -86,11 +89,11 @@
             </div>
 
             <!-- Bottom Controls -->
-            <div class="absolute bottom-10 flex items-center gap-4">
-                <button type="button" onclick="document.getElementById('nisnInput').focus()" class="px-6 py-3 bg-white/10 backdrop-blur-xl rounded-full text-xs font-bold uppercase tracking-widest hover:bg-white/20 transition-all flex items-center gap-2">
+            <div class="absolute bottom-10 z-20 flex items-center gap-4">
+                <button id="focusButton" type="button" onclick="document.getElementById('nisnInput').focus()" class="px-6 py-3 bg-white/10 backdrop-blur-xl rounded-full text-xs font-bold uppercase tracking-widest hover:bg-white/20 transition-all flex items-center gap-2">
                     <span class="material-symbols-outlined text-lg">videocam</span> Focus
                 </button>
-                <button type="button" onclick="clearScannedData()" class="px-6 py-3 bg-white/10 backdrop-blur-xl rounded-full text-xs font-bold uppercase tracking-widest hover:bg-white/20 transition-all flex items-center gap-2">
+                <button id="resetButton" type="button" onclick="clearScannedData()" class="px-6 py-3 bg-white/10 backdrop-blur-xl rounded-full text-xs font-bold uppercase tracking-widest hover:bg-white/20 transition-all flex items-center gap-2">
                     <span class="material-symbols-outlined text-lg">restart_alt</span> Reset
                 </button>
             </div>
@@ -141,12 +144,104 @@
         const checkInTime = document.getElementById('checkInTime');
         const statusDisplay = document.getElementById('statusDisplay');
         const scanLogs = document.getElementById('scanLogs');
+        const reader = document.getElementById('reader');
+        const focusButton = document.getElementById('focusButton');
+        const resetButton = document.getElementById('resetButton');
+        let html5QrScanner = null;
+        let isProcessingScan = false;
+        let activeCameraIsFront = false;
         let scannedStudents = [];
 
         // Focus on page load
         window.addEventListener('load', () => {
+            initializeCameraScanner();
             nisnInput.focus();
         });
+
+        async function initializeCameraScanner() {
+            if (typeof Html5Qrcode === 'undefined') {
+                showErrorMessage('Library scanner tidak termuat. Coba refresh halaman.');
+                return;
+            }
+
+            try {
+                html5QrScanner = new Html5Qrcode('reader');
+
+                const cameras = await Html5Qrcode.getCameras();
+                const rearRegex = /(rear|back|environment|traseira|tr\u00e1s)/i;
+                const frontRegex = /(front|user|facetime|webcam|integrated)/i;
+                const selectedCamera = cameras.find((camera) => rearRegex.test(camera.label || '')) || cameras[0] || null;
+
+                if (selectedCamera) {
+                    activeCameraIsFront = frontRegex.test(selectedCamera.label || '');
+                    applyMirrorFix(activeCameraIsFront);
+                }
+
+                const config = {
+                    fps: 12,
+                    qrbox: { width: 260, height: 260 },
+                    rememberLastUsedCamera: true,
+                    aspectRatio: 1,
+                };
+
+                await html5QrScanner.start(
+                    selectedCamera ? selectedCamera.id : { facingMode: { exact: 'environment' } },
+                    config,
+                    (decodedText) => {
+                        processScannedCode(decodedText);
+                    },
+                    () => {}
+                );
+            } catch (envError) {
+                try {
+                    if (!html5QrScanner) {
+                        html5QrScanner = new Html5Qrcode('reader');
+                    }
+
+                    activeCameraIsFront = true;
+                    applyMirrorFix(true);
+
+                    await html5QrScanner.start(
+                        { facingMode: 'user' },
+                        {
+                            fps: 12,
+                            qrbox: { width: 260, height: 260 },
+                            rememberLastUsedCamera: true,
+                            aspectRatio: 1,
+                        },
+                        (decodedText) => {
+                            processScannedCode(decodedText);
+                        },
+                        () => {}
+                    );
+                } catch (fallbackError) {
+                    showErrorMessage('Kamera tidak dapat diakses. Izinkan permission kamera pada browser.');
+                }
+            }
+        }
+
+        function applyMirrorFix(isFrontCamera) {
+            if (!reader) return;
+
+            if (isFrontCamera) {
+                reader.classList.add('camera-unmirror');
+            } else {
+                reader.classList.remove('camera-unmirror');
+            }
+        }
+
+        function processScannedCode(decodedText) {
+            if (isProcessingScan) return;
+
+            isProcessingScan = true;
+            const normalized = (decodedText || '').trim();
+            nisnInput.value = normalized;
+            submitAttendance(normalized).finally(() => {
+                setTimeout(() => {
+                    isProcessingScan = false;
+                }, 1200);
+            });
+        }
 
         // Handle NISN input
         nisnInput.addEventListener('keypress', async (e) => {
@@ -155,33 +250,35 @@
                 const nisn = nisnInput.value.trim();
                 
                 if (!nisn) return;
-
-                try {
-                    const response = await fetch("{{ route('admin.attendance.scan') }}", {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
-                        },
-                        body: JSON.stringify({ nisn: nisn })
-                    });
-
-                    const data = await response.json();
-
-                    if (data.success) {
-                        updateLatestScanned(data.data);
-                        addToLog(data.data);
-                        showSuccessAnimation();
-                    } else {
-                        showErrorMessage(data.message);
-                    }
-                } catch (error) {
-                    showErrorMessage('Terjadi kesalahan: ' + error.message);
-                }
-
+                await submitAttendance(nisn);
                 nisnInput.value = '';
             }
         });
+
+        async function submitAttendance(nisn) {
+            try {
+                const response = await fetch("{{ route('admin.attendance.scan') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
+                    },
+                    body: JSON.stringify({ nisn: nisn })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    updateLatestScanned(data.data);
+                    addToLog(data.data);
+                    showSuccessAnimation();
+                } else {
+                    showErrorMessage(data.message);
+                }
+            } catch (error) {
+                showErrorMessage('Terjadi kesalahan: ' + error.message);
+            }
+        }
 
         function updateLatestScanned(data) {
             studentName.textContent = data.student_name || '-';
@@ -226,7 +323,7 @@
                 </div>
             `;
 
-            if (scanLogs.querySelector('p:contains("Belum ada")')) {
+            if (scanLogs.querySelector('p')) {
                 scanLogs.innerHTML = '';
             }
 
@@ -262,5 +359,44 @@
             nisnInput.focus();
         }
     </script>
+
+    <style>
+        #reader {
+            border: none !important;
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        #reader > div,
+        #reader__scan_region {
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        #reader__scan_region {
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        #reader__dashboard {
+            display: none !important;
+        }
+
+        #reader video,
+        #reader__scan_region video,
+        #reader__scan_region img {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover;
+        }
+
+        #reader.camera-unmirror video,
+        #reader.camera-unmirror #reader__scan_region video,
+        #reader.camera-unmirror #reader__scan_region img {
+            transform: scaleX(-1);
+        }
+    </style>
 </body>
 </html>

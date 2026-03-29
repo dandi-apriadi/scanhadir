@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Exports\AttendanceExport;
 use App\Models\Attendance;
 use App\Models\Schedule;
 use App\Models\Student;
 use App\Models\StudentClass;
 use App\Models\Subject;
+use App\Models\SystemSetting;
 use App\Models\User;
+use App\Services\AttendanceExportService;
 use App\Services\ReportService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -101,6 +102,12 @@ class DashboardController extends Controller
                 ],
                 [
                     'status' => $validated['type'],
+                    'approval_status' => 'pending',
+                    'approved_by' => null,
+                    'approved_at' => null,
+                    'rejected_by' => null,
+                    'rejected_at' => null,
+                    'rejection_reason' => null,
                     'notes' => $validated['reason'],
                     'check_in' => null,
                     'check_out' => null,
@@ -131,6 +138,12 @@ class DashboardController extends Controller
             ],
             [
                 'status' => $validated['status'],
+                'approval_status' => 'approved',
+                'approved_by' => auth()->id(),
+                'approved_at' => now(),
+                'rejected_by' => null,
+                'rejected_at' => null,
+                'rejection_reason' => null,
                 'check_in' => $validated['check_in'] . ':00',
                 'notes' => $validated['notes'] ?: null,
             ]
@@ -186,12 +199,141 @@ class DashboardController extends Controller
         ]);
     }
 
-    public function adminIzinApproval() {
-        return view('admin.izin_approval', ['title' => 'Persetujuan Izin']);
+    public function adminIzinApproval(Request $request)
+    {
+        $approval = trim((string) $request->query('approval', 'all'));
+        $classId = (int) $request->query('class_id', 0);
+        $q = trim((string) $request->query('q', ''));
+
+        $allowedApproval = ['all', 'pending', 'approved', 'rejected'];
+        if (!in_array($approval, $allowedApproval, true)) {
+            $approval = 'all';
+        }
+
+        $submissions = Attendance::query()
+            ->with([
+                'student.user:id,name',
+                'student.class:id,name',
+                'approvedBy:id,name',
+                'rejectedBy:id,name',
+            ])
+            ->whereIn('status', ['sick', 'excused'])
+            ->when($approval !== 'all', fn ($query) => $query->where('approval_status', $approval))
+            ->when($classId > 0, fn ($query) => $query->whereHas('student', fn ($studentQuery) => $studentQuery->where('class_id', $classId)))
+            ->when($q !== '', function ($query) use ($q) {
+                $query->where(function ($inner) use ($q) {
+                    $inner->where('notes', 'like', "%{$q}%")
+                        ->orWhereHas('student.user', fn ($userQuery) => $userQuery->where('name', 'like', "%{$q}%"))
+                        ->orWhereHas('student', fn ($studentQuery) => $studentQuery->where('nisn', 'like', "%{$q}%"));
+                });
+            })
+            ->orderByRaw("CASE approval_status WHEN 'pending' THEN 1 WHEN 'rejected' THEN 2 WHEN 'approved' THEN 3 ELSE 99 END")
+            ->orderByDesc('date')
+            ->paginate(12)
+            ->withQueryString();
+
+        $counts = Attendance::query()
+            ->selectRaw("COALESCE(approval_status, 'pending') as approval_status, COUNT(*) as total")
+            ->whereIn('status', ['sick', 'excused'])
+            ->groupBy('approval_status')
+            ->pluck('total', 'approval_status');
+
+        return view('admin.izin_approval', [
+            'title' => 'Persetujuan Izin',
+            'submissions' => $submissions,
+            'classOptions' => StudentClass::query()->orderBy('name')->get(['id', 'name']),
+            'approval' => $approval,
+            'classId' => $classId,
+            'q' => $q,
+            'counts' => [
+                'all' => (int) ($counts->sum()),
+                'pending' => (int) ($counts['pending'] ?? 0),
+                'approved' => (int) ($counts['approved'] ?? 0),
+                'rejected' => (int) ($counts['rejected'] ?? 0),
+            ],
+        ]);
     }
 
-    public function adminSettings() {
-        return view('admin.settings', ['title' => 'Pengaturan']);
+    public function approveIzinAttendance(Attendance $attendance)
+    {
+        abort_unless(in_array($attendance->status, ['sick', 'excused'], true), 404);
+
+        $attendance->update([
+            'approval_status' => 'approved',
+            'approved_by' => auth()->id(),
+            'approved_at' => now(),
+            'rejected_by' => null,
+            'rejected_at' => null,
+            'rejection_reason' => null,
+        ]);
+
+        return redirect()->route('admin.izin_approval')->with('status', 'Pengajuan berhasil disetujui.');
+    }
+
+    public function rejectIzinAttendance(Request $request, Attendance $attendance)
+    {
+        abort_unless(in_array($attendance->status, ['sick', 'excused'], true), 404);
+
+        $validated = $request->validate([
+            'rejection_reason' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $attendance->update([
+            'approval_status' => 'rejected',
+            'approved_by' => null,
+            'approved_at' => null,
+            'rejected_by' => auth()->id(),
+            'rejected_at' => now(),
+            'rejection_reason' => $validated['rejection_reason'] ?: null,
+        ]);
+
+        return redirect()->route('admin.izin_approval')->with('status', 'Pengajuan berhasil ditolak.');
+    }
+
+    public function adminSettings()
+    {
+        $settings = SystemSetting::query()->firstOrCreate(
+            ['id' => 1],
+            [
+                'school_name' => 'SMK Negeri 1 Bandung',
+                'npsn' => null,
+                'school_address' => null,
+                'attendance_start_time' => '07:00:00',
+                'late_tolerance_minutes' => 15,
+                'active_days' => ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat'],
+            ]
+        );
+
+        return view('admin.settings', [
+            'title' => 'Pengaturan',
+            'settings' => $settings,
+            'dayOptions' => ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'],
+        ]);
+    }
+
+    public function updateSettings(Request $request)
+    {
+        $validated = $request->validate([
+            'school_name' => ['required', 'string', 'max:255'],
+            'npsn' => ['nullable', 'string', 'max:32'],
+            'school_address' => ['nullable', 'string', 'max:2000'],
+            'attendance_start_time' => ['required', 'date_format:H:i'],
+            'late_tolerance_minutes' => ['required', 'integer', 'min:0', 'max:180'],
+            'active_days' => ['array'],
+            'active_days.*' => ['in:Senin,Selasa,Rabu,Kamis,Jumat,Sabtu'],
+        ]);
+
+        $settings = SystemSetting::query()->firstOrCreate(['id' => 1]);
+        $settings->update([
+            'school_name' => $validated['school_name'],
+            'npsn' => $validated['npsn'] ?? null,
+            'school_address' => $validated['school_address'] ?? null,
+            'attendance_start_time' => $validated['attendance_start_time'] . ':00',
+            'late_tolerance_minutes' => (int) $validated['late_tolerance_minutes'],
+            'active_days' => array_values(array_unique($validated['active_days'] ?? [])),
+        ]);
+
+        return redirect()->route('admin.settings')->with('status', 'Pengaturan berhasil disimpan.');
     }
 
     public function adminScanner() {
@@ -212,15 +354,23 @@ class DashboardController extends Controller
         ]);
     }
 
-    public function exportAttendanceCsv(ReportService $reportService)
+    public function exportAttendanceExcel(AttendanceExportService $exportService)
     {
-        $rows = $reportService->getAttendanceRowsForDate(now()->toDateString());
-        $export = new AttendanceExport($rows);
+        $date = now()->toDateString();
+        $attendances = Attendance::with(['student.user', 'student.class'])
+            ->whereDate('date', $date)
+            ->get();
 
-        return response($export->toCsvString(), 200, [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="attendance-' . now()->format('Y-m-d') . '.csv"',
-        ]);
+        $options = [
+            'date_from' => $date,
+            'date_to' => $date,
+            'class_name' => 'All Classes',
+        ];
+
+        $filePath = $exportService->exportToXLSX($attendances, $options);
+        $downloadName = 'laporan-presensi-' . now()->format('Y-m-d') . '.xlsx';
+
+        return response()->download($filePath, $downloadName)->deleteFileAfterSend(true);
     }
 
     public function exportAttendancePdf(ReportService $reportService)
@@ -240,9 +390,17 @@ class DashboardController extends Controller
             ]),
         ]);
 
+        $downloadName = 'laporan-presensi-' . now()->format('Y-m-d') . '.pdf';
+
         return response()->streamDownload(
-            static fn () => print($pdf->output()),
-            'attendance-' . now()->format('Y-m-d') . '.pdf'
+            fn () => print($pdf->output()),
+            $downloadName,
+            [
+                'Content-Type' => 'application/pdf',
+                'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+                'Pragma' => 'no-cache',
+                'Expires' => '0',
+            ]
         );
     }
 
@@ -580,14 +738,17 @@ class DashboardController extends Controller
             'nisn' => 'required|string|max:20',
         ]);
 
-        $student = Student::where('nisn', $request->nisn)
+        $scanValue = trim((string) $request->nisn);
+
+        $student = Student::where('nisn', $scanValue)
+            ->orWhere('qr_code', $scanValue)
             ->with(['user', 'class'])
             ->first();
 
         if (!$student) {
             return response()->json([
                 'success' => false,
-                'message' => 'Siswa dengan NISN ' . $request->nisn . ' tidak ditemukan.',
+                'message' => 'Data siswa dengan kode ' . $scanValue . ' tidak ditemukan.',
             ], 404);
         }
 
@@ -596,13 +757,16 @@ class DashboardController extends Controller
         
         // Check if already scanned today
         $existingAttendance = Attendance::where('student_id', $student->id)
-            ->whereDate('date', $date)
+            ->where('date', $date)
             ->first();
 
         if ($existingAttendance) {
             // Update check_out if already have check_in
             $existingAttendance->update([
                 'check_out' => $checkInTime,
+                'approval_status' => $existingAttendance->approval_status ?? 'approved',
+                'approved_by' => $existingAttendance->approved_by ?? auth()->id(),
+                'approved_at' => $existingAttendance->approved_at ?? now(),
             ]);
             $attendance = $existingAttendance;
         } else {
@@ -621,6 +785,9 @@ class DashboardController extends Controller
                 'date' => $date,
                 'check_in' => $checkInTime,
                 'status' => $status,
+                'approval_status' => 'approved',
+                'approved_by' => auth()->id(),
+                'approved_at' => now(),
             ]);
         }
 
@@ -650,7 +817,7 @@ class DashboardController extends Controller
             ->where('user_id', $user->id)
             ->first();
 
-        abort_unless($student, 404, 'Data siswa tidak ditemukan.');
+        abort_unless($student !== null, 404, 'Data siswa tidak ditemukan.');
 
         return $student;
     }

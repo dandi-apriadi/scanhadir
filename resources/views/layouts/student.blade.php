@@ -7,7 +7,9 @@
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script defer src="https://unpkg.com/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    @livewireStyles
     <script>
         tailwind.config = {
             darkMode: "class",
@@ -56,9 +58,36 @@
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
         }
+
+        .custom-scrollbar {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(129, 140, 248, 0.55) transparent;
+            scrollbar-gutter: stable;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: rgba(129, 140, 248, 0.55);
+            border-radius: 9999px;
+            border: 2px solid transparent;
+            background-clip: content-box;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-button {
+            display: none;
+            width: 0;
+            height: 0;
+        }
     </style>
 </head>
-<body class="bg-surface font-body text-on-surface antialiased overflow-x-hidden" x-data="{ sidebarCollapsed: false }">
+<body class="bg-surface font-body text-on-surface antialiased overflow-x-hidden" x-data="{ sidebarCollapsed: false, activeGroups: { activity: true, account: true } }">
     <!-- SideNavBar -->
     <aside class="hidden md:flex flex-col h-screen fixed left-0 top-0 bg-white dark:bg-slate-900 border-r-0 rounded-r-[32px] shadow-2xl shadow-slate-200/50 dark:shadow-none z-50 py-8 gap-2 transition-all duration-300 overflow-hidden" :class="sidebarCollapsed ? 'w-20' : 'w-72'">
         <div class="mb-10 flex flex-col items-center gap-6" :class="sidebarCollapsed ? 'px-2' : 'px-6 items-stretch'">
@@ -77,27 +106,52 @@
                 </button>
             </div>
         </div>
-        <nav class="flex-1 flex flex-col gap-2">
-            <a class="flex items-center gap-4 {{ request()->routeIs('student.dashboard') ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500' }} rounded-2xl px-6 py-4 mx-4 transition-all" href="{{ route('student.dashboard') }}">
-                <span class="material-symbols-outlined">dashboard</span>
-                <span class="font-medium text-sm whitespace-nowrap" x-show="!sidebarCollapsed">Overview</span>
-            </a>
-            <a class="flex items-center gap-4 {{ request()->routeIs('student.izin') ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500' }} rounded-2xl px-6 py-4 mx-4 transition-all" href="{{ route('student.izin') }}">
-                <span class="material-symbols-outlined">history</span>
-                <span class="font-medium text-sm whitespace-nowrap" x-show="!sidebarCollapsed">Riwayat Absensi</span>
-            </a>
-            <a class="flex items-center gap-4 {{ request()->routeIs('student.profil') ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500' }} rounded-2xl px-6 py-4 mx-4 transition-all" href="{{ route('student.profil') }}">
-                <span class="material-symbols-outlined">person</span>
-                <span class="font-medium text-sm whitespace-nowrap" x-show="!sidebarCollapsed">Profil</span>
-            </a>
-            <a class="flex items-center gap-4 {{ request()->routeIs('student.manual') ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500' }} rounded-2xl px-6 py-4 mx-4 transition-all" href="{{ route('student.manual') }}">
-                <span class="material-symbols-outlined">edit_calendar</span>
-                <span class="font-medium text-sm whitespace-nowrap" x-show="!sidebarCollapsed">Absensi Manual</span>
-            </a>
-            <a class="flex items-center gap-4 text-slate-500 px-6 py-4 mx-4 hover:bg-slate-100 rounded-2xl transition-all" href="{{ route('landing') }}">
-                <span class="material-symbols-outlined">help</span>
-                <span class="font-medium text-sm whitespace-nowrap" x-show="!sidebarCollapsed">Bantuan</span>
-            </a>
+        <nav class="flex-1 flex flex-col gap-2 overflow-y-auto custom-scrollbar px-2">
+            <!-- Aktivitas -->
+            <div class="mb-4">
+                <button @click="activeGroups.activity = !activeGroups.activity" class="w-full flex items-center justify-between px-4 py-3 text-[10px] uppercase tracking-[0.2em] text-indigo-400 font-bold hover:text-white transition-colors group">
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-sm" :class="activeGroups.activity ? 'text-white' : 'text-indigo-400'">rocket_launch</span>
+                        <span x-show="!sidebarCollapsed">Aktivitas</span>
+                    </div>
+                    <span class="material-symbols-outlined text-xs transition-transform duration-300" :class="activeGroups.activity ? 'rotate-180' : ''" x-show="!sidebarCollapsed">expand_more</span>
+                </button>
+                <div x-show="activeGroups.activity" x-collapse x-transition.opacity>
+                    <a class="flex items-center gap-4 {{ request()->routeIs('student.dashboard') ? 'bg-indigo-50 text-indigo-700 border-l-4 border-indigo-600' : 'text-slate-500' }} rounded-2xl px-6 py-4 mx-2 transition-all" href="{{ route('student.dashboard') }}">
+                        <span class="material-symbols-outlined">dashboard</span>
+                        <span class="font-medium text-sm whitespace-nowrap" x-show="!sidebarCollapsed">Overview</span>
+                    </a>
+                    <a class="flex items-center gap-4 {{ request()->routeIs('student.izin') ? 'bg-indigo-50 text-indigo-700 border-l-4 border-indigo-600' : 'text-slate-500' }} rounded-2xl px-6 py-4 mx-2 transition-all" href="{{ route('student.izin') }}">
+                        <span class="material-symbols-outlined">history</span>
+                        <span class="font-medium text-sm whitespace-nowrap" x-show="!sidebarCollapsed">Riwayat Absensi</span>
+                    </a>
+                    <a class="flex items-center gap-4 {{ request()->routeIs('student.manual') ? 'bg-indigo-50 text-indigo-700 border-l-4 border-indigo-600' : 'text-slate-500' }} rounded-2xl px-6 py-4 mx-2 transition-all" href="{{ route('student.manual') }}">
+                        <span class="material-symbols-outlined">edit_calendar</span>
+                        <span class="font-medium text-sm whitespace-nowrap" x-show="!sidebarCollapsed">Absensi Manual</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Akun -->
+            <div class="mb-12">
+                <button @click="activeGroups.account = !activeGroups.account" class="w-full flex items-center justify-between px-4 py-3 text-[10px] uppercase tracking-[0.2em] text-indigo-400 font-bold hover:text-white transition-colors group">
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-sm" :class="activeGroups.account ? 'text-white' : 'text-indigo-400'">account_circle</span>
+                        <span x-show="!sidebarCollapsed">Akun</span>
+                    </div>
+                    <span class="material-symbols-outlined text-xs transition-transform duration-300" :class="activeGroups.account ? 'rotate-180' : ''" x-show="!sidebarCollapsed">expand_more</span>
+                </button>
+                <div x-show="activeGroups.account" x-collapse x-transition.opacity>
+                    <a class="flex items-center gap-4 {{ request()->routeIs('student.profil') ? 'bg-indigo-50 text-indigo-700 border-l-4 border-indigo-600' : 'text-slate-500' }} rounded-2xl px-6 py-4 mx-2 transition-all" href="{{ route('student.profil') }}">
+                        <span class="material-symbols-outlined">person</span>
+                        <span class="font-medium text-sm whitespace-nowrap" x-show="!sidebarCollapsed">Profil</span>
+                    </a>
+                    <a class="flex items-center gap-4 text-slate-500 px-6 py-4 mx-2 hover:bg-slate-100 rounded-2xl transition-all" href="{{ route('landing') }}">
+                        <span class="material-symbols-outlined">help</span>
+                        <span class="font-medium text-sm whitespace-nowrap" x-show="!sidebarCollapsed">Bantuan</span>
+                    </a>
+                </div>
+            </div>
         </nav>
         <div class="px-4 mt-auto">
             <a href="{{ route('student.manual') }}" class="w-full bg-gradient-to-r from-primary to-primary-container text-white py-4 rounded-2xl font-semibold shadow-lg shadow-primary/20 flex items-center justify-center gap-2 hover:scale-[0.98] transition-transform overflow-hidden px-2">
@@ -175,5 +229,6 @@
         <!-- Decorative Background Element -->
         <div class="fixed -bottom-32 -right-32 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[100px] pointer-events-none -z-10"></div>
     </main>
+    @livewireScripts
 </body>
 </html>
