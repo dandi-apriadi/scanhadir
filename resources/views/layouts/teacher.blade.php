@@ -39,19 +39,21 @@
     <div class="flex min-h-screen">
         <!-- Sidebar -->
         <aside class="bg-white border-r border-slate-100 flex flex-col fixed h-screen z-50 transition-all duration-300 overflow-hidden" :class="sidebarCollapsed ? 'w-20' : 'w-64'">
-            <div class="p-4 mb-2 flex items-center justify-between overflow-hidden">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-primary flex-shrink-0 rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
-                        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">qr_code_scanner</span>
+            <div class="mb-2 flex flex-col items-center gap-4" :class="sidebarCollapsed ? 'p-2' : 'p-4 items-stretch'">
+                <div class="flex items-center justify-between w-full" :class="sidebarCollapsed ? 'flex-col gap-4' : ''">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-primary flex-shrink-0 rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
+                            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">qr_code_scanner</span>
+                        </div>
+                        <div x-show="!sidebarCollapsed" x-transition.opacity class="flex-1">
+                            <h1 class="text-xl font-bold text-indigo-700 font-headline whitespace-nowrap">ScanHadir</h1>
+                            <p class="text-[10px] uppercase tracking-widest text-slate-400 font-bold whitespace-nowrap">Teacher Portal</p>
+                        </div>
                     </div>
-                    <div x-show="!sidebarCollapsed" x-transition.opacity>
-                        <h1 class="text-xl font-bold text-indigo-700 font-headline">ScanHadir</h1>
-                        <p class="text-[10px] uppercase tracking-widest text-slate-400 font-bold">Teacher Portal</p>
-                    </div>
+                    <button @click="sidebarCollapsed = !sidebarCollapsed" class="p-2 hover:bg-slate-50 rounded-lg text-slate-400 transition-colors hidden md:block" :class="sidebarCollapsed ? 'mx-auto' : ''" title="Toggle Sidebar">
+                        <span class="material-symbols-outlined text-[20px]" x-text="sidebarCollapsed ? 'menu_open' : 'menu'">menu</span>
+                    </button>
                 </div>
-                <button @click="sidebarCollapsed = !sidebarCollapsed" class="p-1 hover:bg-slate-50 rounded-lg text-slate-400 transition-colors hidden md:block" :class="sidebarCollapsed ? 'mx-auto' : ''">
-                    <span class="material-symbols-outlined text-[20px]" x-text="sidebarCollapsed ? 'menu_open' : 'menu'">menu</span>
-                </button>
             </div>
 
             <nav class="flex-1 px-3 space-y-1 mt-4">

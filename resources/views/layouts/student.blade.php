@@ -61,19 +61,21 @@
 <body class="bg-surface font-body text-on-surface antialiased overflow-x-hidden" x-data="{ sidebarCollapsed: false }">
     <!-- SideNavBar -->
     <aside class="hidden md:flex flex-col h-screen fixed left-0 top-0 bg-white dark:bg-slate-900 border-r-0 rounded-r-[32px] shadow-2xl shadow-slate-200/50 dark:shadow-none z-50 py-8 gap-2 transition-all duration-300 overflow-hidden" :class="sidebarCollapsed ? 'w-20' : 'w-72'">
-        <div class="px-6 mb-10 flex items-center justify-between overflow-hidden">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary-container flex-shrink-0 flex items-center justify-center text-white">
-                    <span class="material-symbols-outlined text-2xl">qr_code_2</span>
+        <div class="mb-10 flex flex-col items-center gap-6" :class="sidebarCollapsed ? 'px-2' : 'px-6 items-stretch'">
+            <div class="flex items-center justify-between w-full" :class="sidebarCollapsed ? 'flex-col gap-4' : ''">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary-container flex-shrink-0 flex items-center justify-center text-white">
+                        <span class="material-symbols-outlined text-2xl">qr_code_2</span>
+                    </div>
+                    <div x-show="!sidebarCollapsed" x-transition.opacity class="flex-1">
+                        <h1 class="text-xl font-extrabold text-indigo-700 dark:text-indigo-400 font-headline leading-tight whitespace-nowrap">ScanHadir</h1>
+                        <p class="text-[10px] uppercase tracking-widest text-slate-400 font-bold whitespace-nowrap">Student Portal</p>
+                    </div>
                 </div>
-                <div x-show="!sidebarCollapsed" x-transition.opacity>
-                    <h1 class="text-xl font-extrabold text-indigo-700 dark:text-indigo-400 font-headline leading-tight">ScanHadir</h1>
-                    <p class="text-[10px] uppercase tracking-widest text-slate-400 font-bold">Student Portal</p>
-                </div>
+                <button @click="sidebarCollapsed = !sidebarCollapsed" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-400 transition-colors hidden md:block" :class="sidebarCollapsed ? 'mx-auto' : ''" title="Toggle Sidebar">
+                    <span class="material-symbols-outlined text-[20px]" x-text="sidebarCollapsed ? 'dock_to_right' : 'dock_to_left'">dock_to_left</span>
+                </button>
             </div>
-            <button @click="sidebarCollapsed = !sidebarCollapsed" class="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-400 transition-colors hidden md:block" :class="sidebarCollapsed ? 'mx-auto' : ''">
-                <span class="material-symbols-outlined text-[20px]" x-text="sidebarCollapsed ? 'dock_to_right' : 'dock_to_left'">dock_to_left</span>
-            </button>
         </div>
         <nav class="flex-1 flex flex-col gap-2">
             <a class="flex items-center gap-4 {{ request()->routeIs('student.dashboard') ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500' }} rounded-2xl px-6 py-4 mx-4 transition-all" href="{{ route('student.dashboard') }}">
