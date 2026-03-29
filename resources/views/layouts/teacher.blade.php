@@ -115,7 +115,11 @@
 
             <!-- Content Area -->
             <div class="p-8">
-                @yield('content')
+                @if (isset($slot))
+                    {{ $slot }}
+                @else
+                    @yield('content')
+                @endif
             </div>
         </main>
     </div>

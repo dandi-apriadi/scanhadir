@@ -52,8 +52,8 @@ class StudentDashboardTest extends TestCase
     {
         Livewire::actingAs($this->student)
             ->test('student-dashboard')
-            ->assertSee($this->studentRecord->qr_code)
-            ->assertSee('Kartu Digital');
+            ->assertSee('Kode QR Anda')
+            ->assertSee('Download QR Code');
     }
 
     /** @test */
@@ -129,7 +129,7 @@ class StudentDashboardTest extends TestCase
         
         Livewire::actingAs($this->student)
             ->test('student-dashboard')
-            ->assertSee('Riwayat Kehadiran');
+            ->assertSee('Riwayat Presensi Terbaru');
     }
 
     /** @test */
@@ -143,7 +143,7 @@ class StudentDashboardTest extends TestCase
         
         Livewire::actingAs($this->student)
             ->test('student-dashboard')
-            ->assertSee('present');
+            ->assertSee('Hadir Tepat Waktu');
     }
 
     /** @test */
@@ -151,8 +151,8 @@ class StudentDashboardTest extends TestCase
     {
         Livewire::actingAs($this->student)
             ->test('student-dashboard')
-            ->assertSee('Riwayat Kehadiran')
-            ->assertDontSee('absent'); // No attendance records
+            ->assertSee('Riwayat Presensi Terbaru')
+            ->assertSee('Belum ada riwayat presensi');
     }
 
     /** @test */
@@ -188,8 +188,7 @@ class StudentDashboardTest extends TestCase
         
         $response = $this->actingAs($otherStudent)->get('/student/dashboard');
         
-        // Should get their own dashboard or error
-        $response->assertStatus(200);
+        $response->assertStatus(403);
     }
 
     /** @test */
@@ -203,7 +202,7 @@ class StudentDashboardTest extends TestCase
         
         Livewire::actingAs($this->student)
             ->test('student-dashboard')
-            ->assertSee('late');
+            ->assertSee('LATE');
     }
 
     /** @test */

@@ -19,6 +19,12 @@ class TeacherDashboard extends Component
 
     public function mount()
     {
+        $user = auth()->user();
+
+        if (!$user || $user->role !== 'teacher') {
+            abort(403, 'Unauthorized');
+        }
+
         $this->selectedDate = now()->toDateString();
         $this->lastRefresh = now();
     }

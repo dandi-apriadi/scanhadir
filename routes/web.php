@@ -2,33 +2,15 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\StudentQrCodeController;
 use App\Livewire\TeacherDashboard;
-use App\Models\Student;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Storage;
-use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 Route::redirect('/admin', '/admin/dashboard');
 Route::redirect('/teacher', '/teacher/dashboard');
 Route::redirect('/dashboard', '/student/dashboard');
 
-Route::get('/student/{student}/qrcode', function (Student $student) {
-    $filename = "qrcodes/student-{$student->id}.svg";
-
-    if (!Storage::disk('local')->exists($filename)) {
-        Storage::disk('local')->makeDirectory('qrcodes');
-        $qrImage = QrCode::format('svg')->size(400)->margin(1)->generate($student->qr_code);
-        Storage::disk('local')->put($filename, $qrImage);
-    }
-
-    $path = storage_path('app/' . $filename);
-
-    if (request()->boolean('download')) {
-        return response()->download($path, "qr-{$student->nisn}.svg", ['Content-Type' => 'image/svg+xml']);
-    }
-
-    return response()->file($path, ['Content-Type' => 'image/svg+xml']);
-})->name('students.qrcode');
+Route::get('/student/{student}/qrcode', [StudentQrCodeController::class, 'show'])->name('students.qrcode');
 
 // Guest Routes
 Route::get('/', [DashboardController::class, 'landing'])->name('landing');

@@ -100,13 +100,23 @@ php artisan test
 ## Deployment Notes
 
 - Pastikan `APP_ENV`, `APP_DEBUG`, dan kredensial database sesuai environment produksi.
-- Jalankan optimasi sebelum deploy:
+- Jalankan alur Phase 10 untuk deployment produksi:
 
 ```bash
-php artisan config:cache
-php artisan route:cache
-php artisan view:cache
+# Linux/macOS
+bash scripts/deploy-production.sh
+
+# Windows PowerShell
+powershell -ExecutionPolicy Bypass -File scripts/deploy-production.ps1
 ```
+
+- Atau jalankan command inti secara manual:
+
+```bash
+php artisan app:prepare-production --with-migrate --force
+```
+
+- Health endpoint tersedia di `/up` untuk verifikasi readiness aplikasi.
 
 ## Kontribusi
 

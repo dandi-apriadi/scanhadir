@@ -16,6 +16,12 @@ class AdminDashboard extends Component
 
     public function mount()
     {
+        $user = auth()->user();
+
+        if (!$user || $user->role !== 'admin') {
+            abort(403, 'Unauthorized');
+        }
+
         $this->selectedDate = now()->toDateString();
     }
 

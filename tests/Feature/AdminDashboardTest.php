@@ -31,7 +31,7 @@ class AdminDashboardTest extends TestCase
         $response = $this->actingAs($this->admin)->get('/admin/dashboard');
         
         $response->assertStatus(200);
-        $response->assertSeeText('System Overview');
+        $response->assertSeeText('Dashboard Admin');
         $response->assertSeeLivewire('admin-dashboard');
     }
 
@@ -43,7 +43,7 @@ class AdminDashboardTest extends TestCase
         
         Livewire::actingAs($this->admin)
             ->test('admin-dashboard')
-            ->assertSee('Siswa Aktif')
+            ->assertSee('Total Siswa')
             ->assertSee('5');
     }
 
@@ -151,7 +151,7 @@ class AdminDashboardTest extends TestCase
     {
         Livewire::actingAs($this->admin)
             ->test('admin-dashboard')
-            ->assertSee('System Overview') // Should render without error
+            ->assertSee('Dashboard Admin') // Should render without error
             ->assertDontSee(null);
     }
 

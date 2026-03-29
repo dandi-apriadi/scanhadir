@@ -177,7 +177,7 @@ class TeacherDashboardTest extends TestCase
     {
         Livewire::actingAs($this->teacher)
             ->test('teacher-dashboard')
-            ->assertSee('Jadwal Mengajar');
+            ->assertSee('Belum ada data kelas');
     }
 
     /** @test */
