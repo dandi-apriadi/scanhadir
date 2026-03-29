@@ -43,8 +43,21 @@
             </form>
 
             <div class="mt-8 text-center">
-                <p class="text-sm text-indigo-300">Bukan Admin? <a href="{{ route('login.student') }}" class="text-white font-bold hover:underline">Masuk Portal Siswa</a></p>
+                <p class="text-sm text-indigo-300">Bukan Admin? <a href="{{ route('student.dashboard') }}" class="text-white font-bold hover:underline">Masuk Portal Siswa</a></p>
             </div>
+
+            <!-- Demo Credentials (Dev Only) -->
+            <div class="mt-8 p-6 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-md">
+                <div class="flex items-center gap-2 mb-3">
+                    <span class="material-symbols-outlined text-primary-container text-sm">terminal</span>
+                    <p class="font-headline text-xs font-bold text-indigo-200 uppercase tracking-widest">Admin Demo</p>
+                </div>
+                <div class="flex justify-between items-center text-indigo-100 bg-white/5 p-3 rounded-lg font-mono text-xs">
+                    <span class="font-semibold text-primary-container">ID:</span>
+                    <span>admin@scanhadir.com / admin123</span>
+                </div>
+            </div>
+
         </div>
     </div>
 

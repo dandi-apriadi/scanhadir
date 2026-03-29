@@ -94,7 +94,7 @@
                 <span class="material-symbols-outlined">edit_calendar</span>
                 <span class="font-medium text-sm whitespace-nowrap" x-show="!sidebarCollapsed">Absensi Manual</span>
             </a>
-            <a class="flex items-center gap-4 text-slate-500 px-6 py-4 mx-4 hover:bg-slate-100 rounded-2xl transition-all" href="#">
+            <a class="flex items-center gap-4 text-slate-500 px-6 py-4 mx-4 hover:bg-slate-100 rounded-2xl transition-all" href="{{ route('landing') }}">
                 <span class="material-symbols-outlined">help</span>
                 <span class="font-medium text-sm whitespace-nowrap" x-show="!sidebarCollapsed">Bantuan</span>
             </a>

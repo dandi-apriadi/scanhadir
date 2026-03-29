@@ -16,7 +16,7 @@
                 <h2 class="text-3xl font-extrabold text-on-surface tracking-tight font-headline">Daftar Kelas</h2>
                 <p class="text-slate-500 mt-1 text-sm">Kelola data ruang kelas dan wali kelas untuk sistem absensi.</p>
             </div>
-            <button class="bg-gradient-to-r from-primary to-primary-container text-white px-6 py-3 rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg shadow-indigo-200 hover:scale-95 transition-transform duration-150">
+            <button type="button" onclick="alert('Fitur tambah kelas akan diaktifkan pada tahap berikutnya.')" class="bg-gradient-to-r from-primary to-primary-container text-white px-6 py-3 rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg shadow-indigo-200 hover:scale-95 transition-transform duration-150">
                 <span class="material-symbols-outlined">add</span>
                 Tambah Kelas
             </button>
@@ -60,8 +60,8 @@
                                 <td class="px-6 py-5 text-center text-sm font-bold text-on-surface">{{ $class->students_count }}</td>
                                 <td class="px-6 py-5 text-right">
                                     <div class="flex items-center justify-end gap-1 text-slate-400">
-                                        <button class="p-2 hover:text-primary transition-colors"><span class="material-symbols-outlined text-[20px]">edit_note</span></button>
-                                        <button class="p-2 hover:text-rose-500 transition-colors"><span class="material-symbols-outlined text-[20px]">delete</span></button>
+                                        <button type="button" onclick="alert('Fitur edit kelas belum diaktifkan.')" class="p-2 hover:text-primary transition-colors"><span class="material-symbols-outlined text-[20px]">edit_note</span></button>
+                                        <button type="button" onclick="alert('Fitur hapus kelas belum diaktifkan.')" class="p-2 hover:text-rose-500 transition-colors"><span class="material-symbols-outlined text-[20px]">delete</span></button>
                                     </div>
                                 </td>
                             </tr>

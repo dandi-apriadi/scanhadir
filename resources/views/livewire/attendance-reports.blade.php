@@ -87,7 +87,7 @@
             <table class="w-full text-left text-sm">
                 <thead class="bg-slate-50 border-b border-slate-100 sticky top-0">
                     <tr>
-                        <th class="px-6 py-3 text-[10px] font-bold text-slate-400 uppercase cursor-pointer hover:bg-slate-100" wire:click="$set('sortBy', 'date'); $toggle('sortOrder')">
+                        <th class="px-6 py-3 text-[10px] font-bold text-slate-400 uppercase cursor-pointer hover:bg-slate-100" wire:click="sortByField('date')">
                             Date
                             @if($sortBy === 'date')
                                 <span class="material-symbols-outlined text-xs">{{ $sortOrder === 'asc' ? 'arrow_upward' : 'arrow_downward' }}</span>

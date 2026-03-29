@@ -22,22 +22,33 @@ class AttendanceAnalytics extends Component
     public function render()
     {
         $teacher = auth()->user();
-        $assignedClassIds = $teacher?->assignedClasses()->pluck('classes.id') ?? collect();
+        $isAdmin = $teacher && $teacher->role === 'admin';
+        $assignedClassIds = $isAdmin
+            ? StudentClass::query()->pluck('id')
+            : ($teacher?->assignedClasses()->pluck('classes.id') ?? collect());
 
         // Get classes for filter
-        $classes = $teacher?->assignedClasses()->get() ?? collect();
+        $classes = $isAdmin
+            ? StudentClass::query()->orderBy('name')->get()
+            : ($teacher?->assignedClasses()->get() ?? collect());
+
+        $effectiveClassIds = $this->selectedClass
+            ? $assignedClassIds->intersect([(int) $this->selectedClass])->values()
+            : $assignedClassIds;
 
         // Get analytics data
-        $analyticsData = $this->getAnalyticsData($assignedClassIds);
+        $analyticsData = $this->getAnalyticsData($effectiveClassIds);
 
         // Get monthly trend
-        $monthlyTrend = $this->getMonthlyTrend($assignedClassIds);
+        $monthlyTrend = $this->getMonthlyTrend($effectiveClassIds);
 
         // Get class comparison
-        $classComparison = $this->getClassComparison($assignedClassIds);
+        $classComparison = $this->getClassComparison($effectiveClassIds);
 
         // Get student performance
-        $studentPerformance = $this->getStudentPerformance($assignedClassIds);
+        $studentPerformance = $this->getStudentPerformance($effectiveClassIds);
+
+        $layout = $isAdmin ? 'layouts.admin' : 'layouts.teacher';
 
         return view('livewire.attendance-analytics', [
             'classes' => $classes,
@@ -45,7 +56,7 @@ class AttendanceAnalytics extends Component
             'monthlyTrend' => $monthlyTrend,
             'classComparison' => $classComparison,
             'studentPerformance' => $studentPerformance,
-        ])->layout('layouts.teacher', ['title' => 'Attendance Analytics']);
+        ])->layout($layout, ['title' => 'Attendance Analytics']);
     }
 
     private function getAnalyticsData($classIds)

@@ -10,6 +10,15 @@
     <!-- Filters -->
     <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/15 p-6 flex gap-4 items-end flex-wrap">
         <div>
+            <label class="block text-xs text-slate-500 uppercase font-bold mb-2">Class</label>
+            <select wire:model="selectedClass" class="px-4 py-2.5 bg-surface-container-low border border-outline-variant/15 rounded-lg text-sm font-semibold outline-none">
+                <option value="">All Classes</option>
+                @foreach($classes as $class)
+                    <option value="{{ $class->id }}">{{ $class->name }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div>
             <label class="block text-xs text-slate-500 uppercase font-bold mb-2">Year</label>
             <select wire:model="selectedYear" class="px-4 py-2.5 bg-surface-container-low border border-outline-variant/15 rounded-lg text-sm font-semibold outline-none">
                 @for ($year = now()->year - 2; $year <= now()->year + 1; $year++)

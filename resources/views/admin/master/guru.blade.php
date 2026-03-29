@@ -24,7 +24,7 @@
             </div>
             <button type="submit" class="px-4 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-bold hover:opacity-90 transition-all">Cari</button>
         </form>
-        <button class="w-full md:w-auto px-6 py-2.5 bg-gradient-to-br from-primary to-primary-container text-white font-bold rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-all transform hover:scale-[1.02] active:scale-95 shadow-lg shadow-primary/20">
+        <button type="button" onclick="alert('Fitur tambah guru akan diaktifkan pada tahap berikutnya.')" class="w-full md:w-auto px-6 py-2.5 bg-gradient-to-br from-primary to-primary-container text-white font-bold rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-all transform hover:scale-[1.02] active:scale-95 shadow-lg shadow-primary/20">
             <span class="material-symbols-outlined">add_circle</span>
             <span>Tambah Guru</span>
         </button>
@@ -68,8 +68,8 @@
                             </td>
                             <td class="px-6 py-4 text-right">
                                 <div class="flex items-center justify-end gap-2 text-slate-400">
-                                    <button class="hover:text-primary transition-colors"><span class="material-symbols-outlined text-[20px]">edit</span></button>
-                                    <button class="hover:text-rose-500 transition-colors"><span class="material-symbols-outlined text-[20px]">delete</span></button>
+                                    <button type="button" onclick="alert('Fitur edit guru belum diaktifkan.')" class="hover:text-primary transition-colors"><span class="material-symbols-outlined text-[20px]">edit</span></button>
+                                    <button type="button" onclick="alert('Fitur hapus guru belum diaktifkan.')" class="hover:text-rose-500 transition-colors"><span class="material-symbols-outlined text-[20px]">delete</span></button>
                                 </div>
                             </td>
                         </tr>

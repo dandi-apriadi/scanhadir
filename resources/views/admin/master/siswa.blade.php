@@ -18,7 +18,7 @@
             <p class="text-slate-500 text-sm max-w-xl">Kelola data seluruh siswa, cetak kartu QR kehadiran, dan pantau status keaktifan dalam satu platform terpusat.</p>
         </div>
         <div class="flex items-center gap-3">
-            <button class="flex items-center gap-2 px-6 py-3.5 bg-gradient-to-br from-primary to-primary-container text-white rounded-2xl font-bold shadow-xl shadow-indigo-200/50 hover:shadow-indigo-300/50 active:scale-95 transition-all">
+            <button type="button" onclick="alert('Fitur tambah siswa akan diaktifkan pada tahap berikutnya.')" class="flex items-center gap-2 px-6 py-3.5 bg-gradient-to-br from-primary to-primary-container text-white rounded-2xl font-bold shadow-xl shadow-indigo-200/50 hover:shadow-indigo-300/50 active:scale-95 transition-all">
                 <span class="material-symbols-outlined" style="font-variation-settings: 'wght' 600;">add</span>
                 <span>Tambah Siswa</span>
             </button>
@@ -45,10 +45,10 @@
                 <button type="submit" class="px-4 py-3 rounded-2xl bg-slate-900 text-white text-sm font-bold">Cari</button>
             </form>
             <div class="flex items-center gap-2">
-                <button class="p-3 text-slate-500 hover:bg-slate-50 rounded-xl transition-colors">
+                <button type="button" onclick="alert('Filter lanjutan belum diaktifkan.')" class="p-3 text-slate-500 hover:bg-slate-50 rounded-xl transition-colors">
                     <span class="material-symbols-outlined">filter_list</span>
                 </button>
-                <button class="p-3 text-slate-500 hover:bg-slate-50 rounded-xl transition-colors">
+                <button type="button" onclick="alert('Ekspor siswa belum diaktifkan.')" class="p-3 text-slate-500 hover:bg-slate-50 rounded-xl transition-colors">
                     <span class="material-symbols-outlined">file_download</span>
                 </button>
             </div>
@@ -92,9 +92,9 @@
                             </td>
                             <td class="px-6 py-4">
                                 <div class="flex items-center justify-center gap-1 text-slate-400">
-                                    <button class="p-2 hover:text-primary transition-colors"><span class="material-symbols-outlined text-[20px]">edit</span></button>
+                                    <button type="button" onclick="alert('Fitur edit siswa belum diaktifkan.')" class="p-2 hover:text-primary transition-colors"><span class="material-symbols-outlined text-[20px]">edit</span></button>
                                     <a href="{{ route('students.qrcode', $student->id) }}?download=1" class="p-2 hover:text-primary transition-colors"><span class="material-symbols-outlined text-[20px]">download</span></a>
-                                    <button class="p-2 hover:text-rose-500 transition-colors"><span class="material-symbols-outlined text-[20px]">delete</span></button>
+                                    <button type="button" onclick="alert('Fitur hapus siswa belum diaktifkan.')" class="p-2 hover:text-rose-500 transition-colors"><span class="material-symbols-outlined text-[20px]">delete</span></button>
                                 </div>
                             </td>
                         </tr>

@@ -30,31 +30,6 @@
             <form action="{{ route('auth.login.process') }}" method="POST" class="space-y-6">
                 @csrf
 
-                <!-- Role Selection Tabs -->
-                <div class="grid grid-cols-3 gap-2 p-1 bg-surface-container-low rounded-lg mb-8">
-                    <label class="relative cursor-pointer">
-                        <input type="radio" name="role" value="student" class="sr-only peer" checked/>
-                        <div class="peer-checked:bg-primary peer-checked:text-white peer-checked:shadow-lg px-3 py-2 rounded-md text-center text-sm font-semibold transition-all duration-200 text-on-surface-variant hover:bg-surface-container-highest">
-                            <span class="material-symbols-outlined text-lg leading-none">school</span>
-                            <span class="block text-xs mt-1">Siswa</span>
-                        </div>
-                    </label>
-                    <label class="relative cursor-pointer">
-                        <input type="radio" name="role" value="teacher" class="sr-only peer"/>
-                        <div class="peer-checked:bg-primary peer-checked:text-white peer-checked:shadow-lg px-3 py-2 rounded-md text-center text-sm font-semibold transition-all duration-200 text-on-surface-variant hover:bg-surface-container-highest">
-                            <span class="material-symbols-outlined text-lg leading-none">person_check</span>
-                            <span class="block text-xs mt-1">Guru</span>
-                        </div>
-                    </label>
-                    <label class="relative cursor-pointer">
-                        <input type="radio" name="role" value="admin" class="sr-only peer"/>
-                        <div class="peer-checked:bg-primary peer-checked:text-white peer-checked:shadow-lg px-3 py-2 rounded-md text-center text-sm font-semibold transition-all duration-200 text-on-surface-variant hover:bg-surface-container-highest">
-                            <span class="material-symbols-outlined text-lg leading-none">admin_panel_settings</span>
-                            <span class="block text-xs mt-1">Admin</span>
-                        </div>
-                    </label>
-                </div>
-
                 <!-- Email Field -->
                 <div class="space-y-2">
                     <label class="font-label text-xs font-semibold text-on-surface-variant uppercase tracking-wider ml-1">Email</label>
@@ -108,15 +83,28 @@
                 </button>
             </form>
 
-            <!-- Demo Credentials -->
-            <div class="mt-8 p-4 bg-surface-container-low rounded-lg text-xs text-on-surface-variant">
-                <p class="font-semibold mb-2">💡 Akun Demo:</p>
-                <ul class="space-y-1 font-mono">
-                    <li><strong>Siswa:</strong> siswa@sekolah.sch.id / siswa123</li>
-                    <li><strong>Guru:</strong> guru@sekolah.sch.id / guru123</li>
-                    <li><strong>Admin:</strong> admin@sekolah.sch.id / admin123</li>
+            <!-- Demo Credentials (Dev Only) -->
+            <div class="mt-8 p-6 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-md">
+                <div class="flex items-center gap-2 mb-3">
+                    <span class="material-symbols-outlined text-primary text-sm">terminal</span>
+                    <p class="font-headline text-xs font-bold text-on-surface uppercase tracking-widest">Demo Credentials</p>
+                </div>
+                <ul class="space-y-3 font-mono text-[10px] md:text-xs">
+                    <li class="flex justify-between items-center text-on-surface-variant bg-surface-container-highest/30 p-2 rounded-lg">
+                        <span class="font-semibold text-primary">Siswa:</span>
+                        <span>siswa@scanhadir.com / siswa123</span>
+                    </li>
+                    <li class="flex justify-between items-center text-on-surface-variant bg-surface-container-highest/30 p-2 rounded-lg">
+                        <span class="font-semibold text-primary">Guru:</span>
+                        <span>guru@scanhadir.com / guru123</span>
+                    </li>
+                    <li class="flex justify-between items-center text-on-surface-variant bg-surface-container-highest/30 p-2 rounded-lg">
+                        <span class="font-semibold text-primary">Admin:</span>
+                        <span>admin@scanhadir.com / admin123</span>
+                    </li>
                 </ul>
             </div>
+
         </div>
     </div>
 

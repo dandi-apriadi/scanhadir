@@ -24,26 +24,16 @@ class AuthController extends Controller
         $credentials = $request->validate([
             'email' => ['required', 'email'],
             'password' => ['required', 'string'],
-            'role' => ['required', 'in:student,teacher,admin'],
         ], [
             'email.required' => 'Email harus diisi',
             'email.email' => 'Format email tidak valid',
             'password.required' => 'Password harus diisi',
-            'role.required' => 'Pilih role terlebih dahulu',
-            'role.in' => 'Role tidak valid',
         ]);
+
 
         // Attempt authentication
         if (Auth::attempt(['email' => $credentials['email'], 'password' => $credentials['password']])) {
             $user = Auth::user();
-
-            // Validate role matches
-            if ($user->role !== $credentials['role']) {
-                Auth::logout();
-                throw ValidationException::withMessages([
-                    'email' => 'Email atau password tidak sesuai dengan role yang dipilih.',
-                ]);
-            }
 
             // Remember me functionality
             if ($request->filled('remember')) {

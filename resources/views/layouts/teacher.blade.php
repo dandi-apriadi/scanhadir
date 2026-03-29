@@ -61,15 +61,15 @@
                     <span class="material-symbols-outlined">dashboard</span>
                     <span class="text-xs uppercase tracking-wider font-semibold whitespace-nowrap" x-show="!sidebarCollapsed">Dashboard</span>
                 </a>
-                <a href="#" class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-50 rounded-xl transition-all">
+                <a href="{{ route('teacher.analytics') }}" class="flex items-center gap-3 px-4 py-3 {{ Request::routeIs('teacher.analytics') ? 'bg-indigo-50 text-indigo-700 font-bold' : 'text-slate-600 hover:bg-slate-50' }} rounded-xl transition-all">
                     <span class="material-symbols-outlined">calendar_today</span>
-                    <span class="text-xs uppercase tracking-wider font-semibold whitespace-nowrap" x-show="!sidebarCollapsed">Jadwal</span>
+                    <span class="text-xs uppercase tracking-wider font-semibold whitespace-nowrap" x-show="!sidebarCollapsed">Analytics</span>
                 </a>
-                <a href="#" class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-50 rounded-xl transition-all">
+                <a href="{{ route('teacher.bulk-update') }}" class="flex items-center gap-3 px-4 py-3 {{ Request::routeIs('teacher.bulk-update') ? 'bg-indigo-50 text-indigo-700 font-bold' : 'text-slate-600 hover:bg-slate-50' }} rounded-xl transition-all">
                     <span class="material-symbols-outlined">group</span>
-                    <span class="text-xs uppercase tracking-wider font-semibold whitespace-nowrap" x-show="!sidebarCollapsed">Siswa</span>
+                    <span class="text-xs uppercase tracking-wider font-semibold whitespace-nowrap" x-show="!sidebarCollapsed">Bulk Update</span>
                 </a>
-                <a href="#" class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-50 rounded-xl transition-all">
+                <a href="{{ route('teacher.reports') }}" class="flex items-center gap-3 px-4 py-3 {{ Request::routeIs('teacher.reports') ? 'bg-indigo-50 text-indigo-700 font-bold' : 'text-slate-600 hover:bg-slate-50' }} rounded-xl transition-all">
                     <span class="material-symbols-outlined">analytics</span>
                     <span class="text-xs uppercase tracking-wider font-semibold whitespace-nowrap" x-show="!sidebarCollapsed">Laporan</span>
                 </a>
@@ -83,10 +83,13 @@
                         <p class="text-[10px] text-slate-500 uppercase font-bold">Senior Teacher</p>
                     </div>
                 </div>
-                <a href="{{ route('landing') }}" class="w-full mt-4 flex items-center justify-center gap-2 text-slate-400 hover:text-error py-2 text-sm font-bold transition-colors">
-                    <span class="material-symbols-outlined text-sm flex-shrink-0">logout</span>
-                    <span x-show="!sidebarCollapsed">LOGOUT</span>
-                </a>
+                <form action="{{ route('auth.logout') }}" method="POST" class="mt-4">
+                    @csrf
+                    <button type="submit" class="w-full flex items-center justify-center gap-2 text-slate-400 hover:text-error py-2 text-sm font-bold transition-colors">
+                        <span class="material-symbols-outlined text-sm flex-shrink-0">logout</span>
+                        <span x-show="!sidebarCollapsed">LOGOUT</span>
+                    </button>
+                </form>
             </div>
         </aside>
 

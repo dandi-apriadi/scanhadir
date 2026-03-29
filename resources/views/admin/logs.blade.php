@@ -16,40 +16,60 @@
                 <h2 class="text-3xl font-bold font-headline tracking-tight text-on-surface">Log Presensi Harian</h2>
                 <p class="text-slate-500 mt-1">Pantau dan kelola kehadiran siswa secara real-time.</p>
             </div>
-            <button class="bg-gradient-to-br from-primary to-primary-container text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-primary/15 hover:scale-[1.02] transition-transform active:scale-95">
+            <a href="{{ route('admin.reports') }}" class="bg-gradient-to-br from-primary to-primary-container text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-primary/15 hover:scale-[1.02] transition-transform active:scale-95">
                 <span class="material-symbols-outlined">download</span>
                 Ekspor Laporan
-            </button>
+            </a>
         </div>
     </div>
 
     <!-- Filter Section -->
     <div class="grid grid-cols-12 gap-4 mb-8">
-        <div class="col-span-12 lg:col-span-8 bg-surface-container-low rounded-xl p-4 flex flex-wrap items-center gap-4">
+        <form method="GET" action="{{ route('admin.logs') }}" class="col-span-12 lg:col-span-8 bg-surface-container-low rounded-xl p-4 flex flex-wrap items-center gap-4">
             <div class="flex-1 min-w-[200px]">
-                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Rentang Tanggal</label>
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Tanggal Mulai</label>
                 <div class="relative">
                     <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">calendar_today</span>
-                    <input class="w-full bg-surface-container-lowest border-none rounded-lg py-2 pl-10 pr-4 text-sm font-medium focus:ring-2 focus:ring-primary/10" type="text" value="Oct 12, 2023 - Oct 19, 2023"/>
+                    <input name="date_from" class="w-full bg-surface-container-lowest border-none rounded-lg py-2 pl-10 pr-4 text-sm font-medium focus:ring-2 focus:ring-primary/10" type="date" value="{{ $dateFrom }}"/>
                 </div>
             </div>
-            <div class="w-48">
+            <div class="flex-1 min-w-[200px]">
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Tanggal Akhir</label>
+                <div class="relative">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">event</span>
+                    <input name="date_to" class="w-full bg-surface-container-lowest border-none rounded-lg py-2 pl-10 pr-4 text-sm font-medium focus:ring-2 focus:ring-primary/10" type="date" value="{{ $dateTo }}"/>
+                </div>
+            </div>
+            <div class="w-full md:w-52">
                 <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Kelas</label>
-                <select class="w-full bg-surface-container-lowest border-none rounded-lg py-2 px-3 text-sm font-medium focus:ring-2 focus:ring-primary/10 appearance-none">
-                    <option>Semua Kelas</option>
-                    <option>XII IPA 1</option>
-                    <option>XII IPA 2</option>
+                <select name="class_id" class="w-full bg-surface-container-lowest border-none rounded-lg py-2 px-3 text-sm font-medium focus:ring-2 focus:ring-primary/10 appearance-none">
+                    <option value="">Semua Kelas</option>
+                    @foreach($classOptions as $classOption)
+                        <option value="{{ $classOption->id }}" @selected($classId === $classOption->id)>{{ $classOption->name }}</option>
+                    @endforeach
                 </select>
             </div>
-            <button class="mt-5 h-10 w-10 flex items-center justify-center rounded-lg bg-surface-container-highest text-primary hover:bg-primary hover:text-white transition-colors">
+            <div class="w-full md:w-48">
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Status</label>
+                <select name="status" class="w-full bg-surface-container-lowest border-none rounded-lg py-2 px-3 text-sm font-medium focus:ring-2 focus:ring-primary/10 appearance-none">
+                    <option value="">Semua Status</option>
+                    <option value="present" @selected($status === 'present')>Hadir</option>
+                    <option value="late" @selected($status === 'late')>Terlambat</option>
+                    <option value="sick" @selected($status === 'sick')>Sakit</option>
+                    <option value="excused" @selected($status === 'excused')>Izin</option>
+                    <option value="absent" @selected($status === 'absent')>Alpa</option>
+                </select>
+            </div>
+            <button type="submit" class="mt-5 h-10 px-4 flex items-center justify-center gap-1 rounded-lg bg-surface-container-highest text-primary hover:bg-primary hover:text-white transition-colors">
                 <span class="material-symbols-outlined">filter_list</span>
+                <span class="text-xs font-bold">Filter</span>
             </button>
-        </div>
+        </form>
         <div class="col-span-12 lg:col-span-4 bg-primary-container rounded-xl p-4 text-white relative overflow-hidden group">
             <div class="relative z-10">
                 <p class="text-[10px] font-bold opacity-70 uppercase tracking-widest mb-1">Kehadiran Hari Ini</p>
                 <div class="flex items-baseline gap-2">
-                    <span class="text-4xl font-bold font-headline">94.2%</span>
+                    <span class="text-4xl font-bold font-headline">{{ $todayRate }}%</span>
                     <span class="text-xs bg-white/20 px-2 py-0.5 rounded-full font-medium text-white">+2.4%</span>
                 </div>
             </div>
@@ -72,69 +92,60 @@
                 </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
-                <tr class="group hover:bg-surface-container-low transition-colors duration-150">
-                    <td class="py-4 px-6">
-                        <span class="text-sm font-bold text-on-surface font-headline">07:12:45</span>
-                        <p class="text-[10px] text-slate-400">19 Okt 2023</p>
-                    </td>
-                    <td class="py-4 px-6">
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-primary font-bold text-xs">AF</div>
-                            <span class="text-sm font-semibold text-on-surface">Ahmad Fauzi</span>
-                        </div>
-                    </td>
-                    <td class="py-4 px-6 text-sm text-slate-500">XII IPA 1</td>
-                    <td class="py-4 px-6">
-                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-600 ring-1 ring-inset ring-emerald-600/10">
-                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>
-                            Hadir
-                        </span>
-                    </td>
-                    <td class="py-4 px-6 text-right">
-                        <button class="p-2 text-slate-400 hover:text-primary transition-colors">
-                            <span class="material-symbols-outlined text-xl">more_vert</span>
-                        </button>
-                    </td>
-                </tr>
-                <tr class="group hover:bg-surface-container-low transition-colors duration-150">
-                    <td class="py-4 px-6">
-                        <span class="text-sm font-bold text-on-surface font-headline">07:45:12</span>
-                        <p class="text-[10px] text-slate-400">19 Okt 2023</p>
-                    </td>
-                    <td class="py-4 px-6">
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-primary font-bold text-xs">SA</div>
-                            <span class="text-sm font-semibold text-on-surface">Siti Aminah</span>
-                        </div>
-                    </td>
-                    <td class="py-4 px-6 text-sm text-slate-500">XII IPA 1</td>
-                    <td class="py-4 px-6">
-                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-600 ring-1 ring-inset ring-amber-600/10">
-                            <span class="w-1.5 h-1.5 rounded-full bg-amber-500 mr-1.5"></span>
-                            Terlambat
-                        </span>
-                    </td>
-                    <td class="py-4 px-6 text-right">
-                        <button class="p-2 text-slate-400 hover:text-primary transition-colors">
-                            <span class="material-symbols-outlined text-xl">more_vert</span>
-                        </button>
-                    </td>
-                </tr>
+                @forelse($logs as $log)
+                    @php
+                        $statusLabel = [
+                            'present' => 'Hadir',
+                            'late' => 'Terlambat',
+                            'sick' => 'Sakit',
+                            'excused' => 'Izin',
+                            'absent' => 'Alpa',
+                        ][$log->status] ?? ucfirst((string) $log->status);
+
+                        $statusClasses = [
+                            'present' => 'bg-emerald-50 text-emerald-600 ring-emerald-600/10',
+                            'late' => 'bg-amber-50 text-amber-600 ring-amber-600/10',
+                            'sick' => 'bg-blue-50 text-blue-600 ring-blue-600/10',
+                            'excused' => 'bg-indigo-50 text-indigo-600 ring-indigo-600/10',
+                            'absent' => 'bg-rose-50 text-rose-600 ring-rose-600/10',
+                        ][$log->status] ?? 'bg-slate-50 text-slate-600 ring-slate-600/10';
+
+                        $studentName = $log->student?->user?->name ?? '-';
+                        $initials = collect(explode(' ', trim($studentName)))->filter()->take(2)->map(fn($part) => strtoupper(substr($part, 0, 1)))->implode('');
+                    @endphp
+                    <tr class="group hover:bg-surface-container-low transition-colors duration-150">
+                        <td class="py-4 px-6">
+                            <span class="text-sm font-bold text-on-surface font-headline">{{ $log->check_in ?? '-' }}</span>
+                            <p class="text-[10px] text-slate-400">{{ \Illuminate\Support\Carbon::parse($log->date)->format('d M Y') }}</p>
+                        </td>
+                        <td class="py-4 px-6">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-primary font-bold text-xs">{{ $initials ?: 'SW' }}</div>
+                                <span class="text-sm font-semibold text-on-surface">{{ $studentName }}</span>
+                            </div>
+                        </td>
+                        <td class="py-4 px-6 text-sm text-slate-500">{{ $log->student?->class?->name ?? '-' }}</td>
+                        <td class="py-4 px-6">
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ring-1 ring-inset {{ $statusClasses }}">
+                                <span class="w-1.5 h-1.5 rounded-full bg-current mr-1.5"></span>
+                                {{ $statusLabel }}
+                            </span>
+                        </td>
+                        <td class="py-4 px-6 text-right">
+                            <span class="text-xs text-slate-400">{{ $log->check_out ? 'Check-out: ' . $log->check_out : '-' }}</span>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="5" class="py-10 px-6 text-center text-sm text-slate-500">Data log sesuai filter belum ditemukan.</td>
+                    </tr>
+                @endforelse
             </tbody>
         </table>
         <!-- Pagination -->
         <div class="px-6 py-4 bg-slate-50/30 flex justify-between items-center">
-            <p class="text-xs text-slate-500 font-medium">Menampilkan 1 - 2 dari 320 entri</p>
-            <div class="flex gap-1">
-                <button class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 text-slate-400 hover:bg-white">
-                    <span class="material-symbols-outlined text-lg">chevron_left</span>
-                </button>
-                <button class="w-8 h-8 flex items-center justify-center rounded-lg bg-primary text-white font-bold text-xs">1</button>
-                <button class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-white font-medium text-xs">2</button>
-                <button class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 text-slate-400 hover:bg-white">
-                    <span class="material-symbols-outlined text-lg">chevron_right</span>
-                </button>
-            </div>
+            <p class="text-xs text-slate-500 font-medium">Menampilkan {{ $logs->count() }} dari {{ $logs->total() }} entri</p>
+            <div>{{ $logs->onEachSide(1)->links() }}</div>
         </div>
     </div>
 </div>

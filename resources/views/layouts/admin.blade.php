@@ -95,12 +95,24 @@
                 <span class="material-symbols-outlined">meeting_room</span>
                 <span class="font-medium text-sm whitespace-nowrap" x-show="!sidebarCollapsed">Data Kelas</span>
             </a>
+            <a class="flex items-center gap-4 {{ request()->routeIs('admin.master.jadwal*') ? 'bg-primary-container text-white' : 'text-indigo-200 hover:bg-white/10' }} rounded-xl px-4 py-3 transition-all" href="{{ route('admin.master.jadwal') }}">
+                <span class="material-symbols-outlined">calendar_month</span>
+                <span class="font-medium text-sm whitespace-nowrap" x-show="!sidebarCollapsed">Jadwal</span>
+            </a>
             <a class="flex items-center gap-4 {{ request()->routeIs('admin.master.mapel') ? 'bg-primary-container text-white' : 'text-indigo-200 hover:bg-white/10' }} rounded-xl px-4 py-3 transition-all" href="{{ route('admin.master.mapel') }}">
                 <span class="material-symbols-outlined">library_books</span>
                 <span class="font-medium text-sm whitespace-nowrap" x-show="!sidebarCollapsed">Mata Pelajaran</span>
             </a>
 
             <p x-show="!sidebarCollapsed" class="text-[10px] uppercase tracking-[0.2em] text-indigo-400 font-bold mt-6 mb-2 px-4 whitespace-nowrap">System</p>
+            <a class="flex items-center gap-4 {{ request()->routeIs('admin.scanner') ? 'bg-primary-container text-white' : 'text-indigo-200 hover:bg-white/10' }} rounded-xl px-4 py-3 transition-all" href="{{ route('admin.scanner') }}">
+                <span class="material-symbols-outlined">qr_code_scanner</span>
+                <span class="font-medium text-sm whitespace-nowrap" x-show="!sidebarCollapsed">Scanner</span>
+            </a>
+            <a class="flex items-center gap-4 {{ request()->routeIs('admin.reports*') ? 'bg-primary-container text-white' : 'text-indigo-200 hover:bg-white/10' }} rounded-xl px-4 py-3 transition-all" href="{{ route('admin.reports') }}">
+                <span class="material-symbols-outlined">summarize</span>
+                <span class="font-medium text-sm whitespace-nowrap" x-show="!sidebarCollapsed">Reports</span>
+            </a>
             <a class="flex items-center gap-4 {{ request()->routeIs('admin.settings') ? 'bg-primary-container text-white' : 'text-indigo-200 hover:bg-white/10' }} rounded-xl px-4 py-3 transition-all" href="{{ route('admin.settings') }}">
                 <span class="material-symbols-outlined">settings</span>
                 <span class="font-medium text-sm whitespace-nowrap" x-show="!sidebarCollapsed">Settings</span>

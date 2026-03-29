@@ -7,9 +7,12 @@ use App\Models\StudentClass;
 use App\Services\AttendanceExportService;
 use Illuminate\Support\Carbon;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 class AttendanceReports extends Component
 {
+    use WithPagination;
+
     public $dateFrom;
     public $dateTo;
     public $selectedClass = null;
@@ -50,12 +53,15 @@ class AttendanceReports extends Component
         }
 
         if ($this->searchStudent) {
-            $query->whereHas('student.user', fn($q) => 
-                $q->where('name', 'like', '%' . $this->searchStudent . '%')
-                  ->orWhere('email', 'like', '%' . $this->searchStudent . '%')
-            )->orWhereHas('student', fn($q) => 
-                $q->where('nisn', 'like', '%' . $this->searchStudent . '%')
-            );
+            $search = $this->searchStudent;
+            $query->where(function ($inner) use ($search) {
+                $inner->whereHas('student.user', fn ($q) =>
+                    $q->where('name', 'like', '%' . $search . '%')
+                        ->orWhere('email', 'like', '%' . $search . '%')
+                )->orWhereHas('student', fn ($q) =>
+                    $q->where('nisn', 'like', '%' . $search . '%')
+                );
+            });
         }
 
         // Apply sorting
@@ -65,7 +71,7 @@ class AttendanceReports extends Component
             $query->orderBy($this->sortBy, $this->sortOrder);
         }
 
-        $reports = $query->paginate(50);
+        $reports = $query->paginate(20);
 
         // Get statistics
         $stats = $this->getStatistics($assignedClassIds);
@@ -120,6 +126,19 @@ class AttendanceReports extends Component
         $this->searchStudent = '';
         $this->dateFrom = now()->subMonth()->toDateString();
         $this->dateTo = now()->toDateString();
+        $this->resetPage();
+    }
+
+    public function sortByField(string $field): void
+    {
+        if ($this->sortBy === $field) {
+            $this->sortOrder = $this->sortOrder === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortBy = $field;
+            $this->sortOrder = 'asc';
+        }
+
+        $this->resetPage();
     }
 
     private function getStatistics($classIds)

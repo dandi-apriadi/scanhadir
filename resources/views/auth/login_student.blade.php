@@ -51,8 +51,21 @@
             </form>
 
             <div class="mt-8 text-center">
-                <p class="text-sm text-on-surface-variant">Bukan Siswa? <a href="{{ route('login.admin') }}" class="text-primary font-bold hover:underline">Masuk Console Admin</a></p>
+                <p class="text-sm text-on-surface-variant">Bukan Siswa? <a href="{{ route('admin.dashboard') }}" class="text-primary font-bold hover:underline">Masuk Console Admin</a></p>
             </div>
+
+            <!-- Demo Credentials (Dev Only) -->
+            <div class="mt-8 p-6 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-md">
+                <div class="flex items-center gap-2 mb-3">
+                    <span class="material-symbols-outlined text-primary text-sm">terminal</span>
+                    <p class="font-headline text-xs font-bold text-on-surface uppercase tracking-widest">Siswa Demo</p>
+                </div>
+                <div class="flex justify-between items-center text-on-surface-variant bg-surface-container-highest/30 p-3 rounded-lg font-mono text-xs">
+                    <span class="font-semibold text-primary">ID:</span>
+                    <span>siswa@scanhadir.com / siswa123</span>
+                </div>
+            </div>
+
         </div>
     </div>
 

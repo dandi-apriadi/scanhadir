@@ -4,6 +4,10 @@
 <div class="flex flex-1 overflow-hidden -m-8 h-[calc(100vh-64px)]">
     <!-- Main Content Area -->
     <div class="flex-1 p-8 overflow-y-auto">
+        <div class="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">
+            Halaman persetujuan saat ini masih mode preview (read-only).
+        </div>
+
         <!-- Breadcrumbs -->
         <nav class="flex items-center gap-2 text-xs font-medium text-slate-500 mb-2 uppercase tracking-widest">
             <span>Dashboard</span>
@@ -14,17 +18,17 @@
 
         <!-- Tabs Section -->
         <div class="flex items-center gap-8 border-b border-outline-variant/15 mb-8 overflow-x-auto pb-1">
-            <button class="pb-4 text-sm font-semibold text-primary border-b-2 border-primary whitespace-nowrap">
+            <button type="button" onclick="alert('Filter tab approval belum diaktifkan.')" class="pb-4 text-sm font-semibold text-primary border-b-2 border-primary whitespace-nowrap">
                 Semua
             </button>
-            <button class="pb-4 text-sm font-medium text-slate-500 hover:text-primary transition-colors flex items-center gap-2 whitespace-nowrap">
+            <button type="button" onclick="alert('Filter tab approval belum diaktifkan.')" class="pb-4 text-sm font-medium text-slate-500 hover:text-primary transition-colors flex items-center gap-2 whitespace-nowrap">
                 Pending
                 <span class="bg-primary-container text-white px-2 py-0.5 rounded-full text-[10px] font-bold">12</span>
             </button>
-            <button class="pb-4 text-sm font-medium text-slate-500 hover:text-primary transition-colors whitespace-nowrap">
+            <button type="button" onclick="alert('Filter tab approval belum diaktifkan.')" class="pb-4 text-sm font-medium text-slate-500 hover:text-primary transition-colors whitespace-nowrap">
                 Disetujui
             </button>
-            <button class="pb-4 text-sm font-medium text-slate-500 hover:text-primary transition-colors whitespace-nowrap">
+            <button type="button" onclick="alert('Filter tab approval belum diaktifkan.')" class="pb-4 text-sm font-medium text-slate-500 hover:text-primary transition-colors whitespace-nowrap">
                 Ditolak
             </button>
         </div>
@@ -59,10 +63,10 @@
                         <td class="px-6 py-4 text-sm text-slate-600">12 Mar 2024</td>
                         <td class="px-6 py-4 text-right">
                             <div class="flex items-center justify-end gap-2">
-                                <button class="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg">
+                                <button type="button" onclick="alert('Aksi setujui belum diaktifkan pada mode preview.')" class="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg">
                                     <span class="material-symbols-outlined text-[18px]">check_circle</span>
                                 </button>
-                                <button class="p-2 text-rose-600 hover:bg-rose-50 rounded-lg">
+                                <button type="button" onclick="alert('Aksi tolak belum diaktifkan pada mode preview.')" class="p-2 text-rose-600 hover:bg-rose-50 rounded-lg">
                                     <span class="material-symbols-outlined text-[18px]">cancel</span>
                                 </button>
                             </div>
@@ -112,10 +116,10 @@
             </div>
             
             <div class="pt-6 grid grid-cols-2 gap-3">
-                <button class="py-3 px-4 bg-rose-50 text-rose-600 border border-rose-100 rounded-xl font-bold text-xs uppercase hover:bg-rose-600 hover:text-white transition-all">
+                <button type="button" onclick="alert('Aksi tolak belum diaktifkan pada mode preview.')" class="py-3 px-4 bg-rose-50 text-rose-600 border border-rose-100 rounded-xl font-bold text-xs uppercase hover:bg-rose-600 hover:text-white transition-all">
                     Tolak
                 </button>
-                <button class="py-3 px-4 bg-primary text-white rounded-xl font-bold text-xs uppercase shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all">
+                <button type="button" onclick="alert('Aksi setujui belum diaktifkan pada mode preview.')" class="py-3 px-4 bg-primary text-white rounded-xl font-bold text-xs uppercase shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all">
                     Setujui
                 </button>
             </div>

@@ -63,7 +63,7 @@
                         <input type="checkbox" wire:model="remember" class="w-4 h-4 rounded border-slate-700 bg-slate-800 text-indigo-600 focus:ring-0 transition-colors" :disabled="$isLoading">
                         <span class="ml-2 text-sm text-slate-400 group-hover:text-slate-300 transition-colors">Ingat saya</span>
                     </label>
-                    <a href="#" class="text-sm text-indigo-400 hover:text-indigo-300 transition-colors font-medium">Lupa password?</a>
+                    <a href="{{ route('password.request') }}" class="text-sm text-indigo-400 hover:text-indigo-300 transition-colors font-medium">Lupa password?</a>
                 </div>
 
                 <button type="submit" 

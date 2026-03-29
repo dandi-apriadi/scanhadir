@@ -2,6 +2,10 @@
 
 @section('content')
 <div class="max-w-6xl mx-auto">
+    <div class="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">
+        Halaman ini masih mode preview. Perubahan konfigurasi belum tersimpan ke database.
+    </div>
+
     <div class="grid grid-cols-12 gap-8">
         <!-- Settings Tabs Navigation -->
         <div class="col-span-12 lg:col-span-3">
@@ -57,7 +61,7 @@
                             <div class="space-y-1">
                                 <p class="text-sm font-semibold text-on-surface">Unggah Logo Baru</p>
                                 <p class="text-xs text-slate-400 max-w-xs">Format PNG, JPG atau SVG. Maksimal 2MB. Rekomendasi 512x512px.</p>
-                                <button class="mt-2 text-xs font-bold text-primary hover:underline flex items-center gap-1">
+                                <button type="button" onclick="alert('Fitur upload logo belum diaktifkan.')" class="mt-2 text-xs font-bold text-primary hover:underline flex items-center gap-1">
                                     <span class="material-symbols-outlined text-sm">upload</span> Pilih File
                                 </button>
                             </div>
@@ -112,8 +116,8 @@
                     <p class="text-xs font-medium italic">Semua perubahan akan langsung diterapkan pada sistem.</p>
                 </div>
                 <div class="flex items-center gap-4">
-                    <button class="px-6 py-2.5 rounded-xl text-slate-500 font-bold hover:bg-slate-200/50 transition-all text-sm uppercase tracking-widest">Batal</button>
-                    <button class="px-8 py-3 rounded-xl bg-gradient-to-r from-primary to-primary-container text-white font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all text-sm uppercase tracking-widest">
+                    <button type="button" onclick="alert('Belum ada perubahan yang dapat dibatalkan di mode preview.')" class="px-6 py-2.5 rounded-xl text-slate-500 font-bold hover:bg-slate-200/50 transition-all text-sm uppercase tracking-widest">Batal</button>
+                    <button type="button" onclick="alert('Simpan pengaturan belum diaktifkan pada versi ini.')" class="px-8 py-3 rounded-xl bg-gradient-to-r from-primary to-primary-container text-white font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all text-sm uppercase tracking-widest">
                         Simpan Perubahan
                     </button>
                 </div>

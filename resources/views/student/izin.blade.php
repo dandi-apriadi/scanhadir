@@ -2,6 +2,18 @@
 
 @section('content')
 <div class="space-y-8">
+    @if (session('status'))
+        <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">
+            {{ session('status') }}
+        </div>
+    @endif
+
+    @if ($errors->any())
+        <div class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700">
+            {{ $errors->first() }}
+        </div>
+    @endif
+
     <!-- Breadcrumbs -->
     <nav class="flex items-center gap-2 text-xs font-semibold text-slate-400 mb-6 uppercase tracking-widest">
         <a class="hover:text-primary transition-colors" href="{{ route('student.dashboard') }}">Home</a>
@@ -16,17 +28,18 @@
             <p class="text-slate-500 font-body">Ajukan ketidakhadiran resmi Anda di sini. Pastikan data yang diisi sudah benar.</p>
         </div>
 
+        <form method="POST" action="{{ route('student.izin.store') }}">
+            @csrf
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
             <!-- Left Column -->
             <div class="space-y-8">
                 <div class="space-y-3">
                     <label class="block text-sm font-bold text-on-surface-variant uppercase tracking-wider">Jenis Pengajuan</label>
                     <div class="relative">
-                        <select class="w-full bg-surface-container-low border-none rounded-xl py-4 px-5 text-on-surface font-medium focus:ring-2 ring-indigo-500/20 appearance-none cursor-pointer">
-                            <option>Pilih Jenis Pengajuan</option>
-                            <option>Izin</option>
-                            <option>Sakit</option>
-                            <option>Keperluan Mendesak</option>
+                        <select name="type" class="w-full bg-surface-container-low border-none rounded-xl py-4 px-5 text-on-surface font-medium focus:ring-2 ring-indigo-500/20 appearance-none cursor-pointer" required>
+                            <option value="">Pilih Jenis Pengajuan</option>
+                            <option value="excused" @selected(old('type') === 'excused')>Izin</option>
+                            <option value="sick" @selected(old('type') === 'sick')>Sakit</option>
                         </select>
                         <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</span>
                     </div>
@@ -35,11 +48,11 @@
                     <label class="block text-sm font-bold text-on-surface-variant uppercase tracking-wider">Rentang Tanggal</label>
                     <div class="grid grid-cols-2 gap-4">
                         <div class="relative">
-                            <input class="w-full bg-surface-container-low border-none rounded-xl py-4 px-5 pl-12 text-on-surface font-medium focus:ring-2 ring-indigo-500/20" placeholder="Mulai" type="text"/>
+                            <input name="date_from" value="{{ old('date_from') }}" class="w-full bg-surface-container-low border-none rounded-xl py-4 px-5 pl-12 text-on-surface font-medium focus:ring-2 ring-indigo-500/20" type="date" required/>
                             <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-indigo-500">calendar_today</span>
                         </div>
                         <div class="relative">
-                            <input class="w-full bg-surface-container-low border-none rounded-xl py-4 px-5 pl-12 text-on-surface font-medium focus:ring-2 ring-indigo-500/20" placeholder="Selesai" type="text"/>
+                            <input name="date_to" value="{{ old('date_to') }}" class="w-full bg-surface-container-low border-none rounded-xl py-4 px-5 pl-12 text-on-surface font-medium focus:ring-2 ring-indigo-500/20" type="date" required/>
                             <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-indigo-500">calendar_today</span>
                         </div>
                     </div>
@@ -49,7 +62,7 @@
             <div class="space-y-8">
                 <div class="space-y-3">
                     <label class="block text-sm font-bold text-on-surface-variant uppercase tracking-wider">Alasan / Keterangan</label>
-                    <textarea class="w-full bg-surface-container-low border-none rounded-xl py-4 px-5 text-on-surface font-medium focus:ring-2 ring-indigo-500/20 resize-none" placeholder="Tuliskan alasan ketidakhadiran Anda secara detail..." rows="4"></textarea>
+                    <textarea name="reason" class="w-full bg-surface-container-low border-none rounded-xl py-4 px-5 text-on-surface font-medium focus:ring-2 ring-indigo-500/20 resize-none" placeholder="Tuliskan alasan ketidakhadiran Anda secara detail..." rows="4" required>{{ old('reason') }}</textarea>
                 </div>
                 <div class="space-y-3">
                     <label class="block text-sm font-bold text-on-surface-variant uppercase tracking-wider">Unggah Bukti</label>
@@ -64,11 +77,12 @@
             </div>
         </div>
         <div class="mt-12 flex justify-end">
-            <button class="bg-gradient-to-br from-primary to-primary-container text-white px-10 py-4 rounded-xl font-bold tracking-tight shadow-xl shadow-indigo-200/50 hover:shadow-indigo-300/60 active:scale-95 transition-all flex items-center gap-3">
+            <button type="submit" class="bg-gradient-to-br from-primary to-primary-container text-white px-10 py-4 rounded-xl font-bold tracking-tight shadow-xl shadow-indigo-200/50 hover:shadow-indigo-300/60 active:scale-95 transition-all flex items-center gap-3">
                 Kirim Pengajuan
                 <span class="material-symbols-outlined text-xl">send</span>
             </button>
         </div>
+        </form>
     </section>
 
     <!-- Table Section -->
@@ -87,46 +101,32 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-indigo-50/20">
-                    <tr class="hover:bg-slate-50/50 transition-colors">
-                        <td class="px-8 py-6">
-                            <div class="flex flex-col">
-                                <span class="font-bold text-on-surface">12 Okt 2023</span>
-                                <span class="text-[10px] text-slate-400 font-semibold">1 Hari</span>
-                            </div>
-                        </td>
-                        <td class="px-8 py-6">
-                            <span class="px-3 py-1 bg-indigo-50 text-indigo-600 text-[10px] font-bold rounded-full uppercase">Sakit</span>
-                        </td>
-                        <td class="px-8 py-6">
-                            <p class="text-sm text-slate-600 truncate max-w-[200px]">Demam tinggi disertai flu berat sejak tadi malam.</p>
-                        </td>
-                        <td class="px-8 py-6">
-                            <span class="flex items-center gap-1.5 text-emerald-600 text-xs font-bold">
-                                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                                Approved
-                            </span>
-                        </td>
-                    </tr>
-                    <tr class="hover:bg-slate-50/50 transition-colors">
-                        <td class="px-8 py-6">
-                            <div class="flex flex-col">
-                                <span class="font-bold text-on-surface">15 Okt 2023</span>
-                                <span class="text-[10px] text-slate-400 font-semibold">2 Hari</span>
-                            </div>
-                        </td>
-                        <td class="px-8 py-6">
-                            <span class="px-3 py-1 bg-indigo-50 text-indigo-600 text-[10px] font-bold rounded-full uppercase">Izin</span>
-                        </td>
-                        <td class="px-8 py-6">
-                            <p class="text-sm text-slate-600 truncate max-w-[200px]">Menghadiri acara pernikahan kakak kandung.</p>
-                        </td>
-                        <td class="px-8 py-6">
-                            <span class="flex items-center gap-1.5 text-amber-600 text-xs font-bold">
-                                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
-                                Pending
-                            </span>
-                        </td>
-                    </tr>
+                    @forelse($leaveHistory as $history)
+                        <tr class="hover:bg-slate-50/50 transition-colors">
+                            <td class="px-8 py-6">
+                                <div class="flex flex-col">
+                                    <span class="font-bold text-on-surface">{{ \Illuminate\Support\Carbon::parse($history->date)->format('d M Y') }}</span>
+                                    <span class="text-[10px] text-slate-400 font-semibold">1 Hari</span>
+                                </div>
+                            </td>
+                            <td class="px-8 py-6">
+                                <span class="px-3 py-1 bg-indigo-50 text-indigo-600 text-[10px] font-bold rounded-full uppercase">{{ $history->status === 'sick' ? 'Sakit' : 'Izin' }}</span>
+                            </td>
+                            <td class="px-8 py-6">
+                                <p class="text-sm text-slate-600 truncate max-w-[320px]">{{ $history->notes ?? '-' }}</p>
+                            </td>
+                            <td class="px-8 py-6">
+                                <span class="flex items-center gap-1.5 text-emerald-600 text-xs font-bold">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                    Tercatat
+                                </span>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="4" class="px-8 py-8 text-center text-sm text-slate-500">Belum ada riwayat izin/sakit.</td>
+                        </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>

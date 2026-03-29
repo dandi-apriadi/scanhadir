@@ -35,16 +35,110 @@ class DashboardController extends Controller
         return view('student.dashboard', ['title' => 'Ringkasan Aktivitas']);
     }
 
-    public function studentIzin() {
-        return view('student.izin', ['title' => 'Riwayat & Izin']);
+    public function studentIzin()
+    {
+        $student = $this->getAuthenticatedStudent();
+
+        $leaveHistory = Attendance::query()
+            ->where('student_id', $student->id)
+            ->whereIn('status', ['sick', 'excused'])
+            ->orderByDesc('date')
+            ->limit(20)
+            ->get();
+
+        return view('student.izin', [
+            'title' => 'Riwayat & Izin',
+            'student_name' => $student->user?->name,
+            'class' => $student->class?->name,
+            'leaveHistory' => $leaveHistory,
+        ]);
     }
 
-    public function studentProfil() {
-        return view('student.profil', ['title' => 'Identitas Siswa']);
+    public function studentProfil()
+    {
+        $student = $this->getAuthenticatedStudent();
+
+        return view('student.profil', [
+            'title' => 'Identitas Siswa',
+            'student_id' => $student->id,
+            'student_name' => $student->user?->name,
+            'class' => $student->class?->name,
+            'nisn' => $student->nisn,
+        ]);
     }
 
-    public function studentManual() {
-        return view('student.manual_attendance', ['title' => 'Absensi Manual']);
+    public function studentManual()
+    {
+        $student = $this->getAuthenticatedStudent();
+
+        return view('student.manual_attendance', [
+            'title' => 'Absensi Manual',
+            'student_name' => $student->user?->name,
+            'class' => $student->class?->name,
+            'nisn' => $student->nisn,
+        ]);
+    }
+
+    public function storeStudentIzin(Request $request)
+    {
+        $student = $this->getAuthenticatedStudent();
+
+        $validated = $request->validate([
+            'type' => ['required', 'in:sick,excused'],
+            'date_from' => ['required', 'date'],
+            'date_to' => ['required', 'date', 'after_or_equal:date_from'],
+            'reason' => ['required', 'string', 'max:2000'],
+        ]);
+
+        $from = \Carbon\Carbon::parse($validated['date_from'])->startOfDay();
+        $to = \Carbon\Carbon::parse($validated['date_to'])->startOfDay();
+
+        for ($date = $from->copy(); $date->lte($to); $date->addDay()) {
+            Attendance::updateOrCreate(
+                [
+                    'student_id' => $student->id,
+                    'date' => $date->toDateString(),
+                ],
+                [
+                    'status' => $validated['type'],
+                    'notes' => $validated['reason'],
+                    'check_in' => null,
+                    'check_out' => null,
+                ]
+            );
+        }
+
+        return redirect()
+            ->route('student.izin')
+            ->with('status', 'Pengajuan izin berhasil disimpan.');
+    }
+
+    public function storeStudentManual(Request $request)
+    {
+        $student = $this->getAuthenticatedStudent();
+
+        $validated = $request->validate([
+            'status' => ['required', 'in:present,late'],
+            'date' => ['required', 'date'],
+            'check_in' => ['required', 'date_format:H:i'],
+            'notes' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        Attendance::updateOrCreate(
+            [
+                'student_id' => $student->id,
+                'date' => $validated['date'],
+            ],
+            [
+                'status' => $validated['status'],
+                'check_in' => $validated['check_in'] . ':00',
+                'notes' => $validated['notes'] ?: null,
+            ]
+        );
+
+        return redirect()
+            ->route('student.manual')
+            ->with('status', 'Absensi manual berhasil disimpan.');
     }
 
     public function adminDashboard() {
@@ -55,8 +149,41 @@ class DashboardController extends Controller
         return view('admin.analytics', ['title' => 'Analisis Statistik']);
     }
 
-    public function adminLogs() {
-        return view('admin.logs', ['title' => 'Log Kehadiran']);
+    public function adminLogs(Request $request)
+    {
+        $dateFrom = trim((string) $request->query('date_from', now()->toDateString()));
+        $dateTo = trim((string) $request->query('date_to', $dateFrom));
+        $classId = (int) $request->query('class_id', 0);
+        $status = trim((string) $request->query('status', ''));
+
+        $allowedStatuses = ['present', 'late', 'sick', 'excused', 'absent'];
+
+        $logs = Attendance::query()
+            ->with(['student.user:id,name', 'student.class:id,name'])
+            ->when($dateFrom !== '', fn ($query) => $query->whereDate('date', '>=', $dateFrom))
+            ->when($dateTo !== '', fn ($query) => $query->whereDate('date', '<=', $dateTo))
+            ->when($classId > 0, fn ($query) => $query->whereHas('student', fn ($studentQuery) => $studentQuery->where('class_id', $classId)))
+            ->when(in_array($status, $allowedStatuses, true), fn ($query) => $query->where('status', $status))
+            ->orderByDesc('date')
+            ->orderByDesc('check_in')
+            ->paginate(15)
+            ->withQueryString();
+
+        $todayAttendance = Attendance::query()->whereDate('date', now()->toDateString());
+        $todayTotalStudents = Student::count();
+        $todayPresent = (clone $todayAttendance)->whereIn('status', ['present', 'late'])->count();
+        $todayRate = $todayTotalStudents > 0 ? round(($todayPresent / $todayTotalStudents) * 100, 1) : 0;
+
+        return view('admin.logs', [
+            'title' => 'Log Kehadiran',
+            'logs' => $logs,
+            'classOptions' => StudentClass::query()->orderBy('name')->get(['id', 'name']),
+            'dateFrom' => $dateFrom,
+            'dateTo' => $dateTo,
+            'classId' => $classId,
+            'status' => $status,
+            'todayRate' => $todayRate,
+        ]);
     }
 
     public function adminIzinApproval() {
@@ -510,5 +637,21 @@ class DashboardController extends Controller
                 'timestamp' => now()->format('H:i:s'),
             ],
         ]);
+    }
+
+    private function getAuthenticatedStudent(): Student
+    {
+        $user = auth()->user();
+
+        abort_unless($user && $user->role === 'student', 403, 'Unauthorized');
+
+        $student = Student::query()
+            ->with(['user', 'class'])
+            ->where('user_id', $user->id)
+            ->first();
+
+        abort_unless($student, 404, 'Data siswa tidak ditemukan.');
+
+        return $student;
     }
 }
