@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Livewire\TeacherDashboard;
 use App\Models\Student;
@@ -31,8 +32,18 @@ Route::get('/student/{student}/qrcode', function (Student $student) {
 
 // Guest Routes
 Route::get('/', [DashboardController::class, 'landing'])->name('landing');
-Route::get('/login/student', [DashboardController::class, 'loginStudent'])->name('login.student');
-Route::get('/login/admin', [DashboardController::class, 'loginAdmin'])->name('login.admin');
+
+// Authentication Routes
+Route::prefix('auth')->name('auth.')->group(function () {
+    Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+    Route::post('/login', [AuthController::class, 'processLogin'])->name('login.process');
+    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+});
+
+// Legacy routes - redirect to new login
+Route::redirect('/login/student', '/auth/login');
+Route::redirect('/login/admin', '/auth/login');
+
 Route::get('/forgot-password', [DashboardController::class, 'forgotPassword'])->name('password.request');
 
 // Student Routes

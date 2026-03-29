@@ -45,7 +45,7 @@
 
             <!-- Secondary Link -->
             <div class="pt-4 flex justify-center">
-                <a class="inline-flex items-center gap-2 text-slate-400 hover:text-primary transition-colors font-bold group" href="{{ route('login.student') }}">
+                <a class="inline-flex items-center gap-2 text-slate-400 hover:text-primary transition-colors font-bold group" href="{{ route('auth.login') }}">
                     <span class="material-symbols-outlined text-xl group-hover:-translate-x-1 transition-transform">arrow_back</span>
                     <span class="text-xs uppercase tracking-widest">Kembali ke Login</span>
                 </a>

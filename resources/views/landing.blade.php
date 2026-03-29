@@ -13,8 +13,8 @@
             <a class="text-sm font-medium text-slate-600 hover:text-indigo-600 transition-all duration-300 font-label" href="#">About</a>
         </div>
         <div class="flex items-center gap-4">
-            <a href="{{ route('login.student') }}" class="text-indigo-600 font-bold text-sm hover:underline">Student Portal</a>
-            <a href="{{ route('login.admin') }}" class="bg-gradient-to-br from-primary to-primary-container text-on-primary px-6 py-2.5 rounded-full font-bold text-sm hover:scale-95 transition-all duration-200 ease-in-out shadow-lg shadow-primary/20">
+            <a href="{{ route('auth.login') }}" class="text-indigo-600 font-bold text-sm hover:underline">Student Portal</a>
+            <a href="{{ route('auth.login') }}" class="bg-gradient-to-br from-primary to-primary-container text-on-primary px-6 py-2.5 rounded-full font-bold text-sm hover:scale-95 transition-all duration-200 ease-in-out shadow-lg shadow-primary/20">
                 Admin Console
             </a>
         </div>
@@ -36,7 +36,7 @@
                     Solusi Presensi QR Modern untuk ekosistem pendidikan cerdas.
                 </p>
                 <div class="flex flex-wrap gap-4 pt-4">
-                    <a href="{{ route('login.student') }}" class="bg-primary text-on-primary px-8 py-4 rounded-xl font-bold text-lg hover:shadow-2xl hover:shadow-primary/40 transition-all">
+                    <a href="{{ route('auth.login') }}" class="bg-primary text-on-primary px-8 py-4 rounded-xl font-bold text-lg hover:shadow-2xl hover:shadow-primary/40 transition-all">
                         Mulai Sekarang
                     </a>
                     <button class="flex items-center gap-2 px-8 py-4 rounded-xl font-bold text-lg text-primary hover:bg-surface-container transition-all">
@@ -101,7 +101,7 @@
                         <span class="material-symbols-outlined text-4xl text-primary/40 group-hover:text-primary transition-colors">school</span>
                     </div>
                     <p class="text-on-surface-variant mb-12 text-lg">Lihat riwayat kehadiran, jadwal pelajaran, dan terima notifikasi langsung di perangkat Anda.</p>
-                    <a href="{{ route('login.student') }}" class="block w-full text-center bg-white text-primary border border-primary/20 py-4 rounded-xl font-bold text-lg group-hover:bg-primary group-hover:text-white transition-all">
+                    <a href="{{ route('auth.login') }}" class="block w-full text-center bg-white text-primary border border-primary/20 py-4 rounded-xl font-bold text-lg group-hover:bg-primary group-hover:text-white transition-all">
                         Masuk Portal Siswa
                     </a>
                 </div>
@@ -116,7 +116,7 @@
                             <span class="material-symbols-outlined text-4xl text-indigo-300 group-hover:rotate-12 transition-transform">admin_panel_settings</span>
                         </div>
                         <p class="text-indigo-200 mb-12 text-lg">Kelola data seluruh siswa, buat QR code unik, dan pantau statistik kehadiran secara real-time.</p>
-                        <a href="{{ route('login.admin') }}" class="block w-full text-center bg-primary-container text-white py-4 rounded-xl font-bold text-lg hover:bg-primary transition-all shadow-lg shadow-black/20">
+                        <a href="{{ route('auth.login') }}" class="block w-full text-center bg-primary-container text-white py-4 rounded-xl font-bold text-lg hover:bg-primary transition-all shadow-lg shadow-black/20">
                             Masuk Console Admin
                         </a>
                     </div>
