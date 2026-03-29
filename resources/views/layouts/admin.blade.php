@@ -46,20 +46,22 @@
     </style>
 </head>
 <body class="bg-surface font-body text-on-surface antialiased" x-data="{ sidebarCollapsed: false }">
-    <aside class="hidden md:flex flex-col h-screen fixed left-0 top-0 bg-indigo-950 text-white z-50 py-8 gap-2 transition-all duration-300 overflow-hidden" :class="sidebarCollapsed ? 'w-20' : 'w-72'">
-        <div class="px-6 mb-10 flex items-center justify-between overflow-hidden">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-primary-container flex-shrink-0 flex items-center justify-center text-white">
-                    <span class="material-symbols-outlined text-2xl">admin_panel_settings</span>
+    <aside class="hidden md:flex flex-col h-screen fixed left-0 top-0 bg-indigo-950 text-white z-50 py-8 gap-2 transition-all duration-300" :class="sidebarCollapsed ? 'w-20' : 'w-72'">
+        <div class="mb-10 flex flex-col items-center gap-6" :class="sidebarCollapsed ? 'px-2' : 'px-6 items-stretch'">
+            <div class="flex items-center justify-between w-full" :class="sidebarCollapsed ? 'flex-col gap-4' : ''">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-primary-container flex-shrink-0 flex items-center justify-center text-white shadow-inner">
+                        <span class="material-symbols-outlined text-2xl">admin_panel_settings</span>
+                    </div>
+                    <div x-show="!sidebarCollapsed" x-transition.opacity class="flex-1">
+                        <h1 class="text-xl font-extrabold text-white font-headline leading-tight whitespace-nowrap">ScanHadir</h1>
+                        <p class="text-[10px] uppercase tracking-widest text-indigo-300 font-bold whitespace-nowrap">Admin Console</p>
+                    </div>
                 </div>
-                <div x-show="!sidebarCollapsed" x-transition.opacity>
-                    <h1 class="text-xl font-extrabold text-white font-headline leading-tight">ScanHadir</h1>
-                    <p class="text-[10px] uppercase tracking-widest text-indigo-300 font-bold">Admin Console</p>
-                </div>
+                <button @click="sidebarCollapsed = !sidebarCollapsed" class="p-2 hover:bg-white/10 rounded-lg text-white transition-colors flex items-center justify-center" title="Toggle Sidebar">
+                    <span class="material-symbols-outlined text-2xl" x-text="sidebarCollapsed ? 'menu_open' : 'menu'">menu</span>
+                </button>
             </div>
-            <button @click="sidebarCollapsed = !sidebarCollapsed" class="p-1 hover:bg-white/10 rounded-lg text-indigo-300 transition-colors hidden md:block" :class="sidebarCollapsed ? 'mx-auto translate-x-1' : ''">
-                <span class="material-symbols-outlined text-[20px]" x-text="sidebarCollapsed ? 'menu_open' : 'menu'">menu</span>
-            </button>
         </div>
         <nav class="flex-1 flex flex-col gap-1 px-3">
             <p x-show="!sidebarCollapsed" class="text-[10px] uppercase tracking-[0.2em] text-indigo-400 font-bold mb-2 px-4 whitespace-nowrap">Main Menu</p>

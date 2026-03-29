@@ -1,8 +1,8 @@
 @extends('layouts.student')
 
 @section('content')
-<div class="space-y-8">
-    <!-- Hero Greeting -->
+<livewire:student-dashboard />
+@endsection
     <section class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
             <h1 class="text-3xl font-bold font-headline text-on-background">Halo, {{ $student_name }} 👋</h1>

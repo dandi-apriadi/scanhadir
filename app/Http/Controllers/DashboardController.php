@@ -26,23 +26,7 @@ class DashboardController extends Controller
     }
 
     public function studentDashboard() {
-        // Dummy data for student dashboard
-        $data = [
-            'student_name' => 'Rizki Ramadhan',
-            'class' => 'XII IPA 1',
-            'attendance_this_month' => 18,
-            'total_days' => 20,
-            'late_count' => 2,
-            'today_status' => 'Present',
-            'nisn' => '0045612389',
-            'recent_history' => [
-                ['date' => '24 Okt 2023', 'day' => 'Selasa', 'subject' => 'Matematika Wajib', 'time' => '07:15 - 08:45', 'status' => 'Present', 'icon' => 'functions', 'color' => 'indigo'],
-                ['date' => '23 Okt 2023', 'day' => 'Senin', 'subject' => 'Fisika Lanjutan', 'time' => '07:22 - 09:00', 'status' => 'Late', 'icon' => 'biotech', 'color' => 'amber'],
-                ['date' => '20 Okt 2023', 'day' => 'Jumat', 'subject' => 'Bahasa Inggris', 'time' => '07:05 - 08:30', 'status' => 'Present', 'icon' => 'translate', 'color' => 'indigo'],
-                ['date' => '19 Okt 2023', 'day' => 'Kamis', 'subject' => 'Olahraga', 'time' => '-- : --', 'status' => 'Absent', 'icon' => 'sports_soccer', 'color' => 'red'],
-            ]
-        ];
-        return view('student.dashboard', $data);
+        return view('student.dashboard');
     }
 
     public function studentIzin() {

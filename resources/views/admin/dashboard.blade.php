@@ -1,8 +1,8 @@
 @extends('layouts.admin')
 
 @section('content')
-<div class="max-w-[1440px] mx-auto">
-    <!-- Header Section -->
+<livewire:admin-dashboard />
+@endsection
     <div class="mb-10 flex justify-between items-end">
         <div>
             <h2 class="text-3xl font-bold font-headline tracking-tight text-on-surface">System Overview</h2>
