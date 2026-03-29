@@ -11,10 +11,23 @@ class TeacherDashboard extends Component
 {
     public $selectedDate;
     public $selectedClass = null;
+    public $pollInterval = 3000; // 3 seconds
+    public $lastRefresh;
+    public $scanSessionActive = false;
+    public $scanCount = 0;
+    public $lastScanedStudent = null;
 
     public function mount()
     {
         $this->selectedDate = now()->toDateString();
+        $this->lastRefresh = now();
+    }
+
+    public function refreshAttendance()
+    {
+        // This method is called periodically via Livewire polling
+        // It updates the attendance data in real-time
+        $this->lastRefresh = now();
     }
 
     public function render()
@@ -95,6 +108,30 @@ class TeacherDashboard extends Component
                 'status' => $att->status,
             ]);
 
+        // Live scan statistics (count of today's scans)
+        $totalTodayScans = Attendance::query()
+            ->whereDate('date', $date)
+            ->whereHas('student', fn ($query) => $query->whereIn('class_id', $assignedClassIds))
+            ->count();
+
+        // Latest scanned student (for live feed)
+        $latestScannedStudent = Attendance::query()
+            ->with(['student.user', 'student.class'])
+            ->whereDate('date', $date)
+            ->whereHas('student', fn ($query) => $query->whereIn('class_id', $assignedClassIds))
+            ->orderBy('check_in', 'desc')
+            ->first();
+
+        // Scan session stats (checks if scanning is active)
+        $this->scanSessionActive = $totalTodayScans > 0;
+        $this->scanCount = $totalTodayScans;
+        $this->lastScanedStudent = $latestScannedStudent ? [
+            'name' => $latestScannedStudent->student?->user?->name,
+            'class' => $latestScannedStudent->student?->class?->name,
+            'status' => $latestScannedStudent->status,
+            'time' => $latestScannedStudent->check_in,
+        ] : null;
+
         // Late students alert
         $lateStudents = Attendance::query()
             ->with(['student.user', 'student.class'])
@@ -119,6 +156,8 @@ class TeacherDashboard extends Component
             'lateStudents' => $lateStudents,
             'totalAssignedClasses' => $totalAssignedClasses,
             'totalStudents' => $totalStudents,
+            'totalScans' => $totalTodayScans,
+            'latestScannedStudent' => $latestScannedStudent,
         ])->layout('layouts.teacher', ['title' => 'Teacher Dashboard']);
     }
 }

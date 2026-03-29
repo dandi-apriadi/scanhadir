@@ -1,4 +1,4 @@
-<div class="space-y-8 px-6 py-8 max-w-[1440px] mx-auto">
+<div class="space-y-8 px-6 py-8 max-w-[1440px] mx-auto" wire:poll-3000="refreshAttendance">
     <!-- Header -->
     <div class="flex justify-between items-end gap-6 mb-8">
         <div>
@@ -7,6 +7,28 @@
         </div>
         <input type="date" wire:model="selectedDate" class="px-4 py-2.5 bg-surface-container-low border border-outline-variant/15 rounded-xl text-sm font-semibold outline-none"/>
     </div>
+
+    <!-- Live Scan Session Banner -->
+    @if($scanSessionActive)
+        <div class="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-2xl p-6 flex items-center justify-between shadow-sm">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center animate-pulse">
+                    <span class="material-symbols-outlined text-emerald-600 text-2xl">videocam</span>
+                </div>
+                <div>
+                    <p class="text-sm font-bold text-emerald-900">Sesi Scan QR Aktif</p>
+                    <p class="text-xs text-emerald-700">{{ $scanCount }} siswa telah dipindai hari ini</p>
+                </div>
+            </div>
+            @if($latestScannedStudent)
+                <div class="text-right">
+                    <p class="text-xs text-slate-500 uppercase font-bold mb-1">Scan Terakhir</p>
+                    <p class="text-sm font-semibold text-on-surface">{{ $latestScannedStudent->student?->user?->name }}</p>
+                    <p class="text-xs text-slate-500">{{ $latestScannedStudent->check_in ? $latestScannedStudent->check_in->format('H:i:s') : '-' }}</p>
+                </div>
+            @endif
+        </div>
+    @endif
 
     <!-- Stats Overview -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
@@ -36,9 +58,16 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <!-- Recent Attendance Log -->
         <div class="lg:col-span-2 bg-surface-container-lowest rounded-2xl border border-outline-variant/15 overflow-hidden">
-            <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+            <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-gradient-to-r from-slate-50 to-transparent">
                 <h3 class="text-xl font-bold text-on-surface">Log Presensi Terbaru</h3>
-                <span class="px-3 py-1 bg-emerald-50 text-emerald-600 text-[10px] font-bold rounded-full animate-pulse">LIVE</span>
+                <div class="flex items-center gap-2">
+                    @if($scanSessionActive)
+                        <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                        <span class="px-3 py-1 bg-emerald-50 text-emerald-600 text-[10px] font-bold rounded-full">LIVE ({{ $scanCount }})</span>
+                    @else
+                        <span class="px-3 py-1 bg-slate-100 text-slate-600 text-[10px] font-bold rounded-full">OFFLINE</span>
+                    @endif
+                </div>
             </div>
             @if($recentLogs->isNotEmpty())
                 <div class="overflow-x-auto">
