@@ -60,8 +60,17 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     // Admin Master Data
     Route::prefix('master')->name('master.')->group(function () {
         Route::get('/guru', [DashboardController::class, 'masterGuru'])->name('guru');
+        Route::post('/guru', [DashboardController::class, 'storeGuru'])->name('guru.store');
+        Route::put('/guru/{teacher}', [DashboardController::class, 'updateGuru'])->name('guru.update');
+        Route::delete('/guru/{teacher}', [DashboardController::class, 'destroyGuru'])->name('guru.destroy');
         Route::get('/siswa', [DashboardController::class, 'masterSiswa'])->name('siswa');
+        Route::post('/siswa', [DashboardController::class, 'storeSiswa'])->name('siswa.store');
+        Route::put('/siswa/{student}', [DashboardController::class, 'updateSiswa'])->name('siswa.update');
+        Route::delete('/siswa/{student}', [DashboardController::class, 'destroySiswa'])->name('siswa.destroy');
         Route::get('/kelas', [DashboardController::class, 'masterKelas'])->name('kelas');
+        Route::post('/kelas', [DashboardController::class, 'storeKelas'])->name('kelas.store');
+        Route::put('/kelas/{class}', [DashboardController::class, 'updateKelas'])->name('kelas.update');
+        Route::delete('/kelas/{class}', [DashboardController::class, 'destroyKelas'])->name('kelas.destroy');
         Route::get('/jadwal', [DashboardController::class, 'masterJadwal'])->name('jadwal');
         Route::post('/jadwal', [DashboardController::class, 'storeJadwal'])->name('jadwal.store');
         Route::put('/jadwal/{schedule}', [DashboardController::class, 'updateJadwal'])->name('jadwal.update');
