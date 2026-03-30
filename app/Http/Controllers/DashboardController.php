@@ -13,6 +13,8 @@ use App\Services\AttendanceExportService;
 use App\Services\ReportService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
 class DashboardController extends Controller
 {
@@ -407,6 +409,7 @@ class DashboardController extends Controller
     public function masterGuru(Request $request)
     {
         $q = trim((string) $request->query('q', ''));
+        $editId = (int) $request->query('edit', 0);
 
         $teachers = User::query()
             ->where('role', 'teacher')
@@ -425,6 +428,9 @@ class DashboardController extends Controller
             'title' => 'Manajemen Guru',
             'teachers' => $teachers,
             'q' => $q,
+            'editTeacher' => $editId > 0
+                ? User::query()->where('role', 'teacher')->find($editId)
+                : null,
             'teacherStats' => [
                 'total' => User::where('role', 'teacher')->count(),
                 'active' => User::where('role', 'teacher')->count(),
@@ -432,12 +438,83 @@ class DashboardController extends Controller
         ]);
     }
 
+    public function storeGuru(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'password' => ['required', 'string', 'min:8'],
+        ]);
+
+        User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => Hash::make($validated['password']),
+            'role' => 'teacher',
+        ]);
+
+        return redirect()->route('admin.master.guru')->with('status', 'Guru berhasil ditambahkan.');
+    }
+
+    public function updateGuru(Request $request, User $teacher)
+    {
+        abort_unless($teacher->role === 'teacher', 404);
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email,' . $teacher->id],
+            'password' => ['nullable', 'string', 'min:8'],
+        ]);
+
+        $payload = [
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+        ];
+
+        if (!empty($validated['password'])) {
+            $payload['password'] = Hash::make($validated['password']);
+        }
+
+        $teacher->update($payload);
+
+        return redirect()->route('admin.master.guru')->with('status', 'Data guru berhasil diperbarui.');
+    }
+
+    public function destroyGuru(User $teacher)
+    {
+        abort_unless($teacher->role === 'teacher', 404);
+
+        if ($teacher->teachingSchedules()->exists()) {
+            return redirect()->route('admin.master.guru')
+                ->withErrors(['guru' => 'Guru tidak dapat dihapus karena masih terhubung ke jadwal pelajaran.']);
+        }
+
+        if ($teacher->assignedClasses()->exists()) {
+            return redirect()->route('admin.master.guru')
+                ->withErrors(['guru' => 'Guru tidak dapat dihapus karena masih terhubung sebagai wali/pengajar kelas.']);
+        }
+
+        $teacher->delete();
+
+        return redirect()->route('admin.master.guru')->with('status', 'Guru berhasil dihapus.');
+    }
+
     public function masterSiswa(Request $request)
     {
         $q = trim((string) $request->query('q', ''));
         $classId = (int) $request->query('class_id', 0);
+        $level = trim((string) $request->query('level', ''));
+        $major = trim((string) $request->query('major', ''));
+        $hasQr = trim((string) $request->query('has_qr', ''));
+        $sort = trim((string) $request->query('sort', 'newest'));
+        $editId = (int) $request->query('edit', 0);
 
-        $students = Student::query()
+        $allowedSort = ['newest', 'oldest', 'name_asc', 'name_desc', 'nisn_asc', 'nisn_desc'];
+        if (!in_array($sort, $allowedSort, true)) {
+            $sort = 'newest';
+        }
+
+        $studentsQuery = Student::query()
             ->with(['user:id,name,email', 'class:id,name'])
             ->when($q !== '', function ($query) use ($q) {
                 $query->where(function ($inner) use ($q) {
@@ -449,25 +526,230 @@ class DashboardController extends Controller
                 });
             })
             ->when($classId > 0, fn ($query) => $query->where('class_id', $classId))
-            ->latest('id')
+            ->when($level !== '', fn ($query) => $query->whereHas('class', fn ($classQuery) => $classQuery->where('level', $level)))
+            ->when($major !== '', fn ($query) => $query->whereHas('class', fn ($classQuery) => $classQuery->where('major', $major)))
+            ->when($hasQr !== '', function ($query) use ($hasQr) {
+                if ($hasQr === '1') {
+                    $query->whereNotNull('qr_code');
+                }
+
+                if ($hasQr === '0') {
+                    $query->whereNull('qr_code');
+                }
+            });
+
+        match ($sort) {
+            'oldest' => $studentsQuery->oldest('id'),
+            'name_asc' => $studentsQuery->orderBy(
+                User::query()->select('name')->whereColumn('users.id', 'students.user_id'),
+                'asc'
+            ),
+            'name_desc' => $studentsQuery->orderBy(
+                User::query()->select('name')->whereColumn('users.id', 'students.user_id'),
+                'desc'
+            ),
+            'nisn_asc' => $studentsQuery->orderBy('nisn', 'asc'),
+            'nisn_desc' => $studentsQuery->orderBy('nisn', 'desc'),
+            default => $studentsQuery->latest('id'),
+        };
+
+        $students = $studentsQuery
             ->paginate(10)
             ->withQueryString();
+
+        $classQuery = StudentClass::query();
 
         return view('admin.master.siswa', [
             'title' => 'Manajemen Siswa',
             'students' => $students,
-            'classOptions' => StudentClass::query()->orderBy('name')->get(['id', 'name']),
+            'classOptions' => (clone $classQuery)->orderBy('name')->get(['id', 'name']),
             'q' => $q,
             'classId' => $classId,
+            'levelOptions' => (clone $classQuery)->select('level')->distinct()->orderBy('level')->pluck('level'),
+            'majorOptions' => (clone $classQuery)->select('major')->distinct()->orderBy('major')->pluck('major'),
+            'level' => $level,
+            'major' => $major,
+            'hasQr' => $hasQr,
+            'sort' => $sort,
+            'editStudent' => $editId > 0 ? Student::query()->with('user')->find($editId) : null,
             'studentStats' => [
                 'total' => Student::count(),
             ],
         ]);
     }
 
+    public function exportSiswa(Request $request)
+    {
+        $q = trim((string) $request->query('q', ''));
+        $classId = (int) $request->query('class_id', 0);
+        $level = trim((string) $request->query('level', ''));
+        $major = trim((string) $request->query('major', ''));
+        $hasQr = trim((string) $request->query('has_qr', ''));
+        $sort = trim((string) $request->query('sort', 'newest'));
+
+        $allowedSort = ['newest', 'oldest', 'name_asc', 'name_desc', 'nisn_asc', 'nisn_desc'];
+        if (!in_array($sort, $allowedSort, true)) {
+            $sort = 'newest';
+        }
+
+        $studentsQuery = Student::query()
+            ->with(['user:id,name,email', 'class:id,name,level,major'])
+            ->when($q !== '', function ($query) use ($q) {
+                $query->where(function ($inner) use ($q) {
+                    $inner->where('nisn', 'like', "%{$q}%")
+                        ->orWhereHas('user', function ($userQuery) use ($q) {
+                            $userQuery->where('name', 'like', "%{$q}%")
+                                ->orWhere('email', 'like', "%{$q}%");
+                        });
+                });
+            })
+            ->when($classId > 0, fn ($query) => $query->where('class_id', $classId))
+            ->when($level !== '', fn ($query) => $query->whereHas('class', fn ($classQuery) => $classQuery->where('level', $level)))
+            ->when($major !== '', fn ($query) => $query->whereHas('class', fn ($classQuery) => $classQuery->where('major', $major)))
+            ->when($hasQr !== '', function ($query) use ($hasQr) {
+                if ($hasQr === '1') {
+                    $query->whereNotNull('qr_code');
+                }
+
+                if ($hasQr === '0') {
+                    $query->whereNull('qr_code');
+                }
+            });
+
+        match ($sort) {
+            'oldest' => $studentsQuery->oldest('id'),
+            'name_asc' => $studentsQuery->orderBy(
+                User::query()->select('name')->whereColumn('users.id', 'students.user_id'),
+                'asc'
+            ),
+            'name_desc' => $studentsQuery->orderBy(
+                User::query()->select('name')->whereColumn('users.id', 'students.user_id'),
+                'desc'
+            ),
+            'nisn_asc' => $studentsQuery->orderBy('nisn', 'asc'),
+            'nisn_desc' => $studentsQuery->orderBy('nisn', 'desc'),
+            default => $studentsQuery->latest('id'),
+        };
+
+        $rows = $studentsQuery->get();
+        $fileName = 'master-siswa-' . now()->format('Ymd-His') . '.xls';
+
+        return response()->streamDownload(function () use ($rows) {
+            echo "\xEF\xBB\xBF";
+
+            $headers = ['Nama', 'Email', 'NISN', 'Kelas', 'Level', 'Jurusan', 'QR Code'];
+            echo implode("\t", $headers) . "\n";
+
+            foreach ($rows as $row) {
+                $values = [
+                    $row->user?->name ?? '-',
+                    $row->user?->email ?? '-',
+                    $row->nisn,
+                    $row->class?->name ?? '-',
+                    $row->class?->level ?? '-',
+                    $row->class?->major ?? '-',
+                    $row->qr_code ? 'Ya' : 'Tidak',
+                ];
+
+                $escaped = array_map(function ($value) {
+                    return str_replace(["\t", "\r", "\n"], ' ', (string) $value);
+                }, $values);
+
+                echo implode("\t", $escaped) . "\n";
+            }
+        }, $fileName, [
+            'Content-Type' => 'application/vnd.ms-excel; charset=UTF-8',
+        ]);
+    }
+
+    public function storeSiswa(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'password' => ['required', 'string', 'min:8'],
+            'nisn' => ['required', 'string', 'max:32', 'unique:students,nisn'],
+            'class_id' => ['required', 'exists:classes,id'],
+        ]);
+
+        DB::transaction(function () use ($validated) {
+            $user = User::create([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'password' => Hash::make($validated['password']),
+                'role' => 'student',
+            ]);
+
+            Student::create([
+                'user_id' => $user->id,
+                'class_id' => (int) $validated['class_id'],
+                'nisn' => $validated['nisn'],
+            ]);
+        });
+
+        return redirect()->route('admin.master.siswa')->with('status', 'Siswa berhasil ditambahkan.');
+    }
+
+    public function updateSiswa(Request $request, Student $student)
+    {
+        $student->load('user');
+
+        abort_unless($student->user !== null && $student->user->role === 'student', 404);
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email,' . $student->user->id],
+            'password' => ['nullable', 'string', 'min:8'],
+            'nisn' => ['required', 'string', 'max:32', 'unique:students,nisn,' . $student->id],
+            'class_id' => ['required', 'exists:classes,id'],
+        ]);
+
+        DB::transaction(function () use ($validated, $student) {
+            $userPayload = [
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+            ];
+
+            if (!empty($validated['password'])) {
+                $userPayload['password'] = Hash::make($validated['password']);
+            }
+
+            $student->user->update($userPayload);
+
+            $student->update([
+                'class_id' => (int) $validated['class_id'],
+                'nisn' => $validated['nisn'],
+            ]);
+        });
+
+        return redirect()->route('admin.master.siswa')->with('status', 'Data siswa berhasil diperbarui.');
+    }
+
+    public function destroySiswa(Student $student)
+    {
+        $student->load('user');
+
+        if ($student->attendances()->exists()) {
+            return redirect()->route('admin.master.siswa')
+                ->withErrors(['siswa' => 'Siswa tidak dapat dihapus karena sudah memiliki riwayat absensi.']);
+        }
+
+        DB::transaction(function () use ($student) {
+            $user = $student->user;
+            $student->delete();
+
+            if ($user && $user->role === 'student') {
+                $user->delete();
+            }
+        });
+
+        return redirect()->route('admin.master.siswa')->with('status', 'Siswa berhasil dihapus.');
+    }
+
     public function masterKelas(Request $request)
     {
         $q = trim((string) $request->query('q', ''));
+        $editId = (int) $request->query('edit', 0);
 
         $classes = StudentClass::query()
             ->withCount('students')
@@ -494,6 +776,7 @@ class DashboardController extends Controller
             'title' => 'Manajemen Kelas',
             'classes' => $classes,
             'q' => $q,
+            'editClass' => $editId > 0 ? StudentClass::query()->find($editId) : null,
             'classStats' => [
                 'total' => StudentClass::count(),
                 'levels' => [
@@ -503,6 +786,50 @@ class DashboardController extends Controller
                 ],
             ],
         ]);
+    }
+
+    public function storeKelas(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255', 'unique:classes,name'],
+            'level' => ['required', 'in:X,XI,XII'],
+            'major' => ['required', 'string', 'max:100'],
+        ]);
+
+        StudentClass::create($validated);
+
+        return redirect()->route('admin.master.kelas')->with('status', 'Kelas berhasil ditambahkan.');
+    }
+
+    public function updateKelas(Request $request, StudentClass $class)
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255', 'unique:classes,name,' . $class->id],
+            'level' => ['required', 'in:X,XI,XII'],
+            'major' => ['required', 'string', 'max:100'],
+        ]);
+
+        $class->update($validated);
+
+        return redirect()->route('admin.master.kelas')->with('status', 'Data kelas berhasil diperbarui.');
+    }
+
+    public function destroyKelas(StudentClass $class)
+    {
+        if ($class->students()->exists()) {
+            return redirect()->route('admin.master.kelas')
+                ->withErrors(['kelas' => 'Kelas tidak dapat dihapus karena masih memiliki data siswa.']);
+        }
+
+        if ($class->schedules()->exists()) {
+            return redirect()->route('admin.master.kelas')
+                ->withErrors(['kelas' => 'Kelas tidak dapat dihapus karena masih dipakai pada jadwal pelajaran.']);
+        }
+
+        $class->teachers()->detach();
+        $class->delete();
+
+        return redirect()->route('admin.master.kelas')->with('status', 'Kelas berhasil dihapus.');
     }
 
     public function masterJadwal(Request $request)

@@ -25,6 +25,7 @@ Route::prefix('auth')->name('auth.')->group(function () {
 });
 
 // Legacy routes - redirect to unified login
+Route::redirect('/login', '/auth/login');
 Route::redirect('/login/student', '/auth/login');
 Route::redirect('/login/admin', '/auth/login');
 
@@ -64,6 +65,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
         Route::put('/guru/{teacher}', [DashboardController::class, 'updateGuru'])->name('guru.update');
         Route::delete('/guru/{teacher}', [DashboardController::class, 'destroyGuru'])->name('guru.destroy');
         Route::get('/siswa', [DashboardController::class, 'masterSiswa'])->name('siswa');
+        Route::get('/siswa/export', [DashboardController::class, 'exportSiswa'])->name('siswa.export');
         Route::post('/siswa', [DashboardController::class, 'storeSiswa'])->name('siswa.store');
         Route::put('/siswa/{student}', [DashboardController::class, 'updateSiswa'])->name('siswa.update');
         Route::delete('/siswa/{student}', [DashboardController::class, 'destroySiswa'])->name('siswa.destroy');

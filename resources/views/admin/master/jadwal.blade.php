@@ -226,63 +226,67 @@
     <div x-show="editSchedule" x-transition class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4" @click="editSchedule = null">
         <div @click.stop class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full p-8 border border-slate-100">
             <h3 class="text-xl font-bold text-on-surface mb-6">Edit Jadwal Pelajaran</h3>
-            <form method="POST" x-show="editSchedule" :action="editSchedule ? `/admin/master/jadwal/${editSchedule.id}` : '#'">
+            <form method="POST" :action="editSchedule ? `/admin/master/jadwal/${editSchedule.id}` : '#'">
                 @csrf
                 @method('PUT')
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <template x-if="editSchedule">
                     <div>
-                        <label class="block text-sm font-bold text-slate-700 mb-2">Kelas</label>
-                        <select name="class_id" x-model.number="editSchedule.class_id" class="w-full bg-slate-50 border-none rounded-2xl py-3 px-4 text-sm font-bold text-slate-600 focus:ring-2 focus:ring-primary/20" required>
-                            <option value="">Pilih Kelas</option>
-                            @foreach($classOptions as $option)
-                                <option value="{{ $option->id }}">{{ $option->name }}</option>
-                            @endforeach
-                        </select>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-bold text-slate-700 mb-2">Kelas</label>
+                                <select name="class_id" x-model.number="editSchedule.class_id" class="w-full bg-slate-50 border-none rounded-2xl py-3 px-4 text-sm font-bold text-slate-600 focus:ring-2 focus:ring-primary/20" required>
+                                    <option value="">Pilih Kelas</option>
+                                    @foreach($classOptions as $option)
+                                        <option value="{{ $option->id }}">{{ $option->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-slate-700 mb-2">Mata Pelajaran</label>
+                                <select name="subject_id" x-model.number="editSchedule.subject_id" class="w-full bg-slate-50 border-none rounded-2xl py-3 px-4 text-sm font-bold text-slate-600 focus:ring-2 focus:ring-primary/20" required>
+                                    <option value="">Pilih Mapel</option>
+                                    @foreach($subjectOptions as $subjectOption)
+                                        <option value="{{ $subjectOption->id }}">{{ $subjectOption->code }} - {{ $subjectOption->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-slate-700 mb-2">Guru</label>
+                                <select name="teacher_id" x-model.number="editSchedule.teacher_id" class="w-full bg-slate-50 border-none rounded-2xl py-3 px-4 text-sm font-bold text-slate-600 focus:ring-2 focus:ring-primary/20" required>
+                                    <option value="">Pilih Guru</option>
+                                    @foreach($teacherOptions as $teacherOption)
+                                        <option value="{{ $teacherOption->id }}">{{ $teacherOption->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-slate-700 mb-2">Hari</label>
+                                <select name="day" x-model="editSchedule.day" class="w-full bg-slate-50 border-none rounded-2xl py-3 px-4 text-sm font-bold text-slate-600 focus:ring-2 focus:ring-primary/20" required>
+                                    <option value="">Pilih Hari</option>
+                                    @foreach($dayOptions as $dayOption)
+                                        <option value="{{ $dayOption }}">{{ $dayOption }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-slate-700 mb-2">Jam Mulai</label>
+                                <input type="time" name="start_time" x-model="editSchedule.start_time" class="w-full bg-slate-50 border-none rounded-2xl py-3 px-4 text-sm font-bold text-slate-600 focus:ring-2 focus:ring-primary/20" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-slate-700 mb-2">Jam Selesai</label>
+                                <input type="time" name="end_time" x-model="editSchedule.end_time" class="w-full bg-slate-50 border-none rounded-2xl py-3 px-4 text-sm font-bold text-slate-600 focus:ring-2 focus:ring-primary/20" required>
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-bold text-slate-700 mb-2">Ruang</label>
+                                <input type="text" name="room" x-model="editSchedule.room" class="w-full bg-slate-50 border-none rounded-2xl py-3 px-4 text-sm font-bold text-slate-600 focus:ring-2 focus:ring-primary/20" placeholder="Contoh: R-204">
+                            </div>
+                        </div>
+                        <div class="flex gap-3 mt-8">
+                            <button type="button" @click="editSchedule = null" class="flex-1 py-3 px-4 rounded-2xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 transition-all">Batal</button>
+                            <button type="submit" class="flex-1 py-3 px-4 rounded-2xl bg-primary text-white font-bold hover:opacity-90 transition-all">Simpan</button>
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-sm font-bold text-slate-700 mb-2">Mata Pelajaran</label>
-                        <select name="subject_id" x-model.number="editSchedule.subject_id" class="w-full bg-slate-50 border-none rounded-2xl py-3 px-4 text-sm font-bold text-slate-600 focus:ring-2 focus:ring-primary/20" required>
-                            <option value="">Pilih Mapel</option>
-                            @foreach($subjectOptions as $subjectOption)
-                                <option value="{{ $subjectOption->id }}">{{ $subjectOption->code }} - {{ $subjectOption->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-bold text-slate-700 mb-2">Guru</label>
-                        <select name="teacher_id" x-model.number="editSchedule.teacher_id" class="w-full bg-slate-50 border-none rounded-2xl py-3 px-4 text-sm font-bold text-slate-600 focus:ring-2 focus:ring-primary/20" required>
-                            <option value="">Pilih Guru</option>
-                            @foreach($teacherOptions as $teacherOption)
-                                <option value="{{ $teacherOption->id }}">{{ $teacherOption->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-bold text-slate-700 mb-2">Hari</label>
-                        <select name="day" x-model="editSchedule.day" class="w-full bg-slate-50 border-none rounded-2xl py-3 px-4 text-sm font-bold text-slate-600 focus:ring-2 focus:ring-primary/20" required>
-                            <option value="">Pilih Hari</option>
-                            @foreach($dayOptions as $dayOption)
-                                <option value="{{ $dayOption }}">{{ $dayOption }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-bold text-slate-700 mb-2">Jam Mulai</label>
-                        <input type="time" name="start_time" x-model="editSchedule.start_time" class="w-full bg-slate-50 border-none rounded-2xl py-3 px-4 text-sm font-bold text-slate-600 focus:ring-2 focus:ring-primary/20" required>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-bold text-slate-700 mb-2">Jam Selesai</label>
-                        <input type="time" name="end_time" x-model="editSchedule.end_time" class="w-full bg-slate-50 border-none rounded-2xl py-3 px-4 text-sm font-bold text-slate-600 focus:ring-2 focus:ring-primary/20" required>
-                    </div>
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-bold text-slate-700 mb-2">Ruang</label>
-                        <input type="text" name="room" x-model="editSchedule.room" class="w-full bg-slate-50 border-none rounded-2xl py-3 px-4 text-sm font-bold text-slate-600 focus:ring-2 focus:ring-primary/20" placeholder="Contoh: R-204">
-                    </div>
-                </div>
-                <div class="flex gap-3 mt-8">
-                    <button type="button" @click="editSchedule = null" class="flex-1 py-3 px-4 rounded-2xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 transition-all">Batal</button>
-                    <button type="submit" class="flex-1 py-3 px-4 rounded-2xl bg-primary text-white font-bold hover:opacity-90 transition-all">Simpan</button>
-                </div>
+                </template>
             </form>
         </div>
     </div>

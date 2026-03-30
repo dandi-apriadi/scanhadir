@@ -1,7 +1,19 @@
 @extends('layouts.admin')
 
 @section('content')
-<div class="space-y-8">
+<div class="space-y-8" x-data="{ showCreateModal: {{ $errors->any() && !$editClass ? 'true' : 'false' }}, showEditModal: {{ $editClass ? 'true' : 'false' }} }">
+    @if (session('status'))
+        <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">
+            {{ session('status') }}
+        </div>
+    @endif
+
+    @if ($errors->any())
+        <div class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700">
+            {{ $errors->first() }}
+        </div>
+    @endif
+
     <!-- Breadcrumbs & Header -->
     <div class="mb-10">
         <nav class="flex items-center gap-2 text-xs font-semibold text-slate-400 mb-2 tracking-wide uppercase">
@@ -16,7 +28,7 @@
                 <h2 class="text-3xl font-extrabold text-on-surface tracking-tight font-headline">Daftar Kelas</h2>
                 <p class="text-slate-500 mt-1 text-sm">Kelola data ruang kelas dan wali kelas untuk sistem absensi.</p>
             </div>
-            <button type="button" onclick="alert('Fitur tambah kelas akan diaktifkan pada tahap berikutnya.')" class="bg-gradient-to-r from-primary to-primary-container text-white px-6 py-3 rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg shadow-indigo-200 hover:scale-95 transition-transform duration-150">
+            <button type="button" @click="showCreateModal = true" class="bg-gradient-to-r from-primary to-primary-container text-white px-6 py-3 rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg shadow-indigo-200 hover:scale-95 transition-transform duration-150">
                 <span class="material-symbols-outlined">add</span>
                 Tambah Kelas
             </button>
@@ -60,8 +72,12 @@
                                 <td class="px-6 py-5 text-center text-sm font-bold text-on-surface">{{ $class->students_count }}</td>
                                 <td class="px-6 py-5 text-right">
                                     <div class="flex items-center justify-end gap-1 text-slate-400">
-                                        <button type="button" onclick="alert('Fitur edit kelas belum diaktifkan.')" class="p-2 hover:text-primary transition-colors"><span class="material-symbols-outlined text-[20px]">edit_note</span></button>
-                                        <button type="button" onclick="alert('Fitur hapus kelas belum diaktifkan.')" class="p-2 hover:text-rose-500 transition-colors"><span class="material-symbols-outlined text-[20px]">delete</span></button>
+                                        <a href="{{ route('admin.master.kelas', array_merge(request()->query(), ['edit' => $class->id])) }}" class="p-2 hover:text-primary transition-colors"><span class="material-symbols-outlined text-[20px]">edit_note</span></a>
+                                        <form method="POST" action="{{ route('admin.master.kelas.destroy', $class->id) }}" onsubmit="return confirm('Hapus data kelas ini?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="p-2 hover:text-rose-500 transition-colors"><span class="material-symbols-outlined text-[20px]">delete</span></button>
+                                        </form>
                                     </div>
                                 </td>
                             </tr>
@@ -126,5 +142,73 @@
             </div>
         </div>
     </div>
+
+    <div x-show="showCreateModal" x-transition class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4" @click.self="showCreateModal = false">
+        <div class="w-full max-w-2xl rounded-2xl bg-white border border-slate-100 shadow-2xl p-6">
+            <div class="flex items-center justify-between mb-5">
+                <h3 class="text-lg font-bold text-slate-900">Tambah Kelas</h3>
+                <button type="button" @click="showCreateModal = false" class="text-slate-400 hover:text-slate-700"><span class="material-symbols-outlined">close</span></button>
+            </div>
+            <form method="POST" action="{{ route('admin.master.kelas.store') }}" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                @csrf
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Nama Kelas</label>
+                    <input type="text" name="name" value="{{ old('name') }}" required class="w-full bg-slate-50 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-primary/20" placeholder="Contoh: XI RPL 1" />
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Tingkat</label>
+                    <select name="level" required class="w-full bg-slate-50 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-primary/20">
+                        <option value="">Pilih</option>
+                        <option value="X" @selected(old('level') === 'X')>X</option>
+                        <option value="XI" @selected(old('level') === 'XI')>XI</option>
+                        <option value="XII" @selected(old('level') === 'XII')>XII</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Jurusan</label>
+                    <input type="text" name="major" value="{{ old('major') }}" required class="w-full bg-slate-50 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-primary/20" placeholder="Contoh: RPL" />
+                </div>
+                <div class="md:col-span-3 flex justify-end gap-2 mt-2">
+                    <button type="button" @click="showCreateModal = false" class="px-4 py-2.5 rounded-lg bg-slate-100 text-slate-700 text-sm font-bold">Batal</button>
+                    <button type="submit" class="px-4 py-2.5 rounded-xl bg-slate-900 text-white text-sm font-bold">Simpan Kelas</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @if ($editClass)
+        <div x-show="showEditModal" x-transition class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4" @click.self="window.location='{{ route('admin.master.kelas', request()->except('edit')) }}'">
+            <div class="w-full max-w-2xl rounded-2xl bg-white border border-slate-100 shadow-2xl p-6">
+                <div class="flex items-center justify-between mb-5">
+                    <h3 class="text-lg font-bold text-slate-900">Edit Kelas</h3>
+                    <a href="{{ route('admin.master.kelas', request()->except('edit')) }}" class="text-slate-400 hover:text-slate-700"><span class="material-symbols-outlined">close</span></a>
+                </div>
+                <form method="POST" action="{{ route('admin.master.kelas.update', $editClass->id) }}" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    @csrf
+                    @method('PUT')
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Nama Kelas</label>
+                        <input type="text" name="name" value="{{ old('name', $editClass->name) }}" required class="w-full bg-slate-50 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-primary/20" />
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Tingkat</label>
+                        <select name="level" required class="w-full bg-slate-50 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-primary/20">
+                            <option value="X" @selected(old('level', $editClass->level) === 'X')>X</option>
+                            <option value="XI" @selected(old('level', $editClass->level) === 'XI')>XI</option>
+                            <option value="XII" @selected(old('level', $editClass->level) === 'XII')>XII</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Jurusan</label>
+                        <input type="text" name="major" value="{{ old('major', $editClass->major) }}" required class="w-full bg-slate-50 border-none rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-primary/20" />
+                    </div>
+                    <div class="md:col-span-3 flex justify-end gap-2 mt-2">
+                        <a href="{{ route('admin.master.kelas', request()->except('edit')) }}" class="px-4 py-2.5 rounded-lg bg-slate-100 text-slate-700 text-sm font-bold">Batal</a>
+                        <button type="submit" class="px-4 py-2.5 rounded-xl bg-primary text-white text-sm font-bold">Update Kelas</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endif
 </div>
 @endsection

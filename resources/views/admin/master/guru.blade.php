@@ -1,7 +1,19 @@
 @extends('layouts.admin')
 
 @section('content')
-<div class="space-y-8">
+<div class="space-y-8" x-data="{ showCreateModal: {{ $errors->any() && !$editTeacher ? 'true' : 'false' }}, showEditModal: {{ $editTeacher ? 'true' : 'false' }} }">
+    @if (session('status'))
+        <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">
+            {{ session('status') }}
+        </div>
+    @endif
+
+    @if ($errors->any())
+        <div class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700">
+            {{ $errors->first() }}
+        </div>
+    @endif
+
     <!-- Breadcrumbs & Header -->
     <div class="mb-8">
         <nav class="flex text-xs font-semibold text-slate-400 uppercase tracking-widest gap-2 mb-2">
@@ -24,7 +36,7 @@
             </div>
             <button type="submit" class="px-4 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-bold hover:opacity-90 transition-all">Cari</button>
         </form>
-        <button type="button" onclick="alert('Fitur tambah guru akan diaktifkan pada tahap berikutnya.')" class="w-full md:w-auto px-6 py-2.5 bg-gradient-to-br from-primary to-primary-container text-white font-bold rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-all transform hover:scale-[1.02] active:scale-95 shadow-lg shadow-primary/20">
+        <button type="button" @click="showCreateModal = true" class="w-full md:w-auto px-6 py-2.5 bg-gradient-to-br from-primary to-primary-container text-white font-bold rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-all transform hover:scale-[1.02] active:scale-95 shadow-lg shadow-primary/20">
             <span class="material-symbols-outlined">add_circle</span>
             <span>Tambah Guru</span>
         </button>
@@ -68,8 +80,12 @@
                             </td>
                             <td class="px-6 py-4 text-right">
                                 <div class="flex items-center justify-end gap-2 text-slate-400">
-                                    <button type="button" onclick="alert('Fitur edit guru belum diaktifkan.')" class="hover:text-primary transition-colors"><span class="material-symbols-outlined text-[20px]">edit</span></button>
-                                    <button type="button" onclick="alert('Fitur hapus guru belum diaktifkan.')" class="hover:text-rose-500 transition-colors"><span class="material-symbols-outlined text-[20px]">delete</span></button>
+                                    <a href="{{ route('admin.master.guru', array_merge(request()->query(), ['edit' => $teacher->id])) }}" class="hover:text-primary transition-colors"><span class="material-symbols-outlined text-[20px]">edit</span></a>
+                                    <form method="POST" action="{{ route('admin.master.guru.destroy', $teacher->id) }}" onsubmit="return confirm('Hapus data guru ini?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="hover:text-rose-500 transition-colors"><span class="material-symbols-outlined text-[20px]">delete</span></button>
+                                    </form>
                                 </div>
                             </td>
                         </tr>
@@ -109,5 +125,64 @@
             </div>
         </div>
     </div>
+
+    <div x-show="showCreateModal" x-transition class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4" @click.self="showCreateModal = false">
+        <div class="w-full max-w-2xl rounded-2xl bg-white border border-slate-100 shadow-2xl p-6">
+            <div class="flex items-center justify-between mb-5">
+                <h3 class="text-lg font-bold text-slate-900">Tambah Guru</h3>
+                <button type="button" @click="showCreateModal = false" class="text-slate-400 hover:text-slate-700"><span class="material-symbols-outlined">close</span></button>
+            </div>
+            <form method="POST" action="{{ route('admin.master.guru.store') }}" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                @csrf
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Nama</label>
+                    <input type="text" name="name" value="{{ old('name') }}" required class="w-full px-4 py-2.5 rounded-lg bg-slate-50 border-none text-sm focus:ring-2 focus:ring-primary/20" placeholder="Nama guru" />
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Email</label>
+                    <input type="email" name="email" value="{{ old('email') }}" required class="w-full px-4 py-2.5 rounded-lg bg-slate-50 border-none text-sm focus:ring-2 focus:ring-primary/20" placeholder="guru@sekolah.sch.id" />
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Password</label>
+                    <input type="password" name="password" required class="w-full px-4 py-2.5 rounded-lg bg-slate-50 border-none text-sm focus:ring-2 focus:ring-primary/20" placeholder="Minimal 8 karakter" />
+                </div>
+                <div class="md:col-span-2 flex justify-end gap-2 mt-2">
+                    <button type="button" @click="showCreateModal = false" class="px-4 py-2.5 rounded-lg bg-slate-100 text-slate-700 text-sm font-bold">Batal</button>
+                    <button type="submit" class="px-4 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-bold">Simpan Guru</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @if ($editTeacher)
+        <div x-show="showEditModal" x-transition class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4" @click.self="window.location='{{ route('admin.master.guru', request()->except('edit')) }}'">
+            <div class="w-full max-w-2xl rounded-2xl bg-white border border-slate-100 shadow-2xl p-6">
+                <div class="flex items-center justify-between mb-5">
+                    <h3 class="text-lg font-bold text-slate-900">Edit Guru</h3>
+                    <a href="{{ route('admin.master.guru', request()->except('edit')) }}" class="text-slate-400 hover:text-slate-700"><span class="material-symbols-outlined">close</span></a>
+                </div>
+                <form method="POST" action="{{ route('admin.master.guru.update', $editTeacher->id) }}" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    @csrf
+                    @method('PUT')
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Nama</label>
+                        <input type="text" name="name" value="{{ old('name', $editTeacher->name) }}" required class="w-full px-4 py-2.5 rounded-lg bg-slate-50 border-none text-sm focus:ring-2 focus:ring-primary/20" />
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Email</label>
+                        <input type="email" name="email" value="{{ old('email', $editTeacher->email) }}" required class="w-full px-4 py-2.5 rounded-lg bg-slate-50 border-none text-sm focus:ring-2 focus:ring-primary/20" />
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Password Baru</label>
+                        <input type="password" name="password" class="w-full px-4 py-2.5 rounded-lg bg-slate-50 border-none text-sm focus:ring-2 focus:ring-primary/20" placeholder="Kosongkan jika tidak diubah" />
+                    </div>
+                    <div class="md:col-span-2 flex justify-end gap-2 mt-2">
+                        <a href="{{ route('admin.master.guru', request()->except('edit')) }}" class="px-4 py-2.5 rounded-lg bg-slate-100 text-slate-700 text-sm font-bold">Batal</a>
+                        <button type="submit" class="px-4 py-2.5 bg-primary text-white rounded-lg text-sm font-bold">Update Guru</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endif
 </div>
 @endsection

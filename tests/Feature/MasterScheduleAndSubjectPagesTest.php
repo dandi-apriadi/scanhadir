@@ -56,4 +56,28 @@ class MasterScheduleAndSubjectPagesTest extends TestCase
         $response->assertSee($class->name);
         $response->assertSee('LAB-DB');
     }
+
+    /** @test */
+    public function admin_master_jadwal_page_guards_edit_modal_binding_when_edit_schedule_is_null()
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $teacher = User::factory()->teacher()->create();
+        $class = StudentClass::factory()->create();
+        $subject = Subject::factory()->create();
+
+        Schedule::factory()->create([
+            'teacher_id' => $teacher->id,
+            'class_id' => $class->id,
+            'subject_id' => $subject->id,
+            'day' => 'Senin',
+            'start_time' => '07:00:00',
+            'end_time' => '08:00:00',
+        ]);
+
+        $response = $this->actingAs($admin)->get(route('admin.master.jadwal'));
+
+        $response->assertOk();
+        $response->assertSee('template x-if="editSchedule"', false);
+        $response->assertDontSee('form method="POST" x-show="editSchedule"', false);
+    }
 }
