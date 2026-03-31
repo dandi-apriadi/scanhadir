@@ -1192,25 +1192,41 @@ class DashboardController extends Controller
             ]);
             $attendance = $existingAttendance;
         } else {
-            // Determine status based on check_in time
+        // Calculate status based on system settings
+        $settings = SystemSetting::query()->first();
+        $status = 'present';
+
+        if ($settings) {
+            $startTime = \Carbon\Carbon::parse($settings->attendance_start_time);
+            $tolerance = (int) ($settings->late_tolerance_minutes ?? 0);
+            $lateThreshold = $startTime->copy()->addMinutes($tolerance);
+            
+            $currentTime = now();
+            // Since attendance is for today, we only compare the time part
+            $currentHms = $currentTime->format('H:i:s');
+            $thresholdHms = $lateThreshold->format('H:i:s');
+
+            if ($currentHms > $thresholdHms) {
+                $status = 'late';
+            }
+        } else {
+            // Fallback to 07:30 if settings are missing
             $hour = (int) now()->format('H');
             $minute = (int) now()->format('i');
-            $status = 'present';
-            
-            // Example: If after 07:30, mark as late
             if ($hour > 7 || ($hour == 7 && $minute > 30)) {
                 $status = 'late';
             }
+        }
 
-            $attendance = Attendance::create([
-                'student_id' => $student->id,
-                'date' => $date,
-                'check_in' => $checkInTime,
-                'status' => $status,
-                'approval_status' => 'approved',
-                'approved_by' => auth()->id(),
-                'approved_at' => now(),
-            ]);
+        $attendance = Attendance::create([
+            'student_id' => $student->id,
+            'date' => $date,
+            'check_in' => $checkInTime,
+            'status' => $status,
+            'approval_status' => 'approved',
+            'approved_by' => auth()->id(),
+            'approved_at' => now(),
+        ]);
         }
 
         return response()->json([
