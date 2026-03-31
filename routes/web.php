@@ -13,11 +13,13 @@ Route::redirect('/teacher', '/teacher/dashboard');
 Route::redirect('/dashboard', '/student/dashboard');
 
 Route::get('/student/{student}/qrcode', [StudentQrCodeController::class, 'show'])->name('students.qrcode');
+Route::get('/qr-download/{nisn}/{filename}.png', [StudentQrCodeController::class, 'downloadByNisn'])->name('students.qrcode.download');
 
 // Guest Routes
 Route::get('/', [DashboardController::class, 'landing'])->name('landing');
 
 // Authentication Routes
+Route::redirect('/login', '/auth/login');
 Route::prefix('auth')->name('auth.')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [AuthController::class, 'processLogin'])->name('login.process');

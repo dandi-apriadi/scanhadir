@@ -34,7 +34,7 @@
                         <div class="bg-white p-4 rounded-xl shadow-inner mb-6">
                             <img alt="QR Code" class="w-32 h-32" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAS0JAVO5rC9CQx4N4MvXwKonGxEsZGfAdjgd8nqOb2vuqztPL7YLkV_sJmDLe9tAMiJ0p2aS-genWjl_kQ9-Ygw8Ws4Byuc7wlL6oa5EuHvCVfUOMkjQBoAYf_JoLY5LPE8ymql1WbM9dn39YDry9HxaJvJSPQYpMfDCysZTmenu3myPCd3Ea4GUN1iOcNtlebUS7TLOjc23epzcnG-JDO_CbCjkQxEvBBBWmtawkr98uMTiCrE6J66adD80vAWx6PXY880kXjIVn7"/>
                         </div>
-                        <a href="{{ route('students.qrcode', $student_id) }}?download=1" class="w-full py-3 bg-gradient-to-r from-primary to-primary-container text-white font-bold text-xs uppercase tracking-widest rounded-xl hover:shadow-lg hover:shadow-primary/20 transition-all flex items-center justify-center gap-2">
+                        <a href="{{ route('students.qrcode.download', ['nisn' => $nisn, 'filename' => 'qr-siswa-'.$nisn], false) }}" download="qr-siswa-{{ $nisn }}.png" class="w-full py-3 bg-gradient-to-r from-primary to-primary-container text-white font-bold text-xs uppercase tracking-widest rounded-xl hover:shadow-lg hover:shadow-primary/20 transition-all flex items-center justify-center gap-2">
                             <span class="material-symbols-outlined text-lg">download</span>
                             Download QR
                         </a>
@@ -48,7 +48,7 @@
             <div class="bg-surface-container-lowest rounded-3xl border border-outline-variant/10 shadow-sm overflow-hidden">
                 <div class="px-8 py-5 border-b border-slate-50 flex items-center justify-between">
                     <h4 class="text-lg font-bold text-on-surface">Informasi Pribadi</h4>
-                    <button type="button" onclick="alert('Fitur edit profil belum diaktifkan.')" class="text-primary text-xs font-bold uppercase tracking-widest flex items-center gap-1 hover:bg-indigo-50 px-3 py-1.5 rounded-lg transition-colors">
+                    <button type="button" onclick="showToast('Fitur edit profil belum diaktifkan.')" class="text-primary text-xs font-bold uppercase tracking-widest flex items-center gap-1 hover:bg-indigo-50 px-3 py-1.5 rounded-lg transition-colors">
                         <span class="material-symbols-outlined text-sm">edit</span>
                         Edit Data
                     </button>

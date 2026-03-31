@@ -244,5 +244,67 @@
         </div>
     </main>
     @livewireScripts
+
+    <!-- Global Toast Container -->
+    <div id="toastContainer" class="fixed top-6 right-6 z-[9999] flex flex-col gap-3 pointer-events-none"></div>
+    <script>
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            if(!container) return;
+            
+            const colors = {
+                info: 'bg-indigo-50 border-indigo-200 text-indigo-800',
+                success: 'bg-emerald-50 border-emerald-200 text-emerald-800',
+                error: 'bg-rose-50 border-rose-200 text-rose-800',
+                warning: 'bg-amber-50 border-amber-200 text-amber-800',
+            };
+            const icons = {
+                info: 'info',
+                success: 'check_circle',
+                error: 'error',
+                warning: 'warning',
+            };
+
+            const toast = document.createElement('div');
+            toast.className = `flex items-center gap-3 px-4 py-3 rounded-2xl border ${colors[type] || colors.info} shadow-lg shadow-indigo-100/50 pointer-events-auto transition-all duration-300 translate-x-12 opacity-0`;
+            toast.innerHTML = `
+                <span class="material-symbols-outlined text-[20px]">${icons[type] || 'info'}</span>
+                <span class="text-xs font-bold">${message}</span>
+            `;
+
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.remove('translate-x-12', 'opacity-0');
+            }, 100);
+
+            setTimeout(() => {
+                toast.classList.add('translate-x-12', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        /**
+         * Global File Download Utility
+         * Forces the browser to use a specific filename using client-side Blob triggers.
+         */
+        async function downloadFile(url, filename) {
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Network response was not ok');
+                const blob = await response.blob();
+                const blobUrl = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = blobUrl;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(blobUrl);
+            } catch (error) {
+                console.error('Download failed:', error);
+                showToast('Gagal mengunduh file.', 'error');
+            }
+        }
+    </script>
 </body>
 </html>

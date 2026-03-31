@@ -60,7 +60,7 @@
                 <button type="button" @click="showAdvancedFilter = !showAdvancedFilter" class="p-3 text-slate-500 hover:bg-slate-50 rounded-xl transition-colors" :class="showAdvancedFilter ? 'bg-slate-100 text-primary' : ''">
                     <span class="material-symbols-outlined">filter_list</span>
                 </button>
-                <a href="{{ route('admin.master.siswa.export', request()->query()) }}" class="p-3 text-slate-500 hover:bg-slate-50 rounded-xl transition-colors">
+                <a href="{{ route('admin.master.siswa.export', request()->query(), false) }}" class="p-3 text-slate-500 hover:bg-slate-50 rounded-xl transition-colors">
                     <span class="material-symbols-outlined">file_download</span>
                 </a>
             </div>
@@ -151,14 +151,14 @@
                                 <span class="inline-flex items-center px-3 py-1 bg-indigo-50 rounded-lg text-xs font-bold text-primary">{{ $student->class?->name ?? '-' }}</span>
                             </td>
                             <td class="px-6 py-4">
-                                <a href="{{ route('students.qrcode', $student->id) }}?download=1" class="w-9 h-9 p-1 bg-white border border-slate-100 rounded-lg group-hover:scale-110 transition-transform cursor-pointer flex items-center justify-center shadow-sm">
+                                <a href="{{ route('students.qrcode.download', ['nisn' => $student->nisn, 'filename' => 'qr-siswa-' . $student->nisn], false) }}" download="qr-siswa-{{ $student->nisn }}.png" class="w-9 h-9 p-1 bg-white border border-slate-100 rounded-lg group-hover:scale-110 transition-transform cursor-pointer flex items-center justify-center shadow-sm">
                                     <span class="material-symbols-outlined text-slate-400 text-xl">download</span>
                                 </a>
                             </td>
                             <td class="px-6 py-4">
                                 <div class="flex items-center justify-center gap-1 text-slate-400">
                                     <a href="{{ route('admin.master.siswa', array_merge(request()->query(), ['edit' => $student->id])) }}" class="p-2 hover:text-primary transition-colors"><span class="material-symbols-outlined text-[20px]">edit</span></a>
-                                    <a href="{{ route('students.qrcode', $student->id) }}?download=1" class="p-2 hover:text-primary transition-colors"><span class="material-symbols-outlined text-[20px]">download</span></a>
+                                    <a href="{{ route('students.qrcode.download', ['nisn' => $student->nisn, 'filename' => 'qr-siswa-' . $student->nisn], false) }}" download="qr-siswa-{{ $student->nisn }}.png" class="p-2 hover:text-primary transition-colors"><span class="material-symbols-outlined text-[20px]">download</span></a>
                                     <form method="POST" action="{{ route('admin.master.siswa.destroy', $student->id) }}" onsubmit="return confirm('Hapus data siswa ini?');">
                                         @csrf
                                         @method('DELETE')

@@ -10,7 +10,6 @@ use App\Models\Subject;
 use App\Models\SystemSetting;
 use App\Models\User;
 use App\Services\AttendanceExportService;
-use App\Services\ReportService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -346,53 +345,86 @@ class DashboardController extends Controller
         return view('admin.report_pdf', ['title' => 'Cetak Laporan']);
     }
 
-    public function adminReports(ReportService $reportService)
+    public function adminReports(Request $request)
     {
-        $date = now()->toDateString();
+        $filters = $this->normalizeReportFilters($request);
+        $rowsQuery = $this->buildAdminAttendanceReportQuery($filters);
+        $summaryQuery = $this->buildAdminAttendanceReportQuery($filters);
+
+        $rows = $rowsQuery
+            ->orderByDesc('date')
+            ->orderBy('check_in')
+            ->paginate(20)
+            ->withQueryString();
+
+        $studentQuery = Student::query();
+        if ($filters['class_id'] > 0) {
+            $studentQuery->where('class_id', $filters['class_id']);
+        }
 
         return view('admin.reports', [
-            'summary' => $reportService->getDailyAttendanceSummary($date),
-            'rows' => $reportService->getAttendanceRowsForDate($date),
+            'title' => 'Laporan Presensi',
+            'summary' => [
+                'total_students' => $studentQuery->count(),
+                'total_scanned' => (clone $summaryQuery)->count(),
+                'present' => (clone $summaryQuery)->where('status', 'present')->count(),
+                'late' => (clone $summaryQuery)->where('status', 'late')->count(),
+                'sick' => (clone $summaryQuery)->where('status', 'sick')->count(),
+                'excused' => (clone $summaryQuery)->where('status', 'excused')->count(),
+                'absent' => (clone $summaryQuery)->where('status', 'absent')->count(),
+            ],
+            'rows' => $rows,
+            'classOptions' => StudentClass::query()->orderBy('name')->get(['id', 'name']),
+            'statusOptions' => [
+                'present' => 'Present',
+                'late' => 'Late',
+                'sick' => 'Sick',
+                'excused' => 'Excused',
+                'absent' => 'Absent',
+            ],
+            'filters' => $filters,
         ]);
     }
 
-    public function exportAttendanceExcel(AttendanceExportService $exportService)
+    public function exportAttendanceExcel(Request $request, AttendanceExportService $exportService)
     {
-        $date = now()->toDateString();
-        $attendances = Attendance::with(['student.user', 'student.class'])
-            ->whereDate('date', $date)
+        $filters = $this->normalizeReportFilters($request);
+
+        $attendances = $this->buildAdminAttendanceReportQuery($filters)
+            ->orderBy('date')
+            ->orderBy('check_in')
             ->get();
 
+        $selectedClass = $filters['class_id'] > 0
+            ? StudentClass::query()->find($filters['class_id'])
+            : null;
+
         $options = [
-            'date_from' => $date,
-            'date_to' => $date,
-            'class_name' => 'All Classes',
+            'date_from' => $filters['date_from'],
+            'date_to' => $filters['date_to'],
+            'class_name' => $selectedClass?->name ?? 'All Classes',
         ];
 
         $filePath = $exportService->exportToXLSX($attendances, $options);
-        $downloadName = 'laporan-presensi-' . now()->format('Y-m-d') . '.xlsx';
+        $downloadName = 'laporan-presensi-' . $filters['date_from'] . '-to-' . $filters['date_to'] . '.xlsx';
 
         return response()->download($filePath, $downloadName)->deleteFileAfterSend(true);
     }
 
-    public function exportAttendancePdf(ReportService $reportService)
+    public function exportAttendancePdf(Request $request)
     {
-        $rows = $reportService->getAttendanceRowsForDate(now()->toDateString());
+        $filters = $this->normalizeReportFilters($request);
+
+        $attendances = $this->buildAdminAttendanceReportQuery($filters)
+            ->orderBy('date')
+            ->orderBy('check_in')
+            ->get();
 
         $pdf = Pdf::loadView('reports.attendance', [
-            'attendances' => $rows->map(fn (array $row) => (object) [
-                'date' => $row['date'],
-                'check_in' => $row['check_in'],
-                'check_out' => $row['check_out'],
-                'status' => $row['status'],
-                'student' => (object) [
-                    'user' => (object) ['name' => $row['student_name'] ?? '-'],
-                    'class' => (object) ['name' => $row['class_name'] ?? '-'],
-                ],
-            ]),
+            'attendances' => $attendances,
         ]);
 
-        $downloadName = 'laporan-presensi-' . now()->format('Y-m-d') . '.pdf';
+        $downloadName = 'laporan-presensi-' . $filters['date_from'] . '-to-' . $filters['date_to'] . '.pdf';
 
         return response()->streamDownload(
             fn () => print($pdf->output()),
@@ -404,6 +436,69 @@ class DashboardController extends Controller
                 'Expires' => '0',
             ]
         );
+    }
+
+    private function normalizeReportFilters(Request $request): array
+    {
+        $today = now()->toDateString();
+
+        $dateFrom = (string) $request->query('date_from', $today);
+        $dateTo = (string) $request->query('date_to', $today);
+
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateFrom)) {
+            $dateFrom = $today;
+        }
+
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateTo)) {
+            $dateTo = $today;
+        }
+
+        if ($dateFrom > $dateTo) {
+            [$dateFrom, $dateTo] = [$dateTo, $dateFrom];
+        }
+
+        $classId = (int) $request->query('class_id', 0);
+        if ($classId > 0 && !StudentClass::query()->whereKey($classId)->exists()) {
+            $classId = 0;
+        }
+
+        $status = trim((string) $request->query('status', ''));
+        $allowedStatus = ['present', 'late', 'sick', 'excused', 'absent'];
+        if (!in_array($status, $allowedStatus, true)) {
+            $status = '';
+        }
+
+        return [
+            'q' => trim((string) $request->query('q', '')),
+            'date_from' => $dateFrom,
+            'date_to' => $dateTo,
+            'class_id' => $classId,
+            'status' => $status,
+        ];
+    }
+
+    private function buildAdminAttendanceReportQuery(array $filters)
+    {
+        return Attendance::query()
+            ->with(['student.user:id,name', 'student.class:id,name'])
+            ->whereBetween('date', [$filters['date_from'], $filters['date_to']])
+            ->when($filters['class_id'] > 0, function ($query) use ($filters) {
+                $query->whereHas('student', fn ($studentQuery) => $studentQuery->where('class_id', $filters['class_id']));
+            })
+            ->when($filters['status'] !== '', function ($query) use ($filters) {
+                $query->where('status', $filters['status']);
+            })
+            ->when($filters['q'] !== '', function ($query) use ($filters) {
+                $q = $filters['q'];
+
+                $query->whereHas('student', function ($studentQuery) use ($q) {
+                    $studentQuery
+                        ->where('nisn', 'like', "%{$q}%")
+                        ->orWhereHas('user', function ($userQuery) use ($q) {
+                            $userQuery->where('name', 'like', "%{$q}%");
+                        });
+                });
+            });
     }
 
     public function masterGuru(Request $request)

@@ -62,6 +62,8 @@
             height: 0;
         }
     </style>
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 <body class="bg-surface text-on-surface font-body antialiased" x-data="{ sidebarCollapsed: false, activeGroups: { main: true, reports: true } }">
     <div class="flex min-h-screen">
@@ -78,9 +80,6 @@
                             <p class="text-[10px] uppercase tracking-widest text-slate-400 font-bold whitespace-nowrap">Teacher Portal</p>
                         </div>
                     </div>
-                    <button @click="sidebarCollapsed = !sidebarCollapsed" class="p-2 hover:bg-slate-50 rounded-lg text-slate-400 transition-colors hidden md:block" :class="sidebarCollapsed ? 'mx-auto' : ''" title="Toggle Sidebar">
-                        <span class="material-symbols-outlined text-[20px]" x-text="sidebarCollapsed ? 'menu_open' : 'menu'">menu</span>
-                    </button>
                 </div>
             </div>
 
@@ -164,12 +163,6 @@
                 </div>
 
                 <div class="flex items-center gap-6">
-                    <!-- Modern Search Bar Placeholder -->
-                    <div class="hidden lg:flex items-center gap-3 px-4 py-2 bg-slate-100/50 border border-slate-200/50 rounded-2xl w-64 focus-within:w-80 focus-within:bg-white focus-within:border-primary/20 transition-all duration-300 group shadow-inner">
-                        <span class="material-symbols-outlined text-slate-400 text-xl group-focus-within:text-primary transition-colors">search</span>
-                        <input type="text" placeholder="Cari data siswa atau jadwal..." class="bg-transparent border-none text-sm outline-none w-full font-medium placeholder:text-slate-400 focus:ring-0 shadow-none"/>
-                    </div>
-
                     <div class="flex items-center gap-4">
                         <button class="w-10 h-10 flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-primary rounded-xl transition-all relative">
                             <span class="material-symbols-outlined">notifications</span>
@@ -207,5 +200,56 @@
         </main>
     </div>
     @livewireScripts
+    <div id="toastContainer" class="fixed top-6 right-6 z-[9999] flex flex-col gap-3 pointer-events-none"></div>
+    <script>
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            if(!container) return;
+
+            const colors = {
+                info: 'bg-indigo-50 border-indigo-200 text-indigo-800',
+                success: 'bg-emerald-50 border-emerald-200 text-emerald-800',
+                error: 'bg-rose-50 border-rose-200 text-rose-800',
+                warning: 'bg-amber-50 border-amber-200 text-amber-800',
+            };
+            const icons = { info: 'info', success: 'check_circle', error: 'error', warning: 'warning' };
+            
+            const toast = document.createElement('div');
+            toast.className = `flex items-center gap-3 px-4 py-3 rounded-2xl border ${colors[type] || colors.info} shadow-lg shadow-indigo-100/50 pointer-events-auto transition-all duration-300 translate-x-12 opacity-0`;
+            toast.innerHTML = `
+                <span class="material-symbols-outlined text-[20px]">${icons[type] || 'info'}</span>
+                <span class="text-xs font-bold">${message}</span>
+            `;
+
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.remove('translate-x-12', 'opacity-0');
+            }, 100);
+
+            setTimeout(() => {
+                toast.classList.add('translate-x-12', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        async function downloadFile(url, filename) {
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Network response was not ok');
+                const blob = await response.blob();
+                const blobUrl = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = blobUrl;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(blobUrl);
+            } catch (error) {
+                console.error('Download failed:', error);
+                showToast('Gagal mengunduh file.', 'error');
+            }
+        }
+    </script>
 </body>
 </html>

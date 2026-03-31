@@ -65,7 +65,7 @@
                             <div class="space-y-1">
                                 <p class="text-sm font-semibold text-on-surface">Unggah Logo Baru</p>
                                 <p class="max-w-xs text-xs text-slate-400">Format PNG, JPG atau SVG. Maksimal 2MB. Rekomendasi 512x512px.</p>
-                                <button type="button" onclick="alert('Upload logo akan diaktifkan pada iterasi berikutnya.')" class="mt-2 flex items-center gap-1 text-xs font-bold text-primary hover:underline">
+                                <button type="button" onclick="showToast('Upload logo akan diaktifkan pada iterasi berikutnya.')" class="mt-2 flex items-center gap-1 text-xs font-bold text-primary hover:underline">
                                     <span class="material-symbols-outlined text-sm">upload</span> Pilih File
                                 </button>
                             </div>

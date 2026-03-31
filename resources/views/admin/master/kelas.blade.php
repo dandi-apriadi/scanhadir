@@ -69,9 +69,15 @@
                                     </div>
                                 </td>
                                 <td class="px-6 py-5 text-sm font-medium text-slate-600">{{ optional($class->teachers->first())->name ?? '-' }}</td>
-                                <td class="px-6 py-5 text-center text-sm font-bold text-on-surface">{{ $class->students_count }}</td>
+                                <td class="px-6 py-5 text-center text-sm font-bold text-on-surface">
+                                    <a href="{{ route('admin.master.siswa', ['class_id' => $class->id]) }}" class="inline-flex items-center gap-1 rounded-lg bg-indigo-50 px-2.5 py-1 text-primary hover:bg-indigo-100 transition-colors">
+                                        <span>{{ $class->students_count }}</span>
+                                        <span class="material-symbols-outlined text-[16px]">visibility</span>
+                                    </a>
+                                </td>
                                 <td class="px-6 py-5 text-right">
                                     <div class="flex items-center justify-end gap-1 text-slate-400">
+                                        <a href="{{ route('admin.master.siswa', ['class_id' => $class->id]) }}" class="p-2 hover:text-primary transition-colors" title="Lihat daftar siswa"><span class="material-symbols-outlined text-[20px]">groups</span></a>
                                         <a href="{{ route('admin.master.kelas', array_merge(request()->query(), ['edit' => $class->id])) }}" class="p-2 hover:text-primary transition-colors"><span class="material-symbols-outlined text-[20px]">edit_note</span></a>
                                         <form method="POST" action="{{ route('admin.master.kelas.destroy', $class->id) }}" onsubmit="return confirm('Hapus data kelas ini?');">
                                             @csrf

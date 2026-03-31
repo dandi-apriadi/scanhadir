@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 
 @section('content')
-<div class="space-y-8" x-data="{ editSchedule: null }">
+<div class="space-y-8" x-data="{ editSchedule: { id: null, class_id: null, subject_id: null, teacher_id: null, day: '', start_time: '', end_time: '', room: '' }, showEdit: false }">
     @if (session('status'))
         <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">
             {{ session('status') }}
@@ -179,7 +179,7 @@
                             </td>
                             <td class="px-6 py-4 text-right text-slate-400">
                                 <div class="flex items-center justify-end gap-1">
-                                    <button type="button" @click="editSchedule = { id: {{ $schedule->id }}, class_id: {{ $schedule->class_id }}, subject_id: {{ $schedule->subject_id }}, teacher_id: {{ $schedule->teacher_id }}, day: '{{ $schedule->day }}', start_time: '{{ \Illuminate\Support\Carbon::parse($schedule->start_time)->format('H:i') }}', end_time: '{{ \Illuminate\Support\Carbon::parse($schedule->end_time)->format('H:i') }}', room: '{{ $schedule->room }}' }" class="p-2 hover:text-primary transition-colors"><span class="material-symbols-outlined text-lg">edit</span></button>
+                                    <button type="button" @click="editSchedule = { id: {{ $schedule->id }}, class_id: {{ $schedule->class_id }}, subject_id: {{ $schedule->subject_id }}, teacher_id: {{ $schedule->teacher_id }}, day: '{{ $schedule->day }}', start_time: '{{ \Illuminate\Support\Carbon::parse($schedule->start_time)->format('H:i') }}', end_time: '{{ \Illuminate\Support\Carbon::parse($schedule->end_time)->format('H:i') }}', room: '{{ $schedule->room }}' }; showEdit = true" class="p-2 hover:text-primary transition-colors"><span class="material-symbols-outlined text-lg">edit</span></button>
                                     <form method="POST" action="{{ route('admin.master.jadwal.destroy', $schedule) }}" onsubmit="return confirm('Hapus jadwal ini?')">
                                         @csrf
                                         @method('DELETE')
@@ -223,13 +223,13 @@
     </div>
 
     <!-- Edit Schedule Modal -->
-    <div x-show="editSchedule" x-transition class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4" @click="editSchedule = null">
+    <div x-show="showEdit" x-transition class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4" @click="showEdit = false" x-cloak>
         <div @click.stop class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full p-8 border border-slate-100">
             <h3 class="text-xl font-bold text-on-surface mb-6">Edit Jadwal Pelajaran</h3>
-            <form method="POST" :action="editSchedule ? `/admin/master/jadwal/${editSchedule.id}` : '#'">
+            <form method="POST" :action="showEdit ? `/admin/master/jadwal/${editSchedule.id}` : '#'">
                 @csrf
                 @method('PUT')
-                <template x-if="editSchedule">
+                <template x-if="showEdit">
                     <div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
@@ -282,7 +282,7 @@
                             </div>
                         </div>
                         <div class="flex gap-3 mt-8">
-                            <button type="button" @click="editSchedule = null" class="flex-1 py-3 px-4 rounded-2xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 transition-all">Batal</button>
+                            <button type="button" @click="showEdit = false" class="flex-1 py-3 px-4 rounded-2xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 transition-all">Batal</button>
                             <button type="submit" class="flex-1 py-3 px-4 rounded-2xl bg-primary text-white font-bold hover:opacity-90 transition-all">Simpan</button>
                         </div>
                     </div>

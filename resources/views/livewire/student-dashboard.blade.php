@@ -95,7 +95,7 @@
                     <span class="material-symbols-outlined text-6xl text-slate-300">qr_code_2</span>
                 </div>
                 <p class="text-xs opacity-75">Scan dengan alat presensi untuk pencatat kehadiran</p>
-                <a href="{{ route('students.qrcode', $student->id) }}" class="mt-4 block w-full py-2 px-4 bg-white text-primary rounded-lg font-bold text-center text-sm hover:bg-slate-100 transition-colors">
+                <a href="{{ route('students.qrcode.download', ['nisn' => $student->nisn, 'filename' => 'qr-siswa-'.$student->nisn], false) }}" class="mt-4 block w-full py-2 px-4 bg-white text-primary rounded-lg font-bold text-center text-sm hover:bg-slate-100 transition-colors">
                     Download QR Code
                 </a>
             </div>

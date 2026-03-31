@@ -65,10 +65,48 @@
         <input id="nisnInput" type="text" name="nisn" autofocus>
     </form>
 
+    <!-- Error Banner -->
+    <div id="errorBanner" class="hidden fixed top-20 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-6 py-3 bg-rose-500/20 border border-rose-500/40 rounded-2xl backdrop-blur-xl text-rose-300 text-sm font-semibold shadow-2xl">
+        <span class="material-symbols-outlined text-lg text-rose-400">error</span>
+        <span id="errorBannerText"></span>
+        <button onclick="document.getElementById('errorBanner').classList.add('hidden')" class="ml-2 text-rose-400 hover:text-white transition-colors">
+            <span class="material-symbols-outlined text-base">close</span>
+        </button>
+    </div>
+
     <main class="flex h-[calc(100vh-76px)] p-8 gap-8">
         <!-- Scanner Viewport -->
         <div class="flex-1 relative bg-black rounded-[40px] overflow-hidden border border-white/10 shadow-2xl flex items-center justify-center">
             <div id="reader" class="absolute inset-0 z-0"></div>
+
+            <!-- Camera Error State / Manual Input Mode -->
+            <div id="cameraError" class="hidden absolute inset-0 z-[5] flex flex-col items-center justify-center gap-6 bg-slate-950/90">
+                <div class="w-16 h-16 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-3xl text-indigo-400">qr_code_scanner</span>
+                </div>
+                <div class="text-center">
+                    <p class="text-white font-bold text-lg font-headline">Mode Input Manual</p>
+                    <p class="text-slate-400 text-xs mt-1 max-w-sm">Kamera tidak tersedia. Ketik NISN atau gunakan barcode scanner USB.</p>
+                </div>
+
+                <!-- Manual NISN Input -->
+                <div class="w-full max-w-md px-8">
+                    <div class="relative">
+                        <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-indigo-400">badge</span>
+                        <input id="manualNisnInput" type="text" placeholder="Ketik atau scan NISN di sini..."
+                            class="w-full pl-12 pr-28 py-4 bg-white/5 border border-white/10 rounded-2xl text-white text-lg font-bold font-headline placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all"
+                            autocomplete="off">
+                        <button onclick="submitManualNisn()" class="absolute right-2 top-1/2 -translate-y-1/2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 rounded-xl text-white text-xs font-bold uppercase tracking-widest transition-all">
+                            Kirim
+                        </button>
+                    </div>
+                    <p class="text-slate-600 text-[10px] mt-2 text-center uppercase tracking-widest">Tekan Enter untuk mengirim</p>
+                </div>
+
+                <button onclick="retryCamera()" class="px-5 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-slate-400 text-[10px] font-bold uppercase tracking-widest transition-all flex items-center gap-2">
+                    <span class="material-symbols-outlined text-sm">videocam</span> Coba Aktifkan Kamera
+                </button>
+            </div>
 
             <!-- Simulated Video Feed -->
             <div class="absolute inset-0 opacity-25 mix-blend-overlay grayscale z-[1] pointer-events-none">
@@ -76,7 +114,7 @@
             </div>
 
             <!-- Focus Box -->
-            <div class="relative w-80 h-80 z-10 pointer-events-none">
+            <div id="focusBox" class="relative w-80 h-80 z-10 pointer-events-none">
                 <div class="absolute top-0 left-0 w-16 h-16 border-t-4 border-l-4 border-primary rounded-tl-2xl"></div>
                 <div class="absolute top-0 right-0 w-16 h-16 border-t-4 border-r-4 border-primary rounded-tr-2xl"></div>
                 <div class="absolute bottom-0 left-0 w-16 h-16 border-b-4 border-l-4 border-primary rounded-bl-2xl"></div>
@@ -215,9 +253,49 @@
                         () => {}
                     );
                 } catch (fallbackError) {
-                    showErrorMessage('Kamera tidak dapat diakses. Izinkan permission kamera pada browser.');
+                    setCameraErrorState();
                 }
             }
+        }
+
+        function setCameraErrorState() {
+            document.getElementById('cameraError').classList.remove('hidden');
+            document.getElementById('focusBox').classList.add('hidden');
+            statusDisplay.textContent = 'INPUT MANUAL';
+            statusDisplay.style.color = '#818cf8';
+
+            // Setup manual input
+            const manualInput = document.getElementById('manualNisnInput');
+            if (manualInput) {
+                manualInput.focus();
+                manualInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        submitManualNisn();
+                    }
+                });
+            }
+        }
+
+        function submitManualNisn() {
+            const manualInput = document.getElementById('manualNisnInput');
+            const nisn = (manualInput.value || '').trim();
+            if (!nisn) return;
+            submitAttendance(nisn);
+            manualInput.value = '';
+            manualInput.focus();
+        }
+
+        async function retryCamera() {
+            document.getElementById('cameraError').classList.add('hidden');
+            document.getElementById('focusBox').classList.remove('hidden');
+            statusDisplay.textContent = 'SIAP';
+            statusDisplay.style.color = '#9ca3af';
+            if (html5QrScanner) {
+                try { await html5QrScanner.stop(); } catch(e) {}
+            }
+            html5QrScanner = null;
+            initializeCameraScanner();
         }
 
         function applyMirrorFix(isFrontCamera) {
@@ -344,8 +422,15 @@
         }
 
         function showErrorMessage(message) {
-            alert(message);
+            showBannerError(message);
             nisnInput.focus();
+        }
+
+        function showBannerError(message) {
+            const banner = document.getElementById('errorBanner');
+            document.getElementById('errorBannerText').textContent = message;
+            banner.classList.remove('hidden');
+            setTimeout(() => banner.classList.add('hidden'), 5000);
         }
 
         function clearScannedData() {
@@ -361,16 +446,21 @@
     </script>
 
     <style>
+        /* Container */
         #reader {
             border: none !important;
             width: 100% !important;
             height: 100% !important;
+            position: absolute !important;
+            inset: 0 !important;
         }
 
+        /* All inner wrappers must fill the space */
         #reader > div,
         #reader__scan_region {
             width: 100% !important;
             height: 100% !important;
+            min-height: 100% !important;
         }
 
         #reader__scan_region {
@@ -380,21 +470,35 @@
             overflow: hidden;
         }
 
+        /* Hide library's dashboard UI (camera selector etc) */
         #reader__dashboard {
             display: none !important;
         }
 
-        #reader video,
-        #reader__scan_region video,
-        #reader__scan_region img {
-            width: 100% !important;
-            height: 100% !important;
-            object-fit: cover;
+        /* Hide the library's built-in scan region border (white corners) */
+        #reader__scan_region > canvas,
+        #reader__scan_region > img:not(video) {
+            display: none !important;
         }
 
+        /* The qr-shaded region drawn by html5-qrcode */
+        #qr-shaded-region {
+            display: none !important;
+        }
+
+        /* Force video to cover the entire container */
+        #reader video,
+        #reader__scan_region video {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover !important;
+            position: absolute !important;
+            inset: 0 !important;
+        }
+
+        /* Mirror fix for front camera */
         #reader.camera-unmirror video,
-        #reader.camera-unmirror #reader__scan_region video,
-        #reader.camera-unmirror #reader__scan_region img {
+        #reader.camera-unmirror #reader__scan_region video {
             transform: scaleX(-1);
         }
     </style>
