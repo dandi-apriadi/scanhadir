@@ -5,6 +5,38 @@
     <div class="absolute -bottom-8 left-20 w-72 h-72 bg-pink-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
 
     <div class="z-10 w-full max-w-lg">
+        <!-- Active Session Banner -->
+        @if($activeSessionInfo)
+            <div class="mb-6 backdrop-blur-md bg-emerald-500/10 border border-emerald-500/30 p-4 rounded-2xl shadow-lg">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+                        <svg class="w-5 h-5 text-emerald-400 animate-pulse" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-bold text-emerald-300 truncate">{{ $activeSessionInfo['subject_name'] }} ({{ $activeSessionInfo['subject_code'] }})</p>
+                        <p class="text-xs text-emerald-400/70">{{ $activeSessionInfo['class_name'] }} • {{ $activeSessionInfo['start_time'] }} - {{ $activeSessionInfo['end_time'] }}</p>
+                    </div>
+                    <span class="px-2 py-1 bg-emerald-500/20 text-emerald-300 rounded-lg text-[10px] font-bold uppercase">{{ $activeSessionInfo['source'] === 'auto_schedule' ? 'AUTO' : 'MANUAL' }}</span>
+                </div>
+            </div>
+        @else
+            <div class="mb-6 backdrop-blur-md bg-amber-500/10 border border-amber-500/30 p-4 rounded-2xl shadow-lg">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+                        <svg class="w-5 h-5 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-sm font-bold text-amber-300">Tidak Ada Sesi Aktif</p>
+                        <p class="text-xs text-amber-400/70">Mulai sesi dari halaman Mata Kuliah Saya</p>
+                    </div>
+                </div>
+            </div>
+        @endif
+
         <!-- Header -->
         <div class="text-center mb-8">
             <h1 class="text-5xl font-bold text-white tracking-tight mb-2">ScanHadir</h1>
@@ -166,7 +198,7 @@
     @endif
 
     <!-- Scripts -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+    @vite('resources/js/app.js')
     <script>
         let qrScanner = null;
         let isProcessing = false;
@@ -179,10 +211,49 @@
             startTimeClock();
         });
 
+        function getScannerFormats() {
+            if (typeof Html5QrcodeSupportedFormats === 'undefined') {
+                return undefined;
+            }
+
+            const resolved = Object.values(Html5QrcodeSupportedFormats)
+                .filter((format) => typeof format === 'number');
+
+            const uniqueFormats = [...new Set(resolved)];
+
+            return uniqueFormats.length > 0 ? uniqueFormats : undefined;
+        }
+
+        function getScannerConfig() {
+            const viewportWidth = Math.max(window.innerWidth || 0, 360);
+            const viewportHeight = Math.max(window.innerHeight || 0, 480);
+            const scanWidth = Math.min(560, Math.floor(viewportWidth * 0.9));
+            const scanHeight = Math.max(190, Math.min(320, Math.floor(viewportHeight * 0.42)));
+
+            const config = {
+                fps: 18,
+                qrbox: { width: scanWidth, height: scanHeight },
+                rememberLastUsedCamera: true,
+                aspectRatio: 1.333,
+                disableFlip: false,
+                showTorchButtonIfSupported: true,
+                experimentalFeatures: {
+                    useBarCodeDetectorIfSupported: false,
+                },
+            };
+
+            const formats = getScannerFormats();
+            if (formats) {
+                config.formatsToSupport = formats;
+            }
+
+            return config;
+        }
+
         async function initQrScanner() {
             const html5QrCode = new Html5Qrcode("reader");
             qrScanner = html5QrCode;
-            const config = { fps: 15, qrbox: { width: 280, height: 280 }, rememberLastUsedCamera: true };
+            const config = getScannerConfig();
 
             const cameras = await Html5Qrcode.getCameras();
             const rearRegex = /(rear|back|environment|traseira|tr\u00e1s)/i;

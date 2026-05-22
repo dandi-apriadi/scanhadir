@@ -35,7 +35,16 @@
     </div>
 
     <!-- Toolbar / Filters -->
-    <form method="GET" action="{{ route('admin.master.jadwal') }}" class="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-white rounded-2xl border border-slate-100 shadow-sm">
+    <form method="GET" action="{{ route('admin.master.jadwal') }}" class="grid grid-cols-1 md:grid-cols-5 gap-4 p-4 bg-white rounded-2xl border border-slate-100 shadow-sm">
+        <div class="space-y-1.5">
+            <label class="text-[10px] font-bold uppercase tracking-wider text-slate-500 ml-1">Semester</label>
+            <select name="semester_id" class="w-full bg-slate-50 border-none rounded-xl text-sm font-bold text-slate-600 focus:ring-2 focus:ring-primary/20 py-2.5 px-4">
+                <option value="">Semua Semester</option>
+                @foreach($semesterOptions as $sem)
+                    <option value="{{ $sem->id }}" @selected($selectedSemesterId === (string) $sem->id)>{{ $sem->display_name }}</option>
+                @endforeach
+            </select>
+        </div>
         <div class="space-y-1.5">
             <label class="text-[10px] font-bold uppercase tracking-wider text-slate-500 ml-1">Pilih Kelas</label>
             <select name="class_id" class="w-full bg-slate-50 border-none rounded-xl text-sm font-bold text-slate-600 focus:ring-2 focus:ring-primary/20 py-2.5 px-4">
@@ -70,8 +79,17 @@
         </div>
     </form>
 
-    <form method="POST" action="{{ route('admin.master.jadwal.store') }}" class="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-white rounded-2xl border border-slate-100 shadow-sm">
+    <form method="POST" action="{{ route('admin.master.jadwal.store') }}" class="grid grid-cols-1 md:grid-cols-5 gap-4 p-4 bg-white rounded-2xl border border-slate-100 shadow-sm">
         @csrf
+        <div class="space-y-1.5">
+            <label class="text-[10px] font-bold uppercase tracking-wider text-slate-500 ml-1">Semester</label>
+            <select name="semester_akademik_id" class="w-full bg-slate-50 border-none rounded-xl text-sm font-bold text-slate-600 focus:ring-2 focus:ring-primary/20 py-2.5 px-4">
+                <option value="">Pilih Semester</option>
+                @foreach($semesterOptions as $sem)
+                    <option value="{{ $sem->id }}" @selected((string) old('semester_akademik_id') === (string) $sem->id)>{{ $sem->display_name }}</option>
+                @endforeach
+            </select>
+        </div>
         <div class="space-y-1.5">
             <label class="text-[10px] font-bold uppercase tracking-wider text-slate-500 ml-1">Kelas</label>
             <select name="class_id" class="w-full bg-slate-50 border-none rounded-xl text-sm font-bold text-slate-600 focus:ring-2 focus:ring-primary/20 py-2.5 px-4" required>
@@ -137,6 +155,7 @@
             <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="bg-slate-50">
+                        <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-widest text-slate-400">Semester</th>
                         <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-widest text-slate-400">Hari / Jam</th>
                         <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-widest text-slate-400">Mata Pelajaran</th>
                         <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-widest text-slate-400">Guru Pengampu</th>
@@ -148,6 +167,9 @@
                     @forelse($schedules as $schedule)
                         @php($initials = collect(explode(' ', trim($schedule->teacher?->name ?? '')))->filter()->take(2)->map(fn($part) => strtoupper(substr($part, 0, 1)))->implode(''))
                         <tr class="hover:bg-indigo-50/30 transition-colors group">
+                            <td class="px-6 py-4">
+                                <span class="px-2 py-1 bg-indigo-50 text-primary rounded text-[10px] font-bold">{{ $schedule->semesterAkademik?->display_name ?? '-' }}</span>
+                            </td>
                             <td class="px-6 py-4">
                                 <div class="flex flex-col">
                                     <span class="text-xs font-black text-on-surface">{{ strtoupper($schedule->day) }}</span>
@@ -190,7 +212,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="px-6 py-8 text-center text-sm text-slate-500">Belum ada jadwal pelajaran.</td>
+                            <td colspan="6" class="px-6 py-8 text-center text-sm text-slate-500">Belum ada jadwal pelajaran.</td>
                         </tr>
                     @endforelse
                 </tbody>

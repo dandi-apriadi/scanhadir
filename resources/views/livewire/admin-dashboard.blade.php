@@ -57,7 +57,7 @@
             </div>
             <p class="text-sm font-medium text-slate-500 mb-1">Kehadiran Hari Ini</p>
             <h3 class="text-3xl font-bold font-headline">{{ $attendancePercentage }}%</h3>
-            <p class="text-[10px] text-slate-400 mt-2">{{ $stats['present'] }} tepat waktu</p>
+            <p class="text-[10px] text-slate-400 mt-2">{{ $stats['hadir'] }} tepat waktu</p>
         </div>
     </div>
 
@@ -65,19 +65,19 @@
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
         <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/15">
             <p class="text-sm font-medium text-slate-500 mb-2">Hadir</p>
-            <h3 class="text-2xl font-bold text-emerald-600">{{ $stats['present'] }}/{{ $stats['total_scanned'] }}</h3>
+            <h3 class="text-2xl font-bold text-emerald-600">{{ $stats['hadir'] }}/{{ $stats['total_scanned'] }}</h3>
             <p class="text-[10px] text-slate-400 mt-2">dari {{ $stats['total_students'] }} siswa</p>
         </div>
 
         <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/15">
             <p class="text-sm font-medium text-slate-500 mb-2">Terlambat</p>
-            <h3 class="text-2xl font-bold text-amber-600">{{ $stats['late'] }}</h3>
+            <h3 class="text-2xl font-bold text-amber-600">{{ $stats['telat'] }}</h3>
             <p class="text-[10px] text-slate-400 mt-2">membutuhkan tindakan</p>
         </div>
 
         <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/15">
             <p class="text-sm font-medium text-slate-500 mb-2">Izin/Sakit</p>
-            <h3 class="text-2xl font-bold text-blue-600">{{ $stats['sick'] + $stats['excused'] }}</h3>
+            <h3 class="text-2xl font-bold text-blue-600">{{ ($stats['sakit'] ?? 0) + ($stats['izin'] ?? 0) }}</h3>
             <p class="text-[10px] text-slate-400 mt-2">dengan dokumen</p>
         </div>
 
@@ -120,7 +120,7 @@
                                 <td class="px-6 py-4 text-sm text-slate-500">{{ $log['class_name'] }}</td>
                                 <td class="px-6 py-4 text-sm font-medium text-on-surface">{{ $log['check_in'] ?? '-' }}</td>
                                 <td class="px-6 py-4 text-right">
-                                    <span class="px-2 py-1 text-[10px] font-bold rounded @if($log['status'] === 'present') bg-emerald-50 text-emerald-600 @elseif($log['status'] === 'late') bg-amber-50 text-amber-600 @else bg-slate-50 text-slate-600 @endif">
+                                    <span class="px-2 py-1 text-[10px] font-bold rounded @if($log['status'] === 'Hadir') bg-emerald-50 text-emerald-600 @elseif($log['status'] === 'Telat') bg-amber-50 text-amber-600 @else bg-slate-50 text-slate-600 @endif">
                                         {{ strtoupper(str_replace('_', ' ', $log['status'])) }}
                                     </span>
                                 </td>
@@ -170,7 +170,7 @@
                             <div class="flex justify-between items-start mb-2">
                                 <div>
                                     <p class="text-sm font-semibold text-on-surface">{{ $class['name'] }}</p>
-                                    <p class="text-xs text-slate-500">{{ $class['present'] }}/{{ $class['total_students'] }} hadir</p>
+                                    <p class="text-xs text-slate-500">{{ $class['hadir'] }}/{{ $class['total_students'] }} hadir</p>
                                 </div>
                                 <span class="text-xs font-bold bg-primary/10 text-primary px-2 py-1 rounded">{{ $class['percentage'] }}%</span>
                             </div>

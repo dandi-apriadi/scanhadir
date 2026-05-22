@@ -3,6 +3,8 @@
 namespace App\Livewire;
 
 use App\Models\Attendance;
+use App\Models\MataKuliahDosenAssignment;
+use App\Models\Schedule;
 use App\Models\StudentClass;
 use App\Services\AttendanceExportService;
 use Illuminate\Support\Carbon;
@@ -32,14 +34,26 @@ class AttendanceReports extends Component
     public function render()
     {
         $teacher = auth()->user();
-        $assignedClassIds = $teacher?->assignedClasses()->pluck('classes.id') ?? collect();
+        $isAdmin = $teacher && $teacher->role === 'admin';
+        
+        // Get assigned subject IDs
+        $assignedSubjectIds = $isAdmin
+            ? \App\Models\Subject::pluck('id')
+            : MataKuliahDosenAssignment::where('user_id', $teacher?->id)->pluck('subject_id');
+        
+        // Get class IDs from schedules
+        $assignedClassIds = Schedule::whereIn('subject_id', $assignedSubjectIds)
+            ->pluck('class_id')
+            ->unique();
 
         // Get classes for filter
-        $classes = $teacher?->assignedClasses()->get() ?? collect();
+        $classes = $isAdmin
+            ? StudentClass::query()->orderBy('name')->get()
+            : StudentClass::whereIn('id', $assignedClassIds)->orderBy('name')->get();
 
         // Build query
         $query = Attendance::query()
-            ->with(['student.user', 'student.class'])
+            ->with(['student.user', 'student.class', 'schedule.subject'])
             ->whereBetween('date', [$this->dateFrom, $this->dateTo])
             ->whereHas('student', fn($q) => $q->whereIn('class_id', $assignedClassIds));
 
@@ -80,17 +94,25 @@ class AttendanceReports extends Component
             'classes' => $classes,
             'reports' => $reports,
             'stats' => $stats,
-            'statusOptions' => ['present' => 'Present', 'late' => 'Late', 'sick' => 'Sick', 'excused' => 'Excused', 'absent' => 'Absent'],
+            'statusOptions' => ['Hadir' => 'Hadir', 'Telat' => 'Telat', 'Sakit' => 'Sakit', 'Izin' => 'Izin', 'Alpa' => 'Alpa'],
         ])->layout('layouts.teacher', ['title' => 'Attendance Reports']);
     }
 
     public function exportXLSX()
     {
         $teacher = auth()->user();
-        $assignedClassIds = $teacher?->assignedClasses()->pluck('classes.id') ?? collect();
+        $isAdmin = $teacher && $teacher->role === 'admin';
+        
+        $assignedSubjectIds = $isAdmin
+            ? \App\Models\Subject::pluck('id')
+            : MataKuliahDosenAssignment::where('user_id', $teacher?->id)->pluck('subject_id');
+        
+        $assignedClassIds = Schedule::whereIn('subject_id', $assignedSubjectIds)
+            ->pluck('class_id')
+            ->unique();
 
         $attendances = Attendance::query()
-            ->with(['student.user', 'student.class'])
+            ->with(['student.user', 'student.class', 'schedule.subject'])
             ->whereBetween('date', [$this->dateFrom, $this->dateTo])
             ->whereHas('student', fn($q) => $q->whereIn('class_id', $assignedClassIds))
             ->when($this->selectedClass, fn($q) => $q->whereHas('student', fn($sq) => $sq->where('class_id', $this->selectedClass)))

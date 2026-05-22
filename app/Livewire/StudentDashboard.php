@@ -37,11 +37,11 @@ class StudentDashboard extends Component
             ->whereBetween('date', [$monthStart, $monthEnd])
             ->selectRaw('
                 COUNT(*) as total,
-                SUM(CASE WHEN status = "present" THEN 1 ELSE 0 END) as present,
-                SUM(CASE WHEN status = "late" THEN 1 ELSE 0 END) as late,
-                SUM(CASE WHEN status = "sick" THEN 1 ELSE 0 END) as sick,
-                SUM(CASE WHEN status = "excused" THEN 1 ELSE 0 END) as excused,
-                SUM(CASE WHEN status = "absent" THEN 1 ELSE 0 END) as absent
+                SUM(CASE WHEN status = "Hadir" THEN 1 ELSE 0 END) as present,
+                SUM(CASE WHEN status = "Telat" THEN 1 ELSE 0 END) as late,
+                SUM(CASE WHEN status = "Sakit" THEN 1 ELSE 0 END) as sick,
+                SUM(CASE WHEN status = "Izin" THEN 1 ELSE 0 END) as excused,
+                SUM(CASE WHEN status = "Alpa" THEN 1 ELSE 0 END) as absent
             ')
             ->first();
 
@@ -57,7 +57,7 @@ class StudentDashboard extends Component
         ];
 
         $attendancePercentage = $workdaysCount > 0
-            ? round(($attendanceStats['present'] / $workdaysCount) * 100, 1)
+            ? round((($attendanceStats['present'] + $attendanceStats['late']) / $workdaysCount) * 100, 1)
             : 0;
 
         // Today's status

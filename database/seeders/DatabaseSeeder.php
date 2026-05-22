@@ -19,11 +19,19 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $totalUsers = 188;
-        $studentCount = 150;
-        $adminCount = (int) round($totalUsers * 0.15);
-        $teacherCount = $totalUsers - $studentCount - $adminCount;
+        // 1. Create Active Semester
+        $semester = \App\Models\SemesterAkademik::factory()->create([
+            'nama_semester' => 'Ganjil',
+            'tahun_ajaran' => '2025/2026',
+            'is_active' => true,
+        ]);
 
+        // 2. Create Subjects
+        $subjects = \App\Models\Subject::factory()->count(5)->create([
+            'semester_akademik_id' => $semester->id,
+        ]);
+
+        // 3. Create Classes
         $classesData = [
             ['name' => 'X-A', 'level' => 'X', 'major' => 'RPL'],
             ['name' => 'X-B', 'level' => 'X', 'major' => 'TKJ'],
@@ -36,52 +44,8 @@ class DatabaseSeeder extends Seeder
             return StudentClass::query()->firstOrCreate(['name' => $classData['name']], $classData);
         });
 
-        User::factory()->count($adminCount)->admin()->withPassword('admin123')->create();
-        $teachers = User::factory()->count($teacherCount)->teacher()->withPassword('guru123')->create();
-
-        $studentsPerClass = intdiv($studentCount, $classes->count());
-        $remainingStudents = $studentCount % $classes->count();
-
-        $sequence = 2026000000000;
-
-        foreach ($classes as $index => $class) {
-            $count = $studentsPerClass + ($index < $remainingStudents ? 1 : 0);
-
-            User::factory()
-                ->count($count)
-                ->student()
-                ->withPassword('siswa123')
-                ->create()
-                ->each(function (User $user) use ($class, &$sequence) {
-                    Student::factory()->create([
-                        'user_id' => $user->id,
-                        'class_id' => $class->id,
-                        'nisn' => (string) $sequence++,
-                    ]);
-                });
-        }
-
-        if ($teachers->isNotEmpty()) {
-            foreach ($classes as $index => $class) {
-                $teacher = $teachers[$index % $teachers->count()];
-                $class->teachers()->syncWithoutDetaching([$teacher->id]);
-            }
-        }
-
-        $students = Student::query()->pluck('id');
-        $dates = collect(range(0, 29))->map(fn (int $offset) => Carbon::today()->subDays($offset)->toDateString());
-
-        foreach ($students as $studentId) {
-            foreach ($dates as $date) {
-                Attendance::factory()->create([
-                    'student_id' => $studentId,
-                    'date' => $date,
-                ]);
-            }
-        }
-
-        Holiday::factory()->count(10)->create();
-
+        // 4. Create Users
+        // Admin
         User::query()->updateOrCreate(
             ['email' => 'admin@scanhadir.com'],
             [
@@ -92,7 +56,8 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        User::query()->updateOrCreate(
+        // Teachers
+        $teacher1 = User::query()->updateOrCreate(
             ['email' => 'guru1@sekolah.sch.id'],
             [
                 'name' => 'Ibu Siti Nur Azizah, S.Pd',
@@ -102,13 +67,60 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        $sampleTeacher = User::query()->where('email', 'guru1@sekolah.sch.id')->first();
+        $teacher2 = User::query()->updateOrCreate(
+            ['email' => 'guru@scanhadir.com'],
+            [
+                'name' => 'Bapak Budi Santoso, M.Pd',
+                'password' => Hash::make('guru123'),
+                'role' => 'teacher',
+                'email_verified_at' => now(),
+            ]
+        );
 
-        if ($sampleTeacher !== null && $classes->isNotEmpty()) {
-            $sampleAssignedClassIds = $classes->take(2)->pluck('id')->all();
-            $sampleTeacher->assignedClasses()->syncWithoutDetaching($sampleAssignedClassIds);
+        $teachers = collect([$teacher1, $teacher2]);
+
+        // 5. Create Schedules
+        $schedules = collect();
+        foreach ($classes as $class) {
+            foreach ($subjects->random(2) as $subject) {
+                $schedules->push(\App\Models\Schedule::factory()->create([
+                    'class_id' => $class->id,
+                    'subject_id' => $subject->id,
+                    'teacher_id' => $teachers->random()->id,
+                    'semester_akademik_id' => $semester->id,
+                ]));
+            }
         }
 
+        // 6. Create Students and Attendance
+        $sequence = 2026000000001;
+        $dates = collect(range(0, 10))->map(fn (int $offset) => Carbon::today()->subDays($offset)->toDateString());
+
+        foreach ($classes as $class) {
+            $studentUsers = User::factory()->count(5)->student()->withPassword('siswa123')->create();
+            
+            foreach ($studentUsers as $user) {
+                $student = Student::factory()->create([
+                    'user_id' => $user->id,
+                    'class_id' => $class->id,
+                    'nisn' => (string) $sequence++,
+                ]);
+
+                // Create attendance for this student in their class schedules
+                $classSchedules = $schedules->where('class_id', $class->id);
+                foreach ($classSchedules as $schedule) {
+                    foreach ($dates as $date) {
+                        Attendance::factory()->create([
+                            'student_id' => $student->id,
+                            'schedule_id' => $schedule->id,
+                            'date' => $date,
+                        ]);
+                    }
+                }
+            }
+        }
+
+        // Specific Test Student
         $sampleStudentUser = User::query()->updateOrCreate(
             ['email' => 'rizki@sekolah.sch.id'],
             [
@@ -119,7 +131,7 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        Student::query()->updateOrCreate(
+        $sampleStudent = Student::query()->updateOrCreate(
             ['user_id' => $sampleStudentUser->id],
             [
                 'class_id' => $classes->first()->id,
@@ -127,24 +139,25 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        // Output information for testing
-        echo "\n✅ Database seeding completed!\n";
-        echo "\n📋 Test Credentials:\n";
+        // Add attendance for test student
+        $classSchedules = $schedules->where('class_id', $sampleStudent->class_id);
+        foreach ($classSchedules as $schedule) {
+            foreach ($dates as $date) {
+                Attendance::factory()->create([
+                    'student_id' => $sampleStudent->id,
+                    'schedule_id' => $schedule->id,
+                    'date' => $date,
+                ]);
+            }
+        }
+
+        Holiday::factory()->count(5)->create();
+
+        echo "\n✅ Database seeding completed successfully!\n";
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
-        echo "\n👨‍💼 ADMIN:\n";
-        echo "  Email: admin@scanhadir.com\n";
-        echo "  Password: admin123\n";
-        echo "\n👨‍🏫 TEACHER:\n";
-        echo "  Email: guru1@sekolah.sch.id\n";
-        echo "  Password: guru123\n";
-        echo "\n👨‍🎓 STUDENT:\n";
-        echo "  Email: rizki@sekolah.sch.id | Password: siswa123\n";
-        echo "\n📊 Data Generated:\n";
-        echo "  Users: " . User::count() . " (80% student, 15% admin, 5% teacher)\n";
-        echo "  Students: " . Student::count() . "\n";
-        echo "  Classes: " . StudentClass::count() . "\n";
-        echo "  Attendances: " . Attendance::count() . " (30 hari)\n";
-        echo "  Holidays: " . Holiday::count() . "\n";
+        echo "Admin: admin@scanhadir.com / admin123\n";
+        echo "Teacher: guru1@sekolah.sch.id / guru123\n";
+        echo "Student: rizki@sekolah.sch.id / siswa123\n";
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n";
     }
 }

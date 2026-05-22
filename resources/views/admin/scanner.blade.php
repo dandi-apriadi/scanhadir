@@ -37,7 +37,7 @@
             50% { top: 100%; }
         }
     </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+    @vite('resources/js/app.js')
 </head>
 <body class="bg-slate-950 font-body text-white overflow-hidden">
     <!-- Top Bar -->
@@ -60,7 +60,7 @@
     </nav>
 
     <!-- Hidden NISN Input Form for Scanner -->
-    <form id="scanForm" method="POST" action="{{ route('admin.attendance.scan') }}" style="display: none;">
+    <form id="scanForm" method="POST" action="{{ route('admin.attendance.scan') }}" class="sr-only">
         @csrf
         <input id="nisnInput" type="text" name="nisn" autofocus>
     </form>
@@ -185,16 +185,68 @@
         const reader = document.getElementById('reader');
         const focusButton = document.getElementById('focusButton');
         const resetButton = document.getElementById('resetButton');
+        const manualNisnInput = document.getElementById('manualNisnInput');
         let html5QrScanner = null;
         let isProcessingScan = false;
         let activeCameraIsFront = false;
+        let keyboardBuffer = '';
+        let keyboardBufferTimeout = null;
+        let lastSubmittedCode = '';
+        let lastSubmittedAt = 0;
         let scannedStudents = [];
+        const KEYBOARD_BUFFER_RESET_MS = 120;
+        const DUPLICATE_SCAN_COOLDOWN_MS = 4000;
+        const MIN_SCANNER_INPUT_LENGTH = 5;
 
         // Focus on page load
         window.addEventListener('load', () => {
             initializeCameraScanner();
             nisnInput.focus();
+            setupUsbScannerCapture();
         });
+
+        function getScannerFormats() {
+            if (typeof Html5QrcodeSupportedFormats === 'undefined') {
+                return undefined;
+            }
+
+            const resolved = Object.values(Html5QrcodeSupportedFormats)
+                .filter((format) => typeof format === 'number');
+
+            const uniqueFormats = [...new Set(resolved)];
+
+            return uniqueFormats.length > 0 ? uniqueFormats : undefined;
+        }
+
+        function getScannerConfig() {
+            const viewportWidth = Math.max(window.innerWidth || 0, 360);
+            const viewportHeight = Math.max(window.innerHeight || 0, 480);
+            const scanWidth = Math.min(560, Math.floor(viewportWidth * 0.9));
+            const scanHeight = Math.max(190, Math.min(320, Math.floor(viewportHeight * 0.42)));
+
+            const config = {
+                fps: 18,
+                qrbox: {
+                    width: scanWidth,
+                    height: scanHeight,
+                },
+                rememberLastUsedCamera: true,
+                aspectRatio: 1.333,
+                disableFlip: false,
+                showTorchButtonIfSupported: true,
+                experimentalFeatures: {
+                    // ZXing fallback is often more reliable for mixed barcode symbologies across browsers.
+                    useBarCodeDetectorIfSupported: false,
+                },
+            };
+
+            const formats = getScannerFormats();
+            if (formats) {
+                config.formatsToSupport = formats;
+            }
+
+            return config;
+        }
 
         async function initializeCameraScanner() {
             if (typeof Html5Qrcode === 'undefined') {
@@ -215,12 +267,7 @@
                     applyMirrorFix(activeCameraIsFront);
                 }
 
-                const config = {
-                    fps: 12,
-                    qrbox: { width: 260, height: 260 },
-                    rememberLastUsedCamera: true,
-                    aspectRatio: 1,
-                };
+                const config = getScannerConfig();
 
                 await html5QrScanner.start(
                     selectedCamera ? selectedCamera.id : { facingMode: { exact: 'environment' } },
@@ -241,12 +288,7 @@
 
                     await html5QrScanner.start(
                         { facingMode: 'user' },
-                        {
-                            fps: 12,
-                            qrbox: { width: 260, height: 260 },
-                            rememberLastUsedCamera: true,
-                            aspectRatio: 1,
-                        },
+                        getScannerConfig(),
                         (decodedText) => {
                             processScannedCode(decodedText);
                         },
@@ -265,25 +307,29 @@
             statusDisplay.style.color = '#818cf8';
 
             // Setup manual input
-            const manualInput = document.getElementById('manualNisnInput');
-            if (manualInput) {
-                manualInput.focus();
-                manualInput.addEventListener('keypress', (e) => {
+            if (manualNisnInput) {
+                manualNisnInput.focus();
+
+                if (!manualNisnInput.dataset.listenerBound) {
+                    manualNisnInput.dataset.listenerBound = '1';
+                    manualNisnInput.addEventListener('keypress', (e) => {
                     if (e.key === 'Enter') {
                         e.preventDefault();
                         submitManualNisn();
                     }
-                });
+                    });
+                }
             }
         }
 
         function submitManualNisn() {
-            const manualInput = document.getElementById('manualNisnInput');
-            const nisn = (manualInput.value || '').trim();
+            const nisn = normalizeScannedValue(manualNisnInput ? manualNisnInput.value : '');
             if (!nisn) return;
             submitAttendance(nisn);
-            manualInput.value = '';
-            manualInput.focus();
+            if (manualNisnInput) {
+                manualNisnInput.value = '';
+                manualNisnInput.focus();
+            }
         }
 
         async function retryCamera() {
@@ -312,7 +358,18 @@
             if (isProcessingScan) return;
 
             isProcessingScan = true;
-            const normalized = (decodedText || '').trim();
+
+            const normalized = normalizeScannedValue(decodedText);
+            if (!normalized) {
+                isProcessingScan = false;
+                return;
+            }
+
+            if (isDuplicateRecentScan(normalized)) {
+                isProcessingScan = false;
+                return;
+            }
+
             nisnInput.value = normalized;
             submitAttendance(normalized).finally(() => {
                 setTimeout(() => {
@@ -321,11 +378,108 @@
             });
         }
 
+        function isDuplicateRecentScan(code) {
+            const now = Date.now();
+            const isDuplicate = code === lastSubmittedCode && (now - lastSubmittedAt) < DUPLICATE_SCAN_COOLDOWN_MS;
+
+            if (!isDuplicate) {
+                lastSubmittedCode = code;
+                lastSubmittedAt = now;
+            }
+
+            return isDuplicate;
+        }
+
+        function normalizeScannedValue(rawValue) {
+            const raw = (rawValue || '').toString().trim();
+            if (!raw) {
+                return '';
+            }
+
+            const decoded = decodeURIComponentSafe(raw);
+
+            const labelMatch = decoded.match(/(?:NISN|QR(?:_?CODE)?|CODE)\s*[:=]\s*([A-Za-z0-9\-]+)/i);
+            if (labelMatch && labelMatch[1]) {
+                return labelMatch[1].trim();
+            }
+
+            if (/^https?:\/\//i.test(decoded)) {
+                try {
+                    const parsed = new URL(decoded);
+                    const queryKeys = ['nisn', 'code', 'qr', 'qr_code', 'value'];
+                    for (const key of queryKeys) {
+                        const value = parsed.searchParams.get(key);
+                        if (value && value.trim()) {
+                            return value.trim();
+                        }
+                    }
+
+                    const pathSegments = parsed.pathname.split('/').filter(Boolean);
+                    for (let i = pathSegments.length - 1; i >= 0; i--) {
+                        const segment = pathSegments[i].trim();
+                        if (/^(SH-[A-Z0-9]{8}|\d{8,20})$/i.test(segment)) {
+                            return segment;
+                        }
+                    }
+                } catch (e) {
+                    // ignore parse errors and fallback to raw value
+                }
+            }
+
+            const qrPatternMatch = decoded.match(/SH-[A-Z0-9]{8}/i);
+            if (qrPatternMatch && qrPatternMatch[0]) {
+                return qrPatternMatch[0].toUpperCase();
+            }
+
+            return decoded;
+        }
+
+        function decodeURIComponentSafe(value) {
+            try {
+                return decodeURIComponent(value);
+            } catch (e) {
+                return value;
+            }
+        }
+
+        function setupUsbScannerCapture() {
+            document.addEventListener('keydown', (event) => {
+                if (event.ctrlKey || event.metaKey || event.altKey || isProcessingScan) {
+                    return;
+                }
+
+                if (event.target === manualNisnInput || event.target === nisnInput) {
+                    return;
+                }
+
+                if (event.key === 'Enter') {
+                    if (keyboardBuffer.length >= MIN_SCANNER_INPUT_LENGTH) {
+                        event.preventDefault();
+                        const scannedCode = keyboardBuffer;
+                        keyboardBuffer = '';
+                        processScannedCode(scannedCode);
+                    }
+                    return;
+                }
+
+                if (event.key.length === 1) {
+                    keyboardBuffer += event.key;
+                    if (keyboardBufferTimeout) {
+                        clearTimeout(keyboardBufferTimeout);
+                    }
+
+                    keyboardBufferTimeout = setTimeout(() => {
+                        keyboardBuffer = '';
+                    }, KEYBOARD_BUFFER_RESET_MS);
+                }
+            }, true);
+        }
+
         // Handle NISN input
         nisnInput.addEventListener('keypress', async (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
-                const nisn = nisnInput.value.trim();
+                const nisn = normalizeScannedValue(nisnInput.value);
                 
                 if (!nisn) return;
                 await submitAttendance(nisn);
@@ -344,14 +498,32 @@
                     body: JSON.stringify({ nisn: nisn })
                 });
 
+                const contentType = response.headers.get('content-type') || '';
+                const isJson = contentType.includes('application/json');
+
+                if (!isJson) {
+                    const rawText = await response.text();
+                    throw new Error('Server mengembalikan respons tidak valid (' + response.status + '). ' + rawText.substring(0, 120));
+                }
+
                 const data = await response.json();
+
+                if (!response.ok) {
+                    const fallbackMessage = data.message || 'Gagal menyimpan scan (HTTP ' + response.status + ').';
+                    showErrorMessage(fallbackMessage);
+                    return;
+                }
 
                 if (data.success) {
                     updateLatestScanned(data.data);
                     addToLog(data.data);
                     showSuccessAnimation();
+                    if (manualNisnInput && !document.getElementById('cameraError').classList.contains('hidden')) {
+                        manualNisnInput.value = '';
+                        manualNisnInput.focus();
+                    }
                 } else {
-                    showErrorMessage(data.message);
+                    showErrorMessage(data.message || 'Scan tidak dapat diproses.');
                 }
             } catch (error) {
                 showErrorMessage('Terjadi kesalahan: ' + error.message);
@@ -361,33 +533,83 @@
         function updateLatestScanned(data) {
             studentName.textContent = data.student_name || '-';
             studentClass.textContent = data.class_name || '-';
-            checkInTime.textContent = data.check_in.substring(0, 5) || '--:--';
+            const formattedCheckIn = formatTimeLabel(data.check_in);
+            const formattedCheckOut = formatTimeLabel(data.check_out);
+            const formattedTimestamp = formatTimeLabel(data.timestamp);
+            checkInTime.textContent = formattedCheckIn || formattedCheckOut || formattedTimestamp || '--:--';
+            const normalizedStatus = (data.status || '').toString().toLowerCase();
             
             const statusColor = {
                 'present': '#10b981',
                 'late': '#f59e0b',
-                'absent': '#ef4444'
+                'absent': '#ef4444',
+                'hadir': '#10b981',
+                'telat': '#f59e0b',
+                'alpa': '#ef4444',
+                'izin': '#0ea5e9',
+                'sakit': '#8b5cf6',
             };
             
-            statusDisplay.textContent = data.status.toUpperCase();
-            statusDisplay.style.color = statusColor[data.status] || '#9ca3af';
+            statusDisplay.textContent = (data.status || 'SIAP').toUpperCase();
+            statusDisplay.style.color = statusColor[normalizedStatus] || '#9ca3af';
+        }
+
+        function formatTimeLabel(value) {
+            if (typeof value !== 'string') {
+                return '';
+            }
+
+            const normalized = value.trim();
+            if (!normalized) {
+                return '';
+            }
+
+            if (/^\d{2}:\d{2}:\d{2}$/.test(normalized)) {
+                return normalized.substring(0, 5);
+            }
+
+            if (/^\d{2}:\d{2}$/.test(normalized)) {
+                return normalized;
+            }
+
+            const parsed = new Date(normalized);
+            if (Number.isNaN(parsed.getTime())) {
+                return '';
+            }
+
+            return parsed.toLocaleTimeString('id-ID', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false,
+            });
         }
 
         function addToLog(data) {
+            const normalizedStatus = (data.status || '').toString().toLowerCase();
             const statusIcon = {
                 'present': 'check_circle',
                 'late': 'schedule',
-                'absent': 'cancel'
+                'absent': 'cancel',
+                'hadir': 'check_circle',
+                'telat': 'schedule',
+                'alpa': 'cancel',
+                'izin': 'event_busy',
+                'sakit': 'health_and_safety',
             };
             
             const statusColorClass = {
                 'present': 'emerald',
                 'late': 'amber',
-                'absent': 'red'
+                'absent': 'red',
+                'hadir': 'emerald',
+                'telat': 'amber',
+                'alpa': 'red',
+                'izin': 'sky',
+                'sakit': 'violet',
             };
 
-            const icon = statusIcon[data.status] || 'help';
-            const colorClass = statusColorClass[data.status] || 'slate';
+            const icon = statusIcon[normalizedStatus] || 'help';
+            const colorClass = statusColorClass[normalizedStatus] || 'slate';
 
             const logEntry = document.createElement('div');
             logEntry.className = 'flex items-center gap-4 p-3 rounded-2xl hover:bg-white/5 transition-colors group';

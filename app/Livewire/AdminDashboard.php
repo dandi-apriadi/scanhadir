@@ -46,20 +46,21 @@ class AdminDashboard extends Component
         $stats = [
             'total_students' => $classQuery->count(),
             'total_scanned' => (clone $query)->count(),
-            'present' => (clone $query)->where('status', 'present')->count(),
-            'late' => (clone $query)->where('status', 'late')->count(),
-            'sick' => (clone $query)->where('status', 'sick')->count(),
-            'excused' => (clone $query)->where('status', 'excused')->count(),
-            'absent' => (clone $query)->where('status', 'absent')->count(),
+            'hadir' => (clone $query)->where('status', 'Hadir')->count(),
+            'telat' => (clone $query)->where('status', 'Telat')->count(),
+            'sakit' => (clone $query)->where('status', 'Sakit')->count(),
+            'izin' => (clone $query)->where('status', 'Izin')->count(),
+            'alpa' => (clone $query)->where('status', 'Alpa')->count(),
+            'absent' => (clone $query)->where('status', 'Alpa')->count(),
         ];
 
         $attendancePercentage = $stats['total_students'] > 0
-            ? round(($stats['present'] / $stats['total_students']) * 100, 1)
+            ? round(($stats['hadir'] / $stats['total_students']) * 100, 1)
             : 0;
 
         // Get recent attendance logs
         $recentLogs = Attendance::query()
-            ->with(['student.user', 'student.class'])
+            ->with(['student.user', 'student.class', 'schedule.subject'])
             ->whereDate('date', $date)
             ->orderBy('check_in', 'desc')
             ->limit(10)
@@ -67,15 +68,17 @@ class AdminDashboard extends Component
             ->map(fn ($att) => [
                 'student_name' => $att->student?->user?->name,
                 'class_name' => $att->student?->class?->name,
+                'subject_name' => $att->schedule?->subject?->name ?? '-',
                 'check_in' => $att->check_in,
                 'status' => $att->status,
+                'metode' => $att->metode_absensi ?? 'QR Code',
             ]);
 
         // Late students (for alerts)
         $lateStudents = Attendance::query()
             ->with(['student.user', 'student.class'])
             ->whereDate('date', $date)
-            ->where('status', 'late')
+            ->where('status', 'Telat')
             ->limit(5)
             ->get();
 
@@ -90,14 +93,14 @@ class AdminDashboard extends Component
                     ->whereHas('student', fn ($q) => $q->where('class_id', $class->id))
                     ->selectRaw('
                         COUNT(*) as total,
-                        SUM(CASE WHEN status = "present" THEN 1 ELSE 0 END) as present,
-                        SUM(CASE WHEN status = "late" THEN 1 ELSE 0 END) as late,
-                        SUM(CASE WHEN status = "absent" THEN 1 ELSE 0 END) as absent
+                        SUM(CASE WHEN status = "Hadir" THEN 1 ELSE 0 END) as hadir,
+                        SUM(CASE WHEN status = "Telat" THEN 1 ELSE 0 END) as telat,
+                        SUM(CASE WHEN status = "Alpa" THEN 1 ELSE 0 END) as alpa
                     ')
                     ->first();
 
                 $percentage = $class->students_count > 0
-                    ? round(($attendanceInfo->present / $class->students_count) * 100, 1)
+                    ? round(($attendanceInfo->hadir / $class->students_count) * 100, 1)
                     : 0;
 
                 return [
@@ -105,9 +108,9 @@ class AdminDashboard extends Component
                     'name' => $class->name,
                     'total_students' => $class->students_count,
                     'attendance_total' => $attendanceInfo->total ?? 0,
-                    'present' => $attendanceInfo->present ?? 0,
-                    'late' => $attendanceInfo->late ?? 0,
-                    'absent' => $attendanceInfo->absent ?? 0,
+                    'hadir' => $attendanceInfo->hadir ?? 0,
+                    'telat' => $attendanceInfo->telat ?? 0,
+                    'alpa' => $attendanceInfo->alpa ?? 0,
                     'percentage' => $percentage,
                 ];
             });
@@ -115,7 +118,7 @@ class AdminDashboard extends Component
         // System stats
         $totalUsers = User::count();
         $totalStudents = Student::count();
-        $totalTeachers = User::where('role', 'teacher')->count();
+        $totalTeachers = User::whereIn('role', ['teacher', 'dosen'])->count();
         $totalClasses = StudentClass::count();
 
         return view('livewire.admin-dashboard', [

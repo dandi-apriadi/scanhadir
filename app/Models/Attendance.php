@@ -10,12 +10,16 @@ class Attendance extends Model
 {
     use HasFactory;
 
+    protected $table = 'attendances';
+
     protected $fillable = [
         'student_id',
+        'schedule_id',
         'date',
         'check_in',
         'check_out',
         'status',
+        'metode_absensi',
         'approval_status',
         'approved_by',
         'approved_at',
@@ -36,6 +40,11 @@ class Attendance extends Model
     public function student(): BelongsTo
     {
         return $this->belongsTo(Student::class);
+    }
+
+    public function schedule(): BelongsTo
+    {
+        return $this->belongsTo(Schedule::class);
     }
 
     public function approvedBy(): BelongsTo

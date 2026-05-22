@@ -27,6 +27,7 @@ class ScheduleFactory extends Factory
             'class_id' => StudentClass::query()->inRandomOrder()->value('id') ?? StudentClass::factory(),
             'subject_id' => Subject::query()->inRandomOrder()->value('id') ?? Subject::factory(),
             'teacher_id' => User::query()->where('role', 'teacher')->inRandomOrder()->value('id') ?? User::factory()->teacher(),
+            'semester_akademik_id' => \App\Models\SemesterAkademik::query()->inRandomOrder()->value('id') ?? \App\Models\SemesterAkademik::factory(),
             'day' => $this->faker->randomElement(['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat']),
             'start_time' => $start,
             'end_time' => $end,

@@ -10,10 +10,13 @@ class Schedule extends Model
 {
     use HasFactory;
 
+    protected $table = 'schedules';
+
     protected $fillable = [
         'class_id',
         'subject_id',
         'teacher_id',
+        'semester_akademik_id',
         'day',
         'start_time',
         'end_time',
@@ -28,6 +31,11 @@ class Schedule extends Model
     public function subject(): BelongsTo
     {
         return $this->belongsTo(Subject::class);
+    }
+
+    public function semesterAkademik(): BelongsTo
+    {
+        return $this->belongsTo(SemesterAkademik::class, 'semester_akademik_id');
     }
 
     public function teacher(): BelongsTo

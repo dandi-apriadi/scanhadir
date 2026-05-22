@@ -20,6 +20,7 @@ class SubjectFactory extends Factory
             'code' => 'MP-' . $this->faker->unique()->numerify('###'),
             'name' => $this->faker->unique()->words(2, true),
             'group' => $this->faker->randomElement($groups),
+            'semester_akademik_id' => \App\Models\SemesterAkademik::query()->inRandomOrder()->value('id') ?? \App\Models\SemesterAkademik::factory(),
         ];
     }
 }

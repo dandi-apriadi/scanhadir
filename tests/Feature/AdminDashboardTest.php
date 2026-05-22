@@ -58,7 +58,7 @@ class AdminDashboardTest extends TestCase
             Attendance::factory()->create([
                 'student_id' => $student->id,
                 'date' => now()->toDateString(),
-                'status' => 'present',
+                'status' => 'Hadir',
                 'check_in' => now()->setHour(7)
             ]);
         }
@@ -67,7 +67,7 @@ class AdminDashboardTest extends TestCase
             Attendance::factory()->create([
                 'student_id' => $student->id,
                 'date' => now()->toDateString(),
-                'status' => 'late',
+                'status' => 'Telat',
                 'check_in' => now()->setHour(8)
             ]);
         }

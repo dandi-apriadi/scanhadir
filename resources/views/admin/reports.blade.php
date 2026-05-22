@@ -67,7 +67,7 @@
         </div>
         <div class="bg-white p-4 rounded-xl border border-slate-100">
             <p class="text-xs text-slate-500 uppercase">Hadir</p>
-            <p class="text-2xl font-bold text-emerald-600">{{ $summary['present'] }}</p>
+            <p class="text-2xl font-bold text-emerald-600">{{ $summary['hadir'] }}</p>
         </div>
     </div>
 
@@ -88,12 +88,12 @@
                     @php
                         $status = (string) ($row->status ?? '');
                         $statusLabel = ucfirst($status ?: '-');
-                        $statusClasses = match ($status) {
-                            'present' => 'bg-emerald-100 text-emerald-700',
-                            'late' => 'bg-amber-100 text-amber-700',
-                            'sick' => 'bg-sky-100 text-sky-700',
-                            'excused' => 'bg-violet-100 text-violet-700',
-                            'absent' => 'bg-rose-100 text-rose-700',
+                        $statusClasses = match (strtolower($status)) {
+                            'present', 'hadir' => 'bg-emerald-100 text-emerald-700',
+                            'late', 'telat' => 'bg-amber-100 text-amber-700',
+                            'sick', 'sakit' => 'bg-sky-100 text-sky-700',
+                            'excused', 'izin' => 'bg-violet-100 text-violet-700',
+                            'absent', 'alpa' => 'bg-rose-100 text-rose-700',
                             default => 'bg-slate-100 text-slate-600',
                         };
                     @endphp

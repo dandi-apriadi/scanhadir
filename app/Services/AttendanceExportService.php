@@ -126,25 +126,25 @@ class AttendanceExportService
 
         // Total counts
         $totalAttendances = $attendances->count();
-        $presentCount = $attendances->where('status', 'present')->count();
-        $lateCount = $attendances->where('status', 'late')->count();
-        $sickCount = $attendances->where('status', 'sick')->count();
-        $excusedCount = $attendances->where('status', 'excused')->count();
-        $absentCount = $attendances->where('status', 'absent')->count();
+        $presentCount = $attendances->where('status', 'Hadir')->count();
+        $lateCount = $attendances->where('status', 'Telat')->count();
+        $sickCount = $attendances->where('status', 'Sakit')->count();
+        $excusedCount = $attendances->where('status', 'Izin')->count();
+        $absentCount = $attendances->where('status', 'Alpa')->count();
 
         // Summary rows
         $writer->addRow(Row::fromValues(['Metric', 'Count', 'Percentage']));
         $writer->addRow(Row::fromValues(['Total', $totalAttendances, '100%']));
-        $writer->addRow(Row::fromValues(['Present', $presentCount, $totalAttendances > 0 ? round(($presentCount / $totalAttendances) * 100, 2) . '%' : '0%']));
-        $writer->addRow(Row::fromValues(['Late', $lateCount, $totalAttendances > 0 ? round(($lateCount / $totalAttendances) * 100, 2) . '%' : '0%']));
-        $writer->addRow(Row::fromValues(['Sick', $sickCount, $totalAttendances > 0 ? round(($sickCount / $totalAttendances) * 100, 2) . '%' : '0%']));
-        $writer->addRow(Row::fromValues(['Excused', $excusedCount, $totalAttendances > 0 ? round(($excusedCount / $totalAttendances) * 100, 2) . '%' : '0%']));
-        $writer->addRow(Row::fromValues(['Absent', $absentCount, $totalAttendances > 0 ? round(($absentCount / $totalAttendances) * 100, 2) . '%' : '0%']));
+        $writer->addRow(Row::fromValues(['Hadir', $presentCount, $totalAttendances > 0 ? round(($presentCount / $totalAttendances) * 100, 2) . '%' : '0%']));
+        $writer->addRow(Row::fromValues(['Telat', $lateCount, $totalAttendances > 0 ? round(($lateCount / $totalAttendances) * 100, 2) . '%' : '0%']));
+        $writer->addRow(Row::fromValues(['Sakit', $sickCount, $totalAttendances > 0 ? round(($sickCount / $totalAttendances) * 100, 2) . '%' : '0%']));
+        $writer->addRow(Row::fromValues(['Izin', $excusedCount, $totalAttendances > 0 ? round(($excusedCount / $totalAttendances) * 100, 2) . '%' : '0%']));
+        $writer->addRow(Row::fromValues(['Alpa', $absentCount, $totalAttendances > 0 ? round(($absentCount / $totalAttendances) * 100, 2) . '%' : '0%']));
 
         // Group by date
         $writer->addRow(Row::fromValues([]));
-        $writer->addRow(Row::fromValues(['ATTENDANCE BY DATE']));
-        $writer->addRow(Row::fromValues(['Date', 'Present', 'Late', 'Absent', 'Sick', 'Excused']));
+        $writer->addRow(Row::fromValues(['KEHADIRAN PER TANGGAL']));
+        $writer->addRow(Row::fromValues(['Tanggal', 'Hadir', 'Telat', 'Alpa', 'Sakit', 'Izin']));
 
         $dateGroups = $attendances->groupBy('date')->sortBy(function($item, $key) {
             return $key;
@@ -153,11 +153,11 @@ class AttendanceExportService
         foreach ($dateGroups as $date => $records) {
             $writer->addRow(Row::fromValues([
                 $date,
-                $records->where('status', 'present')->count(),
-                $records->where('status', 'late')->count(),
-                $records->where('status', 'absent')->count(),
-                $records->where('status', 'sick')->count(),
-                $records->where('status', 'excused')->count(),
+                $records->where('status', 'Hadir')->count(),
+                $records->where('status', 'Telat')->count(),
+                $records->where('status', 'Alpa')->count(),
+                $records->where('status', 'Sakit')->count(),
+                $records->where('status', 'Izin')->count(),
             ]));
         }
 
@@ -165,19 +165,19 @@ class AttendanceExportService
         $classes = $attendances->groupBy('student.class_id');
         if ($classes->count() > 1) {
             $writer->addRow(Row::fromValues([]));
-            $writer->addRow(Row::fromValues(['ATTENDANCE BY CLASS']));
-            $writer->addRow(Row::fromValues(['Class', 'Total', 'Present', 'Late', 'Absent', 'Sick', 'Excused']));
+            $writer->addRow(Row::fromValues(['KEHADIRAN PER KELAS']));
+            $writer->addRow(Row::fromValues(['Kelas', 'Total', 'Hadir', 'Telat', 'Alpa', 'Sakit', 'Izin']));
 
             foreach ($classes as $classRecords) {
                 $className = $classRecords->first()?->student?->class?->name ?? 'N/A';
                 $writer->addRow(Row::fromValues([
                     $className,
                     $classRecords->count(),
-                    $classRecords->where('status', 'present')->count(),
-                    $classRecords->where('status', 'late')->count(),
-                    $classRecords->where('status', 'absent')->count(),
-                    $classRecords->where('status', 'sick')->count(),
-                    $classRecords->where('status', 'excused')->count(),
+                    $classRecords->where('status', 'Hadir')->count(),
+                    $classRecords->where('status', 'Telat')->count(),
+                    $classRecords->where('status', 'Alpa')->count(),
+                    $classRecords->where('status', 'Sakit')->count(),
+                    $classRecords->where('status', 'Izin')->count(),
                 ]));
             }
         }

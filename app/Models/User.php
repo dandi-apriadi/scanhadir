@@ -26,10 +26,14 @@ class User extends Authenticatable
         return $this->hasOne(Student::class);
     }
 
-    public function assignedClasses(): BelongsToMany
+    public function mataKuliahAssignments()
     {
-        return $this->belongsToMany(StudentClass::class, 'class_teacher', 'teacher_id', 'class_id')
-            ->withTimestamps();
+        return $this->hasMany(MataKuliahDosenAssignment::class, 'user_id');
+    }
+
+    public function assignedSubjects()
+    {
+        return $this->hasManyThrough(Subject::class, MataKuliahDosenAssignment::class, 'user_id', 'subject_id');
     }
 
     public function teachingSchedules(): HasMany
@@ -37,14 +41,24 @@ class User extends Authenticatable
         return $this->hasMany(Schedule::class, 'teacher_id');
     }
 
+    public function assignedClasses(): BelongsToMany
+    {
+        return $this->belongsToMany(StudentClass::class, 'schedules', 'teacher_id', 'class_id')->distinct();
+    }
+
+    public function getAssignedClassesCountAttribute(): int
+    {
+        return $this->teaching_schedules_count ?? $this->teachingSchedules()->count();
+    }
+
     public function isAdmin(): bool
     {
         return $this->role === 'admin';
     }
 
-    public function isTeacher(): bool
+    public function isDosen(): bool
     {
-        return $this->role === 'teacher';
+        return $this->role === 'dosen';
     }
 
     public function isStudent(): bool

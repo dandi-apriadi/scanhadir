@@ -217,11 +217,11 @@
 
                     <div class="flex items-center gap-3 pl-2">
                         <div class="text-right hidden sm:block">
-                            <p class="text-sm font-bold text-on-surface leading-tight">Super Admin</p>
-                            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Administrator</p>
+                            <p class="text-sm font-bold text-on-surface leading-tight">{{ auth()->user()->name }}</p>
+                            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{{ auth()->user()->role === 'admin' ? 'Administrator' : 'Staf' }}</p>
                         </div>
                         <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold shadow-inner border border-primary/5">
-                            SA
+                            {{ collect(explode(' ', auth()->user()->name))->take(2)->map(fn($n) => strtoupper(substr($n, 0, 1)))->implode('') }}
                         </div>
                     </div>
 

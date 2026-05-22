@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CorrectionController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DosenSessionController;
 use App\Http\Controllers\StudentQrCodeController;
 use App\Livewire\AttendanceAnalytics;
 use App\Livewire\AttendanceReports;
@@ -83,13 +85,41 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
         Route::post('/mapel', [DashboardController::class, 'storeMapel'])->name('mapel.store');
         Route::put('/mapel/{subject}', [DashboardController::class, 'updateMapel'])->name('mapel.update');
         Route::delete('/mapel/{subject}', [DashboardController::class, 'destroyMapel'])->name('mapel.destroy');
+        Route::get('/semester', [DashboardController::class, 'masterSemester'])->name('semester');
+        Route::post('/semester', [DashboardController::class, 'storeSemester'])->name('semester.store');
+        Route::put('/semester/{semester}', [DashboardController::class, 'updateSemester'])->name('semester.update');
+        Route::delete('/semester/{semester}', [DashboardController::class, 'destroySemester'])->name('semester.destroy');
     });
 });
 
-// Teacher Routes
-Route::prefix('teacher')->name('teacher.')->middleware(['auth', 'role:teacher'])->group(function () {
+// Teacher/Dosen Routes
+Route::prefix('teacher')->name('teacher.')->middleware(['auth', 'role:teacher,dosen'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'teacherDashboard'])->name('dashboard');
     Route::get('/analytics', AttendanceAnalytics::class)->name('analytics');
     Route::get('/reports', AttendanceReports::class)->name('reports');
     Route::get('/bulk-update', BulkAttendanceUpdate::class)->name('bulk-update');
+});
+
+// Dosen Session Routes (IOT-Attendance style)
+Route::middleware(['auth', 'role:admin,dosen,teacher'])->group(function () {
+    // Mata Kuliah Saya (Courses)
+    Route::get('/dosen/mata-kuliah', [DosenSessionController::class, 'courses'])->name('dosen-courses');
+    Route::get('/dosen/schedule/start', [DosenSessionController::class, 'create'])->name('dosen-schedule.start');
+    Route::post('/dosen/schedule/start', [DosenSessionController::class, 'store'])->name('dosen-schedule.store');
+    Route::delete('/dosen/schedule/stop', [DosenSessionController::class, 'destroy'])->name('dosen-schedule.stop');
+    Route::get('/dosen/schedule/detail', [DosenSessionController::class, 'detailByFilter'])->name('dosen-schedule.detail');
+    Route::get('/dosen/schedule/detail/export/excel', [DosenSessionController::class, 'exportExcel'])->name('dosen-schedule.detail.export.excel');
+    Route::get('/dosen/schedule/detail/export/pdf', [DosenSessionController::class, 'exportPdf'])->name('dosen-schedule.detail.export.pdf');
+    
+    // Monitoring
+    Route::get('/monitoring/live', [DashboardController::class, 'adminScanner'])->name('monitoring');
+    
+    // Correction (optional)
+    Route::get('/correction', [CorrectionController::class, 'index'])->name('correction');
+    Route::get('/correction/create', [CorrectionController::class, 'create'])->name('correction.create');
+    Route::post('/correction', [CorrectionController::class, 'store'])->name('correction.store');
+    Route::get('/correction/{correction}/edit', [CorrectionController::class, 'edit'])->name('correction.edit');
+    Route::put('/correction/{correction}', [CorrectionController::class, 'update'])->name('correction.update');
+    Route::post('/correction/{correction}/approve', [CorrectionController::class, 'approve'])->name('correction.approve');
+    Route::post('/correction/{correction}/reject', [CorrectionController::class, 'reject'])->name('correction.reject');
 });

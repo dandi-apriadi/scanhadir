@@ -20,11 +20,11 @@
                     <p class="text-xs text-emerald-700">{{ $scanCount }} siswa telah dipindai hari ini</p>
                 </div>
             </div>
-            @if($latestScannedStudent)
+            @if($lastScanedStudent)
                 <div class="text-right">
                     <p class="text-xs text-slate-500 uppercase font-bold mb-1">Scan Terakhir</p>
-                    <p class="text-sm font-semibold text-on-surface">{{ $latestScannedStudent->student?->user?->name }}</p>
-                    <p class="text-xs text-slate-500">{{ $latestScannedStudent->check_in ? $latestScannedStudent->check_in->format('H:i:s') : '-' }}</p>
+                    <p class="text-sm font-semibold text-on-surface">{{ $lastScanedStudent['name'] ?? '-' }}</p>
+                    <p class="text-xs text-slate-500">{{ $lastScanedStudent['time'] ?? '-' }}</p>
                 </div>
             @endif
         </div>
@@ -34,23 +34,23 @@
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
         <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/15">
             <p class="text-xs text-slate-500 uppercase font-bold mb-2">Kelas yang Diampu</p>
-            <p class="text-3xl font-bold text-primary">{{ $totalAssignedClasses }}</p>
+            <p class="text-3xl font-bold text-primary">{{ $classes->count() }}</p>
         </div>
         <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/15">
             <p class="text-xs text-slate-500 uppercase font-bold mb-2">Total Siswa</p>
-            <p class="text-3xl font-bold text-secondary">{{ $totalStudents }}</p>
+            <p class="text-3xl font-bold text-secondary">{{ $classes->sum('total_students') }}</p>
         </div>
         <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/15">
             <p class="text-xs text-slate-500 uppercase font-bold mb-2">Hadir</p>
-            <p class="text-3xl font-bold text-emerald-600">{{ $stats['present'] }}</p>
+            <p class="text-3xl font-bold text-emerald-600">{{ $stats['hadir'] }}</p>
         </div>
         <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/15">
             <p class="text-xs text-slate-500 uppercase font-bold mb-2">Terlambat</p>
-            <p class="text-3xl font-bold text-amber-600">{{ $stats['late'] }}</p>
+            <p class="text-3xl font-bold text-amber-600">{{ $stats['telat'] }}</p>
         </div>
         <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/15">
             <p class="text-xs text-slate-500 uppercase font-bold mb-2">Alpa</p>
-            <p class="text-3xl font-bold text-error">{{ $stats['absent'] }}</p>
+            <p class="text-3xl font-bold text-error">{{ $stats['alpa'] }}</p>
         </div>
     </div>
 
@@ -94,7 +94,7 @@
                                     <td class="px-6 py-4 text-sm text-slate-500">{{ $log['class_name'] }}</td>
                                     <td class="px-6 py-4 text-sm font-medium">{{ $log['check_in'] ?? '-' }}</td>
                                     <td class="px-6 py-4 text-right">
-                                        <span class="px-2 py-1 text-[10px] font-bold rounded @if($log['status'] === 'present') bg-emerald-50 text-emerald-600 @elseif($log['status'] === 'late') bg-amber-50 text-amber-600 @else bg-slate-50 text-slate-600 @endif">
+                                        <span class="px-2 py-1 text-[10px] font-bold rounded @if($log['status'] === 'Hadir') bg-emerald-50 text-emerald-600 @elseif($log['status'] === 'Telat') bg-amber-50 text-amber-600 @else bg-slate-50 text-slate-600 @endif">
                                             {{ strtoupper($log['status']) }}
                                         </span>
                                     </td>
@@ -113,7 +113,7 @@
         <!-- Class Summary & Late Students -->
         <div class="space-y-6">
             <!-- Late Students Alert -->
-            @if($lateStudents->isNotEmpty())
+            @if(isset($lateStudents) && $lateStudents->isNotEmpty())
                 <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/15 overflow-hidden">
                     <div class="p-6 border-b border-slate-100 bg-amber-50">
                         <h4 class="text-lg font-bold text-amber-900 flex items-center gap-2">
@@ -143,7 +143,7 @@
                             <div class="flex justify-between items-start mb-2">
                                 <div>
                                     <p class="text-sm font-semibold text-on-surface">{{ $class['name'] }}</p>
-                                    <p class="text-xs text-slate-500">{{ $class['present'] }}/{{ $class['total_students'] }} hadir</p>
+                                    <p class="text-xs text-slate-500">{{ $class['hadir'] }}/{{ $class['total_students'] }} hadir</p>
                                 </div>
                                 <span class="text-xs font-bold bg-primary/10 text-primary px-2 py-1 rounded">{{ $class['percentage'] }}%</span>
                             </div>

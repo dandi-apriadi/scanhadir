@@ -3,7 +3,11 @@
 namespace App\Livewire;
 
 use App\Models\Attendance;
+use App\Models\MataKuliahDosenAssignment;
+use App\Models\Schedule;
+use App\Models\SemesterAkademik;
 use App\Models\StudentClass;
+use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
 use Illuminate\Support\Carbon;
 
@@ -16,39 +20,82 @@ class TeacherDashboard extends Component
     public $scanSessionActive = false;
     public $scanCount = 0;
     public $lastScanedStudent = null;
+    public $activeSession = null;
+    public $activeSessionInfo = null;
 
     public function mount()
     {
         $user = auth()->user();
 
-        if (!$user || $user->role !== 'teacher') {
+        if (!$user || !in_array($user->role, ['teacher', 'dosen'])) {
             abort(403, 'Unauthorized');
         }
 
         $this->selectedDate = now()->toDateString();
         $this->lastRefresh = now();
+        $this->loadActiveSession();
+    }
+
+    /**
+     * Load active session from cache
+     */
+    private function loadActiveSession()
+    {
+        $this->activeSession = Cache::get('active_attendance_session');
+        
+        if ($this->activeSession) {
+            $schedule = Schedule::with(['subject', 'class', 'semesterAkademik'])
+                ->find($this->activeSession['schedule_id'] ?? null);
+            
+            if ($schedule) {
+                $this->activeSessionInfo = [
+                    'subject_name' => $schedule->subject?->name ?? '-',
+                    'subject_code' => $schedule->subject?->code ?? '-',
+                    'class_name' => $schedule->class?->name ?? '-',
+                    'semester' => $schedule->semesterAkademik?->display_name ?? '-',
+                    'day' => $schedule->day,
+                    'start_time' => Carbon::parse($schedule->start_time)->format('H:i'),
+                    'end_time' => Carbon::parse($schedule->end_time)->format('H:i'),
+                    'schedule_id' => $schedule->id,
+                    'source' => $this->activeSession['source'] ?? 'manual',
+                ];
+            }
+        }
     }
 
     public function refreshAttendance()
     {
-        // This method is called periodically via Livewire polling
-        // It updates the attendance data in real-time
         $this->lastRefresh = now();
+        $this->loadActiveSession();
     }
 
     public function render()
     {
         $teacher = auth()->user();
-        $assignedClassIds = $teacher?->assignedClasses()->pluck('classes.id') ?? collect();
+        $isAdmin = $teacher && $teacher->role === 'admin';
+        
+        // Get assigned subject IDs via mata_kuliah_dosen_assignments or direct schedules
+        $assignedSubjectIds = $isAdmin
+            ? \App\Models\Subject::pluck('id')
+            : MataKuliahDosenAssignment::where('user_id', $teacher?->id)->pluck('subject_id')
+                ->merge(Schedule::where('teacher_id', $teacher?->id)->pluck('subject_id'))
+                ->unique();
+        
+        // Get class IDs from schedules of assigned subjects or direct schedules
+        $assignedClassIds = Schedule::whereIn('subject_id', $assignedSubjectIds)
+            ->orWhere('teacher_id', $teacher?->id)
+            ->pluck('class_id')
+            ->unique();
+        
         $date = Carbon::parse($this->selectedDate)->toDateString();
 
         // Overall stats for today
         $stats = [
-            'present' => 0,
-            'late' => 0,
-            'sick' => 0,
-            'excused' => 0,
-            'absent' => 0,
+            'hadir' => 0,
+            'telat' => 0,
+            'sakit' => 0,
+            'izin' => 0,
+            'alpa' => 0,
         ];
 
         if ($assignedClassIds->isNotEmpty()) {
@@ -57,16 +104,16 @@ class TeacherDashboard extends Component
                 ->whereHas('student', fn ($query) => $query->whereIn('class_id', $assignedClassIds));
 
             $stats = [
-                'present' => (clone $attendanceQuery)->where('status', 'present')->count(),
-                'late' => (clone $attendanceQuery)->where('status', 'late')->count(),
-                'sick' => (clone $attendanceQuery)->where('status', 'sick')->count(),
-                'excused' => (clone $attendanceQuery)->where('status', 'excused')->count(),
-                'absent' => (clone $attendanceQuery)->where('status', 'absent')->count(),
+                'hadir' => (clone $attendanceQuery)->where('status', 'Hadir')->count(),
+                'telat' => (clone $attendanceQuery)->where('status', 'Telat')->count(),
+                'sakit' => (clone $attendanceQuery)->where('status', 'Sakit')->count(),
+                'izin' => (clone $attendanceQuery)->where('status', 'Izin')->count(),
+                'alpa' => (clone $attendanceQuery)->where('status', 'Alpa')->count(),
             ];
         }
 
         // Class details
-        $classes = $teacher?->assignedClasses()
+        $classes = StudentClass::whereIn('id', $assignedClassIds)
             ->with('students.user')
             ->orderBy('name')
             ->get()
@@ -76,31 +123,31 @@ class TeacherDashboard extends Component
                     ->whereHas('student', fn ($query) => $query->where('class_id', $class->id))
                     ->selectRaw('
                         COUNT(*) as total,
-                        SUM(CASE WHEN status = "present" THEN 1 ELSE 0 END) as present,
-                        SUM(CASE WHEN status = "late" THEN 1 ELSE 0 END) as late,
-                        SUM(CASE WHEN status = "absent" THEN 1 ELSE 0 END) as absent
+                        SUM(CASE WHEN status = "Hadir" THEN 1 ELSE 0 END) as hadir,
+                        SUM(CASE WHEN status = "Telat" THEN 1 ELSE 0 END) as telat,
+                        SUM(CASE WHEN status = "Alpa" THEN 1 ELSE 0 END) as alpa
                     ')
                     ->first();
 
                 $total = $class->students->count();
                 $percentage = $total > 0
-                    ? round(($attendanceData->present / $total) * 100, 1)
+                    ? round((($attendanceData->hadir ?? 0) / $total) * 100, 1)
                     : 0;
 
                 return [
                     'id' => $class->id,
                     'name' => $class->name,
                     'total_students' => $total,
-                    'present' => $attendanceData->present ?? 0,
-                    'late' => $attendanceData->late ?? 0,
-                    'absent' => $attendanceData->absent ?? 0,
+                    'hadir' => $attendanceData->hadir ?? 0,
+                    'telat' => $attendanceData->telat ?? 0,
+                    'alpa' => $attendanceData->alpa ?? 0,
                     'percentage' => $percentage,
                 ];
-            }) ?? collect();
+            });
 
         // Recent attendance logs
         $recentLogs = Attendance::query()
-            ->with(['student.user', 'student.class'])
+            ->with(['student.user', 'student.class', 'schedule.subject'])
             ->whereDate('date', $date)
             ->whereHas('student', fn ($query) => $query->whereIn('class_id', $assignedClassIds))
             ->orderBy('check_in', 'desc')
@@ -110,17 +157,19 @@ class TeacherDashboard extends Component
                 'student_name' => $att->student?->user?->name,
                 'class_name' => $att->student?->class?->name,
                 'nisn' => $att->student?->nisn,
+                'subject_name' => $att->schedule?->subject?->name ?? '-',
                 'check_in' => $att->check_in,
                 'status' => $att->status,
+                'metode' => $att->metode_absensi ?? 'QR Code',
             ]);
 
-        // Live scan statistics (count of today's scans)
+        // Live scan statistics
         $totalTodayScans = Attendance::query()
             ->whereDate('date', $date)
             ->whereHas('student', fn ($query) => $query->whereIn('class_id', $assignedClassIds))
             ->count();
 
-        // Latest scanned student (for live feed)
+        // Latest scanned student
         $latestScannedStudent = Attendance::query()
             ->with(['student.user', 'student.class'])
             ->whereDate('date', $date)
@@ -128,7 +177,6 @@ class TeacherDashboard extends Component
             ->orderBy('check_in', 'desc')
             ->first();
 
-        // Scan session stats (checks if scanning is active)
         $this->scanSessionActive = $totalTodayScans > 0;
         $this->scanCount = $totalTodayScans;
         $this->lastScanedStudent = $latestScannedStudent ? [
@@ -138,32 +186,14 @@ class TeacherDashboard extends Component
             'time' => $latestScannedStudent->check_in,
         ] : null;
 
-        // Late students alert
-        $lateStudents = Attendance::query()
-            ->with(['student.user', 'student.class'])
-            ->whereDate('date', $date)
-            ->where('status', 'late')
-            ->whereHas('student', fn ($query) => $query->whereIn('class_id', $assignedClassIds))
-            ->limit(5)
-            ->get();
-
-        // Total stats
-        $totalAssignedClasses = $assignedClassIds->count();
-        $totalStudents = $teacher?->assignedClasses()
-            ->withCount('students')
-            ->get()
-            ->sum('students_count') ?? 0;
+        // Reload active session
+        $this->loadActiveSession();
 
         return view('livewire.teacher-dashboard', [
-            'date' => $date,
             'stats' => $stats,
             'classes' => $classes,
             'recentLogs' => $recentLogs,
-            'lateStudents' => $lateStudents,
-            'totalAssignedClasses' => $totalAssignedClasses,
-            'totalStudents' => $totalStudents,
-            'totalScans' => $totalTodayScans,
-            'latestScannedStudent' => $latestScannedStudent,
+            'activeSessionInfo' => $this->activeSessionInfo,
         ]);
     }
 }

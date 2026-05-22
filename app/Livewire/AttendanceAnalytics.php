@@ -3,6 +3,9 @@
 namespace App\Livewire;
 
 use App\Models\Attendance;
+use App\Models\MataKuliahDosenAssignment;
+use App\Models\Schedule;
+use App\Models\SemesterAkademik;
 use App\Models\StudentClass;
 use Illuminate\Support\Carbon;
 use Livewire\Component;
@@ -10,6 +13,8 @@ use Livewire\Component;
 class AttendanceAnalytics extends Component
 {
     public $selectedClass = null;
+    public $selectedSubject = null;
+    public $selectedSemester = null;
     public $selectedYear = null;
     public $selectedMonth = null;
 
@@ -17,20 +22,36 @@ class AttendanceAnalytics extends Component
     {
         $this->selectedYear = now()->year;
         $this->selectedMonth = now()->month;
+        $this->selectedSemester = SemesterAkademik::where('is_active', true)->value('id');
     }
 
     public function render()
     {
         $teacher = auth()->user();
         $isAdmin = $teacher && $teacher->role === 'admin';
-        $assignedClassIds = $isAdmin
-            ? StudentClass::query()->pluck('id')
-            : ($teacher?->assignedClasses()->pluck('classes.id') ?? collect());
+        
+        // Get assigned subject IDs
+        $assignedSubjectIds = $isAdmin
+            ? \App\Models\Subject::pluck('id')
+            : MataKuliahDosenAssignment::where('user_id', $teacher?->id)->pluck('subject_id');
+        
+        // Get class IDs from schedules
+        $assignedClassIds = Schedule::whereIn('subject_id', $assignedSubjectIds)
+            ->pluck('class_id')
+            ->unique();
+
+        // Apply semester filter
+        if ($this->selectedSemester) {
+            $assignedClassIds = Schedule::where('semester_akademik_id', $this->selectedSemester)
+                ->whereIn('subject_id', $assignedSubjectIds)
+                ->pluck('class_id')
+                ->unique();
+        }
 
         // Get classes for filter
         $classes = $isAdmin
             ? StudentClass::query()->orderBy('name')->get()
-            : ($teacher?->assignedClasses()->get() ?? collect());
+            : StudentClass::whereIn('id', $assignedClassIds)->orderBy('name')->get();
 
         $effectiveClassIds = $this->selectedClass
             ? $assignedClassIds->intersect([(int) $this->selectedClass])->values()
@@ -48,10 +69,14 @@ class AttendanceAnalytics extends Component
         // Get student performance
         $studentPerformance = $this->getStudentPerformance($effectiveClassIds);
 
+        // Get semesters for filter
+        $semesters = SemesterAkademik::orderByDesc('is_active')->orderByDesc('tanggal_mulai')->get();
+
         $layout = $isAdmin ? 'layouts.admin' : 'layouts.teacher';
 
         return view('livewire.attendance-analytics', [
             'classes' => $classes,
+            'semesters' => $semesters,
             'analyticsData' => $analyticsData,
             'monthlyTrend' => $monthlyTrend,
             'classComparison' => $classComparison,
@@ -72,16 +97,23 @@ class AttendanceAnalytics extends Component
             ->whereHas('student', fn($q) => $q->whereIn('class_id', $classIds))
             ->get();
 
+        $total = $attendances->count();
+        $present = $attendances->where('status', 'Hadir')->count();
+        $late = $attendances->where('status', 'Telat')->count();
+        $sick = $attendances->where('status', 'Sakit')->count();
+        $excused = $attendances->where('status', 'Izin')->count();
+        $absent = $attendances->where('status', 'Alpa')->count();
+
         return [
-            'total' => $attendances->count(),
-            'present' => $attendances->where('status', 'present')->count(),
-            'late' => $attendances->where('status', 'late')->count(),
-            'sick' => $attendances->where('status', 'sick')->count(),
-            'excused' => $attendances->where('status', 'excused')->count(),
-            'absent' => $attendances->where('status', 'absent')->count(),
-            'presentPercentage' => $attendances->count() > 0 ? round(($attendances->where('status', 'present')->count() / $attendances->count()) * 100, 1) : 0,
-            'latePercentage' => $attendances->count() > 0 ? round(($attendances->where('status', 'late')->count() / $attendances->count()) * 100, 1) : 0,
-            'absentPercentage' => $attendances->count() > 0 ? round(($attendances->where('status', 'absent')->count() / $attendances->count()) * 100, 1) : 0,
+            'total' => $total,
+            'present' => $present,
+            'late' => $late,
+            'sick' => $sick,
+            'excused' => $excused,
+            'absent' => $absent,
+            'presentPercentage' => $total > 0 ? round(($present / $total) * 100, 1) : 0,
+            'latePercentage' => $total > 0 ? round(($late / $total) * 100, 1) : 0,
+            'absentPercentage' => $total > 0 ? round(($absent / $total) * 100, 1) : 0,
         ];
     }
 

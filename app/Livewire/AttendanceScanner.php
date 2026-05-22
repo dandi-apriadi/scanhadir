@@ -5,8 +5,10 @@ namespace App\Livewire;
 use App\Http\Requests\ScanAttendanceRequest;
 use App\Models\Attendance;
 use App\Models\Holiday;
+use App\Models\Schedule;
 use App\Models\Student;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Livewire\Component;
@@ -23,16 +25,45 @@ class AttendanceScanner extends Component
     public $pendingStudentDetails = null;
     public $awaitingConfirmation = false;
     
+    // Active Session Info
+    public $activeSession = null;
+    public $activeSessionInfo = null;
+    
     // Configuration
-    protected const SCHOOL_START_TIME = '07:00:00';      // Jam masuk
-    protected const LATE_THRESHOLD = '07:30:00';          // Terlambat setelah jam ini
-    protected const SCHOOL_END_TIME = '14:00:00';        // Jam pulang
-    protected const SCAN_THROTTLE_SECONDS = 2;            // Jangan scan lebih cepat dari 2 detik
+    protected const SCAN_THROTTLE_SECONDS = 2;
 
     public function mount()
     {
         $this->scanCount = 0;
         $this->lastScanTime = null;
+        $this->loadActiveSession();
+    }
+
+    /**
+     * Load active session from cache
+     */
+    private function loadActiveSession()
+    {
+        $this->activeSession = Cache::get('active_attendance_session');
+        
+        if ($this->activeSession) {
+            $schedule = Schedule::with(['subject', 'class', 'semesterAkademik'])
+                ->find($this->activeSession['schedule_id'] ?? null);
+            
+            if ($schedule) {
+                $this->activeSessionInfo = [
+                    'subject_name' => $schedule->subject?->name ?? '-',
+                    'subject_code' => $schedule->subject?->code ?? '-',
+                    'class_name' => $schedule->class?->name ?? '-',
+                    'semester' => $schedule->semesterAkademik?->display_name ?? '-',
+                    'day' => $schedule->day,
+                    'start_time' => Carbon::parse($schedule->start_time)->format('H:i'),
+                    'end_time' => Carbon::parse($schedule->end_time)->format('H:i'),
+                    'schedule_id' => $schedule->id,
+                    'source' => $this->activeSession['source'] ?? 'manual',
+                ];
+            }
+        }
     }
 
     /**
@@ -50,6 +81,12 @@ class AttendanceScanner extends Component
 
             if ($validation->fails()) {
                 $this->handleError($validation->errors()->first('code'));
+                return;
+            }
+
+            // Check if there's an active session
+            if (!$this->activeSession || !$this->activeSessionInfo) {
+                $this->handleError('Tidak ada sesi presensi aktif. Mulai sesi dari halaman Mata Kuliah Saya.');
                 return;
             }
 
@@ -149,19 +186,31 @@ class AttendanceScanner extends Component
     }
 
     /**
-     * Process attendance check-in or check-out
+     * Process attendance check-in or check-out with schedule_id
      */
     private function processAttendance($student, $today)
     {
         $now = now();
         $nowTime = $now->toTimeString();
+        $scheduleId = $this->activeSessionInfo['schedule_id'] ?? null;
         
-        // Get or create attendance record
+        // Determine status based on schedule time
+        $status = $this->determineStatusFromSchedule($nowTime);
+
+        // Get or create attendance record (unique per student + schedule + date)
         $attendance = Attendance::firstOrCreate(
-            ['student_id' => $student->id, 'date' => $today],
             [
-                'status' => $this->determineStatus($nowTime),
-                'check_in' => $nowTime
+                'student_id' => $student->id,
+                'schedule_id' => $scheduleId,
+                'date' => $today,
+            ],
+            [
+                'status' => $status,
+                'check_in' => $nowTime,
+                'metode_absensi' => 'QR Code',
+                'approval_status' => 'approved',
+                'approved_by' => auth()->id(),
+                'approved_at' => now(),
             ]
         );
 
@@ -206,18 +255,24 @@ class AttendanceScanner extends Component
     }
 
     /**
-     * Determine attendance status based on check-in time
+     * Determine attendance status based on schedule time
      */
-    private function determineStatus($timeString): string
+    private function determineStatusFromSchedule($nowTime): string
     {
-        $checkInTime = Carbon::parse($timeString);
-        $lateThreshold = Carbon::parse(self::LATE_THRESHOLD);
+        if (!$this->activeSessionInfo) {
+            return 'Alpa';
+        }
+
+        $scheduleStartTime = $this->activeSessionInfo['start_time'] . ':00';
         
-        if ($checkInTime->greaterThan($lateThreshold)) {
-            return 'late';
+        // If student scans after start time + 15 minutes, mark as Telat
+        $lateThreshold = Carbon::parse($scheduleStartTime)->addMinutes(15)->toTimeString();
+        
+        if ($nowTime > $lateThreshold) {
+            return 'Telat';
         }
         
-        return 'present';
+        return 'Hadir';
     }
 
     /**

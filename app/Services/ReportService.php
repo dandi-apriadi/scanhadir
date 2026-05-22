@@ -35,11 +35,11 @@ class ReportService
             'date' => $date,
             'total_students' => $studentQuery->count(),
             'total_scanned' => (clone $records)->count(),
-            'present' => (clone $records)->where('status', 'present')->count(),
-            'late' => (clone $records)->where('status', 'late')->count(),
-            'sick' => (clone $records)->where('status', 'sick')->count(),
-            'excused' => (clone $records)->where('status', 'excused')->count(),
-            'absent' => (clone $records)->where('status', 'absent')->count(),
+            'hadir' => (clone $records)->where('status', 'Hadir')->count(),
+            'telat' => (clone $records)->where('status', 'Telat')->count(),
+            'sakit' => (clone $records)->where('status', 'Sakit')->count(),
+            'izin' => (clone $records)->where('status', 'Izin')->count(),
+            'alpa' => (clone $records)->where('status', 'Alpa')->count(),
         ];
     }
 
@@ -81,11 +81,11 @@ class ReportService
             'class_id' => $classId,
             'student_id' => $studentId,
             'month' => $month,
-            'present' => (clone $records)->where('status', 'present')->count(),
-            'late' => (clone $records)->where('status', 'late')->count(),
-            'sick' => (clone $records)->where('status', 'sick')->count(),
-            'excused' => (clone $records)->where('status', 'excused')->count(),
-            'absent' => (clone $records)->where('status', 'absent')->count(),
+            'hadir' => (clone $records)->where('status', 'Hadir')->count(),
+            'telat' => (clone $records)->where('status', 'Telat')->count(),
+            'sakit' => (clone $records)->where('status', 'Sakit')->count(),
+            'izin' => (clone $records)->where('status', 'Izin')->count(),
+            'alpa' => (clone $records)->where('status', 'Alpa')->count(),
         ];
     }
 
@@ -153,11 +153,11 @@ class ReportService
             'assigned_classes' => count($assignedClassIds),
             'total_students' => $totalStudents,
             'total_scanned' => (clone $records)->count(),
-            'present' => (clone $records)->where('status', 'present')->count(),
-            'late' => (clone $records)->where('status', 'late')->count(),
-            'sick' => (clone $records)->where('status', 'sick')->count(),
-            'excused' => (clone $records)->where('status', 'excused')->count(),
-            'absent' => (clone $records)->where('status', 'absent')->count(),
+            'hadir' => (clone $records)->where('status', 'Hadir')->count(),
+            'telat' => (clone $records)->where('status', 'Telat')->count(),
+            'sakit' => (clone $records)->where('status', 'Sakit')->count(),
+            'izin' => (clone $records)->where('status', 'Izin')->count(),
+            'alpa' => (clone $records)->where('status', 'Alpa')->count(),
         ];
     }
 
@@ -249,13 +249,13 @@ class ReportService
             'end_date' => $end,
             'total_workdays' => $workdays,
             'total_records' => $records->count(),
-            'present' => $records->where('status', 'present')->count(),
-            'late' => $records->where('status', 'late')->count(),
-            'sick' => $records->where('status', 'sick')->count(),
-            'excused' => $records->where('status', 'excused')->count(),
-            'absent' => $records->where('status', 'absent')->count(),
+            'hadir' => $records->where('status', 'Hadir')->count(),
+            'telat' => $records->where('status', 'Telat')->count(),
+            'sakit' => $records->where('status', 'Sakit')->count(),
+            'izin' => $records->where('status', 'Izin')->count(),
+            'alpa' => $records->where('status', 'Alpa')->count(),
             'attendance_percentage' => $workdays > 0
-                ? round(($records->where('status', 'present')->count() / $workdays) * 100, 2)
+                ? round(($records->where('status', 'Hadir')->count() / $workdays) * 100, 2)
                 : 0,
         ];
     }

@@ -3,6 +3,8 @@
 namespace App\Livewire;
 
 use App\Models\Attendance;
+use App\Models\MataKuliahDosenAssignment;
+use App\Models\Schedule;
 use App\Models\StudentClass;
 use Illuminate\Support\Carbon;
 use Livewire\Component;
@@ -27,10 +29,22 @@ class BulkAttendanceUpdate extends Component
     public function render()
     {
         $teacher = auth()->user();
-        $assignedClassIds = $teacher?->assignedClasses()->pluck('classes.id') ?? collect();
+        $isAdmin = $teacher && $teacher->role === 'admin';
+        
+        // Get assigned subject IDs
+        $assignedSubjectIds = $isAdmin
+            ? \App\Models\Subject::pluck('id')
+            : MataKuliahDosenAssignment::where('user_id', $teacher?->id)->pluck('subject_id');
+        
+        // Get class IDs from schedules
+        $assignedClassIds = Schedule::whereIn('subject_id', $assignedSubjectIds)
+            ->pluck('class_id')
+            ->unique();
 
         // Get classes
-        $classes = $teacher?->assignedClasses()->get() ?? collect();
+        $classes = $isAdmin
+            ? StudentClass::query()->orderBy('name')->get()
+            : StudentClass::whereIn('id', $assignedClassIds)->orderBy('name')->get();
 
         // Get students for selected class
         $students = collect();
@@ -46,18 +60,18 @@ class BulkAttendanceUpdate extends Component
         $attendanceSummary = [];
         if ($this->selectedClass && $this->selectedDate) {
             $attendances = Attendance::query()
-                ->with(['student.user', 'student.class'])
+                ->with(['student.user', 'student.class', 'schedule.subject'])
                 ->where('date', $this->selectedDate)
                 ->whereHas('student', fn($q) => $q->where('class_id', $this->selectedClass))
                 ->get()
                 ->keyBy('student_id');
 
             $attendanceSummary = [
-                'present' => $attendances->where('status', 'present')->count(),
-                'late' => $attendances->where('status', 'late')->count(),
-                'sick' => $attendances->where('status', 'sick')->count(),
-                'excused' => $attendances->where('status', 'excused')->count(),
-                'absent' => $attendances->where('status', 'absent')->count(),
+                'hadir' => $attendances->where('status', 'Hadir')->count(),
+                'telat' => $attendances->where('status', 'Telat')->count(),
+                'sakit' => $attendances->where('status', 'Sakit')->count(),
+                'izin' => $attendances->where('status', 'Izin')->count(),
+                'alpa' => $attendances->where('status', 'Alpa')->count(),
             ];
         }
 
@@ -66,14 +80,22 @@ class BulkAttendanceUpdate extends Component
             'students' => $students,
             'attendances' => $attendances,
             'attendanceSummary' => $attendanceSummary,
-            'statusOptions' => ['present' => 'Present', 'late' => 'Late', 'sick' => 'Sick', 'excused' => 'Excused', 'absent' => 'Absent'],
+            'statusOptions' => ['Hadir' => 'Hadir', 'Telat' => 'Telat', 'Sakit' => 'Sakit', 'Izin' => 'Izin', 'Alpa' => 'Alpa'],
         ])->layout('layouts.teacher', ['title' => 'Bulk Attendance Update']);
     }
 
     public function selectAllStudents()
     {
         $teacher = auth()->user();
-        $assignedClassIds = $teacher?->assignedClasses()->pluck('classes.id') ?? collect();
+        $isAdmin = $teacher && $teacher->role === 'admin';
+        
+        $assignedSubjectIds = $isAdmin
+            ? \App\Models\Subject::pluck('id')
+            : MataKuliahDosenAssignment::where('user_id', $teacher?->id)->pluck('subject_id');
+        
+        $assignedClassIds = Schedule::whereIn('subject_id', $assignedSubjectIds)
+            ->pluck('class_id')
+            ->unique();
 
         if ($this->selectedClass && $assignedClassIds->contains($this->selectedClass)) {
             $class = StudentClass::find($this->selectedClass);

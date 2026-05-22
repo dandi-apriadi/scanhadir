@@ -64,6 +64,17 @@
                         <span class="material-symbols-outlined text-lg">expand_more</span>
                     </span>
                 </div>
+                <div class="relative group">
+                    <select name="semester_id" class="appearance-none bg-slate-50 border-none rounded-2xl py-3 pl-4 pr-10 text-sm font-bold text-slate-600 focus:ring-2 focus:ring-primary/20 transition-all min-w-[200px]">
+                        <option value="">Semua Semester</option>
+                        @foreach($semesterList as $sem)
+                            <option value="{{ $sem->id }}" @selected($selectedSemesterId === (string) $sem->id)>{{ $sem->display_name }}</option>
+                        @endforeach
+                    </select>
+                    <span class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
+                        <span class="material-symbols-outlined text-lg">expand_more</span>
+                    </span>
+                </div>
                 <button type="submit" class="bg-slate-900 hover:opacity-90 text-white font-black text-xs uppercase tracking-widest py-3.5 px-6 rounded-2xl flex items-center justify-center gap-2 transition-all">Cari</button>
             </form>
             <div class="bg-indigo-50 text-indigo-600 font-black text-xs uppercase tracking-widest py-3.5 px-6 rounded-2xl flex items-center justify-center gap-2">
@@ -72,24 +83,31 @@
             </div>
         </div>
 
-        <form method="POST" action="{{ route('admin.master.mapel.store') }}" class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-8">
+        <form method="POST" action="{{ route('admin.master.mapel.store') }}" class="grid grid-cols-1 md:grid-cols-5 gap-3 mb-8">
             @csrf
             <input name="code" value="{{ old('code') }}" class="bg-slate-50 border-none rounded-2xl py-3 px-4 text-sm font-semibold focus:ring-2 focus:ring-primary/20" placeholder="Kode (contoh: PPLG-01)" required>
-            <input name="name" value="{{ old('name') }}" class="bg-slate-50 border-none rounded-2xl py-3 px-4 text-sm font-semibold focus:ring-2 focus:ring-primary/20 md:col-span-2" placeholder="Nama mata pelajaran" required>
+            <input name="name" value="{{ old('name') }}" class="bg-slate-50 border-none rounded-2xl py-3 px-4 text-sm font-semibold focus:ring-2 focus:ring-primary/20" placeholder="Nama mata pelajaran" required>
             <select name="group" class="appearance-none bg-slate-50 border-none rounded-2xl py-3 px-4 text-sm font-bold text-slate-600 focus:ring-2 focus:ring-primary/20" required>
                 <option value="">Pilih kelompok</option>
                 @foreach($groupOptions as $groupOption)
                     <option value="{{ $groupOption }}" @selected(old('group') === $groupOption)>{{ $groupOption }}</option>
                 @endforeach
             </select>
-            <div class="md:col-span-4 flex justify-end">
+            <select name="semester_akademik_id" class="appearance-none bg-slate-50 border-none rounded-2xl py-3 px-4 text-sm font-bold text-slate-600 focus:ring-2 focus:ring-primary/20">
+                <option value="">Pilih Semester</option>
+                @foreach($semesterList as $sem)
+                    <option value="{{ $sem->id }}" @selected((string) old('semester_akademik_id') === (string) $sem->id)>{{ $sem->display_name }}</option>
+                @endforeach
+            </select>
+            <input name="sks" value="{{ old('sks', 3) }}" type="number" min="1" max="10" class="bg-slate-50 border-none rounded-2xl py-3 px-4 text-sm font-semibold focus:ring-2 focus:ring-primary/20" placeholder="SKS">
+            <div class="md:col-span-5 flex justify-end">
                 <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs uppercase tracking-widest py-3.5 px-6 rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20 active:scale-95 transition-all">
                     <span class="material-symbols-outlined text-lg">add_circle</span>
                     Tambah Mapel
                 </button>
             </div>
             @if ($errors->any())
-                <p class="md:col-span-4 text-xs font-semibold text-rose-600">{{ $errors->first() }}</p>
+                <p class="md:col-span-5 text-xs font-semibold text-rose-600">{{ $errors->first() }}</p>
             @endif
         </form>
 
@@ -101,6 +119,8 @@
                         <th class="px-6 py-4 text-center w-16 uppercase">No</th>
                         <th class="px-6 py-4 uppercase">Kode</th>
                         <th class="px-6 py-4 uppercase">Nama Mata Pelajaran</th>
+                        <th class="px-6 py-4 uppercase">Semester</th>
+                        <th class="px-6 py-4 uppercase text-center">SKS</th>
                         <th class="px-6 py-4 uppercase">Kelompok</th>
                         <th class="px-6 py-4 text-right uppercase">Kontrol</th>
                     </tr>
@@ -112,13 +132,19 @@
                         <td class="px-6 py-4 font-mono font-bold text-indigo-700">{{ $subject->code }}</td>
                         <td class="px-6 py-4 text-on-surface">{{ $subject->name }}</td>
                         <td class="px-6 py-4">
+                            <span class="px-2 py-1 bg-indigo-50 text-primary rounded text-[10px] font-bold">{{ $subject->semesterAkademik?->display_name ?? '-' }}</span>
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <span class="px-2 py-1 bg-slate-100 text-slate-600 rounded text-xs font-bold">{{ $subject->sks ?? 3 }}</span>
+                        </td>
+                        <td class="px-6 py-4">
                             <span class="px-3 py-1.5 {{ $subject->group === 'Kejuruan' ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-100 text-slate-500' }} rounded-lg text-[10px] font-black uppercase tracking-widest ring-1 ring-inset {{ $subject->group === 'Kejuruan' ? 'ring-indigo-200' : 'ring-slate-200' }}">
                                 {{ $subject->group }}
                             </span>
                         </td>
                         <td class="px-6 py-4 text-right rounded-r-2xl">
                             <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button type="button" @click="editSubject = {{ json_encode($subject->only(['id', 'code', 'name', 'group'])) }}" class="w-9 h-9 flex items-center justify-center rounded-xl bg-white text-slate-400 hover:text-indigo-600 shadow-sm ring-1 ring-slate-100 transition-all active:scale-90" title="Edit mapel">
+                                <button type="button" @click="editSubject = {{ json_encode($subject->only(['id', 'code', 'name', 'group', 'sks', 'semester_akademik_id'])) }}" class="w-9 h-9 flex items-center justify-center rounded-xl bg-white text-slate-400 hover:text-indigo-600 shadow-sm ring-1 ring-slate-100 transition-all active:scale-90" title="Edit mapel">
                                     <span class="material-symbols-outlined text-lg">edit</span>
                                 </button>
                                 <form method="POST" action="{{ route('admin.master.mapel.destroy', $subject) }}" onsubmit="return confirm('Hapus mapel ini?')">
@@ -133,7 +159,7 @@
                     </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="px-6 py-8 text-center text-sm text-slate-500">Belum ada data mata pelajaran.</td>
+                            <td colspan="7" class="px-6 py-8 text-center text-sm text-slate-500">Belum ada data mata pelajaran.</td>
                         </tr>
                     @endforelse
                 </tbody>
