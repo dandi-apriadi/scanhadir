@@ -14,12 +14,27 @@ class SubjectFactory extends Factory
 
     public function definition(): array
     {
-        $groups = ['Kejuruan', 'Umum'];
+        $subjects = [
+            ['code' => 'IPA', 'name' => 'Ilmu Pengetahuan Alam'],
+            ['code' => 'MAT', 'name' => 'Matematika'],
+            ['code' => 'PANCASILA', 'name' => 'Pendidikan Pancasila'],
+            ['code' => 'BIND', 'name' => 'Bahasa Indonesia'],
+            ['code' => 'BING', 'name' => 'Bahasa Inggris'],
+            ['code' => 'SBP', 'name' => 'Seni Budaya / Prakarya'],
+            ['code' => 'PJOK', 'name' => 'Pendidikan Jasmani Olahraga'],
+            ['code' => 'IPS', 'name' => 'Ilmu Pengetahuan Sosial'],
+            ['code' => 'INF', 'name' => 'Informatika'],
+            ['code' => 'KKA', 'name' => 'KKA'],
+            ['code' => 'MULOK', 'name' => 'Muatan Lokal'],
+            ['code' => 'PAKBP', 'name' => 'PAK dan BP'],
+        ];
+
+        $subject = $this->faker->randomElement($subjects);
 
         return [
-            'code' => 'MP-' . $this->faker->unique()->numerify('###'),
-            'name' => $this->faker->unique()->words(2, true),
-            'group' => $this->faker->randomElement($groups),
+            'code' => $subject['code'] . '-' . $this->faker->unique()->numerify('###'),
+            'name' => $subject['name'],
+            'group' => 'Umum',
             'semester_akademik_id' => \App\Models\SemesterAkademik::query()->inRandomOrder()->value('id') ?? \App\Models\SemesterAkademik::factory(),
         ];
     }

@@ -3,7 +3,6 @@
 namespace App\Livewire;
 
 use App\Models\Attendance;
-use App\Models\MataKuliahDosenAssignment;
 use App\Models\Schedule;
 use App\Models\StudentClass;
 use Illuminate\Support\Carbon;
@@ -30,14 +29,9 @@ class BulkAttendanceUpdate extends Component
     {
         $teacher = auth()->user();
         $isAdmin = $teacher && $teacher->role === 'admin';
-        
-        // Get assigned subject IDs
-        $assignedSubjectIds = $isAdmin
-            ? \App\Models\Subject::pluck('id')
-            : MataKuliahDosenAssignment::where('user_id', $teacher?->id)->pluck('subject_id');
-        
-        // Get class IDs from schedules
-        $assignedClassIds = Schedule::whereIn('subject_id', $assignedSubjectIds)
+
+        $assignedClassIds = Schedule::query()
+            ->when(! $isAdmin, fn ($query) => $query->where('teacher_id', $teacher?->id))
             ->pluck('class_id')
             ->unique();
 
@@ -55,14 +49,15 @@ class BulkAttendanceUpdate extends Component
             }
         }
 
+        $selectedSchedule = $this->resolveSelectedSchedule($teacher, $isAdmin);
+
         // Get attendance records for selected date and class
         $attendances = collect();
         $attendanceSummary = [];
-        if ($this->selectedClass && $this->selectedDate) {
+        if ($selectedSchedule) {
             $attendances = Attendance::query()
                 ->with(['student.user', 'student.class', 'schedule.subject'])
-                ->where('date', $this->selectedDate)
-                ->whereHas('student', fn($q) => $q->where('class_id', $this->selectedClass))
+                ->where('schedule_id', $selectedSchedule->id)
                 ->get()
                 ->keyBy('student_id');
 
@@ -88,12 +83,9 @@ class BulkAttendanceUpdate extends Component
     {
         $teacher = auth()->user();
         $isAdmin = $teacher && $teacher->role === 'admin';
-        
-        $assignedSubjectIds = $isAdmin
-            ? \App\Models\Subject::pluck('id')
-            : MataKuliahDosenAssignment::where('user_id', $teacher?->id)->pluck('subject_id');
-        
-        $assignedClassIds = Schedule::whereIn('subject_id', $assignedSubjectIds)
+
+        $assignedClassIds = Schedule::query()
+            ->when(! $isAdmin, fn ($query) => $query->where('teacher_id', $teacher?->id))
             ->pluck('class_id')
             ->unique();
 
@@ -135,7 +127,17 @@ class BulkAttendanceUpdate extends Component
     public function confirmUpdate()
     {
         $teacher = auth()->user();
-        $assignedClassIds = $teacher?->assignedClasses()->pluck('classes.id') ?? collect();
+        $assignedClassIds = Schedule::query()
+            ->when($teacher && $teacher->role !== 'admin', fn ($query) => $query->where('teacher_id', $teacher->id))
+            ->pluck('class_id')
+            ->unique();
+
+        $selectedSchedule = $this->resolveSelectedSchedule($teacher, $teacher && $teacher->role === 'admin');
+
+        if (! $selectedSchedule) {
+            $this->message = 'Tidak ada jadwal yang cocok untuk kelas dan tanggal ini';
+            return;
+        }
 
         // Verify teacher has access to this class
         if (!$assignedClassIds->contains($this->selectedClass)) {
@@ -149,6 +151,7 @@ class BulkAttendanceUpdate extends Component
             Attendance::updateOrCreate(
                 [
                     'student_id' => $studentId,
+                    'schedule_id' => $selectedSchedule->id,
                     'date' => $this->selectedDate,
                 ],
                 [
@@ -171,5 +174,35 @@ class BulkAttendanceUpdate extends Component
     public function cancel()
     {
         $this->showConfirmation = false;
+    }
+
+    private function resolveSelectedSchedule($teacher, bool $isAdmin): ?Schedule
+    {
+        if (! $this->selectedClass || ! $this->selectedDate) {
+            return null;
+        }
+
+        $dayNames = [
+            1 => 'Senin',
+            2 => 'Selasa',
+            3 => 'Rabu',
+            4 => 'Kamis',
+            5 => 'Jumat',
+            6 => 'Sabtu',
+            7 => 'Minggu',
+        ];
+
+        $dayName = $dayNames[Carbon::parse($this->selectedDate)->dayOfWeekIso] ?? null;
+
+        if (! $dayName) {
+            return null;
+        }
+
+        return Schedule::query()
+            ->where('class_id', $this->selectedClass)
+            ->where('day', $dayName)
+            ->when(! $isAdmin, fn ($query) => $query->where('teacher_id', $teacher?->id))
+            ->orderBy('start_time')
+            ->first();
     }
 }

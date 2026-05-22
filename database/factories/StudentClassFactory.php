@@ -14,15 +14,20 @@ class StudentClassFactory extends Factory
 
     public function definition(): array
     {
-        $levels = ['X', 'XI', 'XII'];
-        $majors = ['RPL', 'TKJ', 'MM'];
-        $level = $this->faker->randomElement($levels);
-        $major = $this->faker->randomElement($majors);
+        $classes = [
+            ['name' => '7A', 'level' => 'VII', 'major' => 'SMP'],
+            ['name' => '7B', 'level' => 'VII', 'major' => 'SMP'],
+            ['name' => '8', 'level' => 'VIII', 'major' => 'SMP'],
+            ['name' => '9A', 'level' => 'IX', 'major' => 'SMP'],
+            ['name' => '9B', 'level' => 'IX', 'major' => 'SMP'],
+        ];
+
+        $class = $this->faker->randomElement($classes);
 
         return [
-            'name' => $level . '-' . $major . '-' . $this->faker->numberBetween(1, 3),
-            'level' => $level,
-            'major' => $major,
+            'name' => $class['name'] . '-' . $this->faker->unique()->numerify('###'),
+            'level' => $class['level'],
+            'major' => $class['major'],
         ];
     }
 }

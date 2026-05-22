@@ -3,7 +3,6 @@
 namespace App\Livewire;
 
 use App\Models\Attendance;
-use App\Models\MataKuliahDosenAssignment;
 use App\Models\Schedule;
 use App\Models\StudentClass;
 use App\Services\AttendanceExportService;
@@ -35,14 +34,9 @@ class AttendanceReports extends Component
     {
         $teacher = auth()->user();
         $isAdmin = $teacher && $teacher->role === 'admin';
-        
-        // Get assigned subject IDs
-        $assignedSubjectIds = $isAdmin
-            ? \App\Models\Subject::pluck('id')
-            : MataKuliahDosenAssignment::where('user_id', $teacher?->id)->pluck('subject_id');
-        
-        // Get class IDs from schedules
-        $assignedClassIds = Schedule::whereIn('subject_id', $assignedSubjectIds)
+
+        $assignedClassIds = Schedule::query()
+            ->when(! $isAdmin, fn ($query) => $query->where('teacher_id', $teacher?->id))
             ->pluck('class_id')
             ->unique();
 
@@ -55,7 +49,17 @@ class AttendanceReports extends Component
         $query = Attendance::query()
             ->with(['student.user', 'student.class', 'schedule.subject'])
             ->whereBetween('date', [$this->dateFrom, $this->dateTo])
-            ->whereHas('student', fn($q) => $q->whereIn('class_id', $assignedClassIds));
+            ->whereHas('schedule', function ($scheduleQuery) use ($isAdmin, $teacher, $assignedClassIds): void {
+                if ($isAdmin) {
+                    if ($assignedClassIds->isNotEmpty()) {
+                        $scheduleQuery->whereIn('class_id', $assignedClassIds);
+                    }
+
+                    return;
+                }
+
+                $scheduleQuery->where('teacher_id', $teacher?->id);
+            });
 
         // Apply filters
         if ($this->selectedClass) {
@@ -102,19 +106,20 @@ class AttendanceReports extends Component
     {
         $teacher = auth()->user();
         $isAdmin = $teacher && $teacher->role === 'admin';
-        
-        $assignedSubjectIds = $isAdmin
-            ? \App\Models\Subject::pluck('id')
-            : MataKuliahDosenAssignment::where('user_id', $teacher?->id)->pluck('subject_id');
-        
-        $assignedClassIds = Schedule::whereIn('subject_id', $assignedSubjectIds)
+
+        $assignedClassIds = Schedule::query()
+            ->when(! $isAdmin, fn ($query) => $query->where('teacher_id', $teacher?->id))
             ->pluck('class_id')
             ->unique();
 
         $attendances = Attendance::query()
             ->with(['student.user', 'student.class', 'schedule.subject'])
             ->whereBetween('date', [$this->dateFrom, $this->dateTo])
-            ->whereHas('student', fn($q) => $q->whereIn('class_id', $assignedClassIds))
+            ->whereHas('schedule', function ($query) use ($isAdmin, $teacher): void {
+                if (! $isAdmin) {
+                    $query->where('teacher_id', $teacher?->id);
+                }
+            })
             ->when($this->selectedClass, fn($q) => $q->whereHas('student', fn($sq) => $sq->where('class_id', $this->selectedClass)))
             ->when($this->selectedStatus, fn($q) => $q->where('status', $this->selectedStatus))
             ->when($this->searchStudent, fn($q) => 
@@ -165,9 +170,20 @@ class AttendanceReports extends Component
 
     private function getStatistics($classIds)
     {
+        if ($classIds->isEmpty()) {
+            return [
+                'total' => 0,
+                'present' => 0,
+                'late' => 0,
+                'sick' => 0,
+                'excused' => 0,
+                'absent' => 0,
+            ];
+        }
+
         $attendances = Attendance::query()
             ->whereBetween('date', [$this->dateFrom, $this->dateTo])
-            ->whereHas('student', fn($q) => $q->whereIn('class_id', $classIds))
+            ->when($classIds->isNotEmpty(), fn ($query) => $query->whereHas('schedule', fn ($scheduleQuery) => $scheduleQuery->whereIn('class_id', $classIds)))
             ->when($this->selectedClass, fn($q) => $q->whereHas('student', fn($sq) => $sq->where('class_id', $this->selectedClass)))
             ->get();
 

@@ -14,6 +14,7 @@ use App\Models\User;
 use App\Services\AttendanceExportService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
@@ -98,24 +99,27 @@ class DashboardController extends Controller
         $to = \Carbon\Carbon::parse($validated['date_to'])->startOfDay();
 
         for ($date = $from->copy(); $date->lte($to); $date->addDay()) {
-            Attendance::updateOrCreate(
-                [
-                    'student_id' => $student->id,
-                    'date' => $date->toDateString(),
-                ],
-                [
-                    'status' => $validated['type'],
-                    'approval_status' => 'pending',
-                    'approved_by' => null,
-                    'approved_at' => null,
-                    'rejected_by' => null,
-                    'rejected_at' => null,
-                    'rejection_reason' => null,
-                    'notes' => $validated['reason'],
-                    'check_in' => null,
-                    'check_out' => null,
-                ]
-            );
+            foreach ($this->resolveSchedulesForStudentDate($student, $date->toDateString()) as $schedule) {
+                Attendance::updateOrCreate(
+                    [
+                        'student_id' => $student->id,
+                        'schedule_id' => $schedule->id,
+                        'date' => $date->toDateString(),
+                    ],
+                    [
+                        'status' => $validated['type'],
+                        'approval_status' => 'pending',
+                        'approved_by' => null,
+                        'approved_at' => null,
+                        'rejected_by' => null,
+                        'rejected_at' => null,
+                        'rejection_reason' => null,
+                        'notes' => $validated['reason'],
+                        'check_in' => null,
+                        'check_out' => null,
+                    ]
+                );
+            }
         }
 
         return redirect()
@@ -134,9 +138,16 @@ class DashboardController extends Controller
             'notes' => ['nullable', 'string', 'max:2000'],
         ]);
 
+        $scheduleId = $this->resolveAttendanceScheduleId($student, $validated['date']);
+
+        if (! $scheduleId) {
+            return back()->withErrors(['date' => 'Jadwal tidak ditemukan untuk tanggal tersebut.'])->withInput();
+        }
+
         Attendance::updateOrCreate(
             [
                 'student_id' => $student->id,
+                'schedule_id' => $scheduleId,
                 'date' => $validated['date'],
             ],
             [
@@ -1210,6 +1221,14 @@ class DashboardController extends Controller
 
         $date = now()->toDateString();
         $checkInTime = now()->format('H:i:s');
+        $scheduleId = $this->resolveAttendanceScheduleId($student, $date);
+
+        if (! $scheduleId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Jadwal aktif tidak ditemukan untuk siswa ini.',
+            ], 404);
+        }
 
         // Calculate status based on system settings
         $settings = SystemSetting::query()->first();
@@ -1239,6 +1258,7 @@ class DashboardController extends Controller
         
         // Check if already scanned today
         $existingAttendance = Attendance::where('student_id', $student->id)
+            ->where('schedule_id', $scheduleId)
             ->whereDate('date', $date)
             ->first();
 
@@ -1266,6 +1286,7 @@ class DashboardController extends Controller
         } else {
             $attendance = Attendance::create([
                 'student_id' => $student->id,
+                'schedule_id' => $scheduleId,
                 'date' => $date,
                 'check_in' => $checkInTime,
                 'status' => $status,
@@ -1390,6 +1411,43 @@ class DashboardController extends Controller
         abort_unless($student !== null, 404, 'Data siswa tidak ditemukan.');
 
         return $student;
+    }
+
+    private function resolveAttendanceScheduleId(Student $student, string $date): ?int
+    {
+        $activeSession = Cache::get('active_attendance_session');
+        if (!empty($activeSession['schedule_id'])) {
+            return (int) $activeSession['schedule_id'];
+        }
+
+        $schedules = $this->resolveSchedulesForStudentDate($student, $date);
+
+        return $schedules->first()?->id;
+    }
+
+    private function resolveSchedulesForStudentDate(Student $student, string $date)
+    {
+        $dayNames = [
+            1 => 'Senin',
+            2 => 'Selasa',
+            3 => 'Rabu',
+            4 => 'Kamis',
+            5 => 'Jumat',
+            6 => 'Sabtu',
+            7 => 'Minggu',
+        ];
+
+        $dayName = $dayNames[\Illuminate\Support\Carbon::parse($date)->dayOfWeekIso] ?? null;
+
+        if (! $dayName) {
+            return collect();
+        }
+
+        return Schedule::query()
+            ->where('class_id', $student->class_id)
+            ->where('day', $dayName)
+            ->orderBy('start_time')
+            ->get();
     }
 
     // ==========================================

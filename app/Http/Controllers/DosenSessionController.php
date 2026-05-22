@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Attendance;
-use App\Models\MataKuliahDosenAssignment;
 use App\Models\Schedule;
 use App\Models\SemesterAkademik;
 use App\Models\Student;
@@ -37,7 +36,6 @@ class DosenSessionController extends Controller
     public function courses(Request $request): View
     {
         $user = $request->user();
-        $assignedSubjectIds = $this->assignedSubjectIds((int) ($user?->id ?? 0));
 
         $activeSession = Cache::get('active_attendance_session');
 
@@ -97,11 +95,10 @@ class DosenSessionController extends Controller
                 ->where('start_time', '<=', $currentTime)
                 ->where('end_time', '>=', $currentTime)
                 ->when($user?->role !== 'admin', function ($builder) use ($user): void {
-                    $subjectIds = $this->assignedSubjectIds((int) ($user?->id ?? 0));
-                    if ($subjectIds === []) {
+                    if (! $user?->id) {
                         $builder->whereRaw('1 = 0');
                     } else {
-                        $builder->whereIn('subject_id', $subjectIds);
+                        $builder->where('teacher_id', $user->id);
                     }
                 })
                 ->orderBy('start_time')
@@ -124,11 +121,10 @@ class DosenSessionController extends Controller
         // Get all schedules grouped by semester
         $query = Schedule::with(['semesterAkademik', 'class', 'subject'])
             ->when($user?->role !== 'admin', function ($builder) use ($user): void {
-                $subjectIds = $this->assignedSubjectIds((int) ($user?->id ?? 0));
-                if ($subjectIds === []) {
+                if (! $user?->id) {
                     $builder->whereRaw('1 = 0');
                 } else {
-                    $builder->whereIn('subject_id', $subjectIds);
+                    $builder->where('teacher_id', $user->id);
                 }
             })
             ->orderByDesc('semester_akademik_id')
@@ -153,7 +149,6 @@ class DosenSessionController extends Controller
         return view('dosen.courses', [
             'groupedSchedules' => $groupedSchedules,
             'todayDate' => now()->toDateString(),
-            'assignedSubjectIds' => $assignedSubjectIds,
             'activeSession' => $activeSession,
         ]);
     }
@@ -171,9 +166,10 @@ class DosenSessionController extends Controller
         $user = $request->user();
 
         if ($user?->role !== 'admin') {
-            $isOwner = MataKuliahDosenAssignment::query()
+            $isOwner = Schedule::query()
                 ->where('subject_id', (int) $data['subject_id'])
-                ->where('user_id', (int) $user?->id)
+                ->where('class_id', (int) $data['class_id'])
+                ->where('teacher_id', (int) $user?->id)
                 ->exists();
 
             if (! $isOwner) {
@@ -184,7 +180,8 @@ class DosenSessionController extends Controller
 
         $scheduleQuery = Schedule::query()
             ->where('subject_id', $data['subject_id'])
-            ->where('class_id', $data['class_id']);
+            ->where('class_id', $data['class_id'])
+            ->when($user?->role !== 'admin', fn ($builder) => $builder->where('teacher_id', $user?->id));
 
         $hasAssignedSchedule = $scheduleQuery->exists();
         if (! $hasAssignedSchedule) {
@@ -384,9 +381,10 @@ class DosenSessionController extends Controller
             ->where('subject_id', $subject->id);
 
         if ($currentUser?->role !== 'admin') {
-            $isOwner = MataKuliahDosenAssignment::query()
+            $isOwner = Schedule::query()
                 ->where('subject_id', $subject->id)
-                ->where('user_id', (int) $currentUser?->id)
+                ->where('class_id', $class->id)
+                ->where('teacher_id', (int) $currentUser?->id)
                 ->exists();
 
             if (! $isOwner) {
@@ -509,10 +507,9 @@ class DosenSessionController extends Controller
             return [];
         }
 
-        return MataKuliahDosenAssignment::query()
-            ->where('user_id', $userId)
+        return Schedule::query()
+            ->where('teacher_id', $userId)
             ->pluck('subject_id')
-            ->merge(Schedule::where('teacher_id', $userId)->pluck('subject_id'))
             ->unique()
             ->map(static fn ($id) => (int) $id)
             ->values()
