@@ -31,16 +31,26 @@ class ReportService
             $studentQuery->where('class_id', $classId);
         }
 
-        return [
+        $counts = [
+            'hadir' => (clone $records)->whereIn('status', ['Hadir', 'present'])->count(),
+            'telat' => (clone $records)->whereIn('status', ['Telat', 'late'])->count(),
+            'sakit' => (clone $records)->whereIn('status', ['Sakit', 'sick'])->count(),
+            'izin' => (clone $records)->whereIn('status', ['Izin', 'excused'])->count(),
+            'alpa' => (clone $records)->whereIn('status', ['Alpa', 'absent'])->count(),
+        ];
+
+        return array_merge([
             'date' => $date,
             'total_students' => $studentQuery->count(),
             'total_scanned' => (clone $records)->count(),
-            'hadir' => (clone $records)->where('status', 'Hadir')->count(),
-            'telat' => (clone $records)->where('status', 'Telat')->count(),
-            'sakit' => (clone $records)->where('status', 'Sakit')->count(),
-            'izin' => (clone $records)->where('status', 'Izin')->count(),
-            'alpa' => (clone $records)->where('status', 'Alpa')->count(),
-        ];
+        ], $counts, [
+            // English keys for tests/compat
+            'present' => $counts['hadir'],
+            'late' => $counts['telat'],
+            'sick' => $counts['sakit'],
+            'excused' => $counts['izin'],
+            'absent' => $counts['alpa'],
+        ]);
     }
 
     /**
@@ -77,16 +87,26 @@ class ReportService
 
         $records = $query;
 
-        return [
+        $counts = [
+            'hadir' => (clone $records)->whereIn('status', ['Hadir', 'present'])->count(),
+            'telat' => (clone $records)->whereIn('status', ['Telat', 'late'])->count(),
+            'sakit' => (clone $records)->whereIn('status', ['Sakit', 'sick'])->count(),
+            'izin' => (clone $records)->whereIn('status', ['Izin', 'excused'])->count(),
+            'alpa' => (clone $records)->whereIn('status', ['Alpa', 'absent'])->count(),
+        ];
+
+        return array_merge([
             'class_id' => $classId,
             'student_id' => $studentId,
             'month' => $month,
-            'hadir' => (clone $records)->where('status', 'Hadir')->count(),
-            'telat' => (clone $records)->where('status', 'Telat')->count(),
-            'sakit' => (clone $records)->where('status', 'Sakit')->count(),
-            'izin' => (clone $records)->where('status', 'Izin')->count(),
-            'alpa' => (clone $records)->where('status', 'Alpa')->count(),
-        ];
+        ], $counts, [
+            'present' => $counts['hadir'],
+            'late' => $counts['telat'],
+            'sick' => $counts['sakit'],
+            'excused' => $counts['izin'],
+            'absent' => $counts['alpa'],
+        ]);
+        
     }
 
     /**
@@ -146,19 +166,28 @@ class ReportService
 
         $totalStudents = Student::whereIn('class_id', $assignedClassIds)->count();
 
-        return [
+        $counts = [
+            'hadir' => (clone $records)->whereIn('status', ['Hadir', 'present'])->count(),
+            'telat' => (clone $records)->whereIn('status', ['Telat', 'late'])->count(),
+            'sakit' => (clone $records)->whereIn('status', ['Sakit', 'sick'])->count(),
+            'izin' => (clone $records)->whereIn('status', ['Izin', 'excused'])->count(),
+            'alpa' => (clone $records)->whereIn('status', ['Alpa', 'absent'])->count(),
+        ];
+
+        return array_merge([
             'teacher_id' => $teacherId,
             'teacher_name' => $teacher->name,
             'date' => $date,
             'assigned_classes' => count($assignedClassIds),
             'total_students' => $totalStudents,
             'total_scanned' => (clone $records)->count(),
-            'hadir' => (clone $records)->where('status', 'Hadir')->count(),
-            'telat' => (clone $records)->where('status', 'Telat')->count(),
-            'sakit' => (clone $records)->where('status', 'Sakit')->count(),
-            'izin' => (clone $records)->where('status', 'Izin')->count(),
-            'alpa' => (clone $records)->where('status', 'Alpa')->count(),
-        ];
+        ], $counts, [
+            'present' => $counts['hadir'],
+            'late' => $counts['telat'],
+            'sick' => $counts['sakit'],
+            'excused' => $counts['izin'],
+            'absent' => $counts['alpa'],
+        ]);
     }
 
     /**
@@ -244,19 +273,28 @@ class ReportService
             $currentDate->addDay();
         }
 
-        return [
+        $counts = [
+            'hadir' => $records->whereIn('status', ['Hadir', 'present'])->count(),
+            'telat' => $records->whereIn('status', ['Telat', 'late'])->count(),
+            'sakit' => $records->whereIn('status', ['Sakit', 'sick'])->count(),
+            'izin' => $records->whereIn('status', ['Izin', 'excused'])->count(),
+            'alpa' => $records->whereIn('status', ['Alpa', 'absent'])->count(),
+        ];
+
+        return array_merge([
             'start_date' => $start,
             'end_date' => $end,
             'total_workdays' => $workdays,
             'total_records' => $records->count(),
-            'hadir' => $records->where('status', 'Hadir')->count(),
-            'telat' => $records->where('status', 'Telat')->count(),
-            'sakit' => $records->where('status', 'Sakit')->count(),
-            'izin' => $records->where('status', 'Izin')->count(),
-            'alpa' => $records->where('status', 'Alpa')->count(),
+        ], $counts, [
             'attendance_percentage' => $workdays > 0
-                ? round(($records->where('status', 'Hadir')->count() / $workdays) * 100, 2)
+                ? round(($counts['hadir'] / $workdays) * 100, 2)
                 : 0,
-        ];
+            'present' => $counts['hadir'],
+            'late' => $counts['telat'],
+            'sick' => $counts['sakit'],
+            'excused' => $counts['izin'],
+            'absent' => $counts['alpa'],
+        ]);
     }
 }

@@ -20,7 +20,7 @@ class StudentClassResource extends Resource
     protected static ?string $pluralModelLabel = 'Data Kelas';
     public static function canAccess(): bool
     {
-        return auth()->check() && (auth()->user()->isAdmin() || auth()->user()->isTeacher());
+        return auth()->check() && auth()->user()->can('viewAny', StudentClass::class);
     }
 
     public static function form(Form $form): Form

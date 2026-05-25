@@ -12,7 +12,7 @@ class MasterDataPagesTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function admin_master_guru_page_shows_real_teacher_data()
     {
         $admin = User::factory()->create(['role' => 'admin']);
@@ -27,7 +27,7 @@ class MasterDataPagesTest extends TestCase
         $response->assertSee($teacher->name);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function admin_master_siswa_page_shows_real_student_data()
     {
         $admin = User::factory()->create(['role' => 'admin']);
@@ -50,7 +50,7 @@ class MasterDataPagesTest extends TestCase
         $response->assertSee($class->name);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function admin_master_kelas_page_shows_real_class_data()
     {
         $admin = User::factory()->create(['role' => 'admin']);

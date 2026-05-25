@@ -1,8 +1,8 @@
 # Backend Readiness Analysis - ScanHadir
 
 **Date**: 29 March 2026  
-**Status**: 70% Ready for Frontend Integration  
-**Recommendation**: Proceed with frontend; complete identified gaps in parallel
+**Status**: Mostly ready, with a few important gaps still open
+**Recommendation**: Continue backend polish in parallel with frontend; prioritize access-control verification, export coverage, and backlog cleanup
 
 ---
 
@@ -16,8 +16,8 @@
 | **Controllers** | ❌ Missing | 0% | 🟡 MEDIUM |
 | **Livewire Components** | ✅ Ready | 90% | - |
 | **Filament Admin Panel** | ⚠️ Incomplete | 70% | 🟡 MEDIUM |
-| **Authorization/Policies** | ❌ Missing | 0% | 🔴 HIGH |
-| **API/Export Features** | ❌ Missing | 0% | 🟡 MEDIUM |
+| **Authorization/Policies** | ✅ Registered, needs verification | 80% | 🔴 HIGH |
+| **API/Export Features** | ⚠️ Partially implemented | 70% | 🟡 MEDIUM |
 | **Logging & Monitoring** | ❌ Missing | 0% | 🟢 LOW |
 
 ---
@@ -55,32 +55,21 @@
 
 ---
 
-### 2. **Missing Authorization & Policies**
+### 2. **Authorization & Policies Need Consistency Checks**
 
-**Status**: No Filament authorization checks; anyone with admin role can access all features
+**Status**: Policy classes and registration already exist, but resource access and forbidden-path coverage still need to be verified end-to-end
 
-**Impact**: No role-based access control; security risk
+**Impact**: Access-control regressions can slip through when resources or routes are added later
 
-**Files Affected**:
-- All Filament Resources lack policy checks
-- No policies defined in `app/Policies/`
+**Files Involved**:
+- `app/Policies/*.php`
+- `app/Providers/AppServiceProvider.php`
+- `app/Filament/Resources/*.php`
 
 **Action Items**:
-1. Create policies:
-   ```bash
-   php artisan make:policy StudentPolicy -m Student
-   php artisan make:policy AttendancePolicy -m Attendance
-   php artisan make:policy StudentClassPolicy -m StudentClass
-   php artisan make:policy HolidayPolicy -m Holiday
-   ```
-
-2. Define authorization methods (viewAny, view, create, update, delete) based on roles
-
-3. Register policies in `AuthServiceProvider`
-
-4. Apply authorization in Filament resources using `->authorize()`
-
-**Estimated Time**: 45 minutes
+1. Keep resource access aligned with policies instead of hard-coded role checks.
+2. Add feature tests for denied CRUD and denied export/report access.
+3. Re-run the authorization suite whenever a new role or resource is introduced.
 
 ---
 

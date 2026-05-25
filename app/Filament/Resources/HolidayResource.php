@@ -22,7 +22,7 @@ class HolidayResource extends Resource
 
     public static function canAccess(): bool
     {
-        return auth()->check() && (auth()->user()->isAdmin() || auth()->user()->isTeacher());
+        return auth()->check() && auth()->user()->can('viewAny', Holiday::class);
     }
 
     public static function form(Form $form): Form

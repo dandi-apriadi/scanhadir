@@ -30,7 +30,7 @@ class StudentDashboardTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function student_can_view_dashboard()
     {
         $response = $this->actingAs($this->student)->get('/student/dashboard');
@@ -39,7 +39,7 @@ class StudentDashboardTest extends TestCase
         $response->assertSeeLivewire('student-dashboard');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function student_dashboard_displays_student_name()
     {
         Livewire::actingAs($this->student)
@@ -47,7 +47,7 @@ class StudentDashboardTest extends TestCase
             ->assertSee($this->student->name);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function student_dashboard_displays_qr_code()
     {
         Livewire::actingAs($this->student)
@@ -56,7 +56,7 @@ class StudentDashboardTest extends TestCase
             ->assertSee('Download QR Code');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function student_dashboard_shows_this_month_attendance()
     {
         $monthStart = now()->startOfMonth()->toDateString();
@@ -77,7 +77,7 @@ class StudentDashboardTest extends TestCase
             ->assertSee('5');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function student_dashboard_shows_late_count()
     {
         // Create 2 late attendances
@@ -95,7 +95,7 @@ class StudentDashboardTest extends TestCase
             ->assertSee('2');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function student_dashboard_calculates_attendance_percentage()
     {
         $monthStart = now()->startOfMonth()->toDateString();
@@ -115,7 +115,7 @@ class StudentDashboardTest extends TestCase
             ->assertSee('80'); // 8/10 = 80%
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function student_dashboard_displays_attendance_history()
     {
         // Create 5 attendance records
@@ -132,7 +132,7 @@ class StudentDashboardTest extends TestCase
             ->assertSee('Riwayat Presensi Terbaru');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function student_dashboard_shows_today_status()
     {
         Attendance::factory()->create([
@@ -146,7 +146,7 @@ class StudentDashboardTest extends TestCase
             ->assertSee('Hadir Tepat Waktu');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function student_dashboard_shows_empty_state_for_no_history()
     {
         Livewire::actingAs($this->student)
@@ -155,7 +155,7 @@ class StudentDashboardTest extends TestCase
             ->assertSee('Belum ada riwayat presensi');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function student_dashboard_displays_class_info()
     {
         Livewire::actingAs($this->student)
@@ -163,7 +163,7 @@ class StudentDashboardTest extends TestCase
             ->assertSee($this->studentRecord->class->name);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function student_dashboard_displays_nisn()
     {
         Livewire::actingAs($this->student)
@@ -171,7 +171,7 @@ class StudentDashboardTest extends TestCase
             ->assertSee($this->studentRecord->nisn);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_student_cannot_access_dashboard()
     {
         $admin = User::factory()->create(['role' => 'admin']);
@@ -181,7 +181,7 @@ class StudentDashboardTest extends TestCase
         $response->assertStatus(403);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function student_cannot_access_other_student_dashboard()
     {
         $otherStudent = User::factory()->create(['role' => 'student']);
@@ -191,7 +191,7 @@ class StudentDashboardTest extends TestCase
         $response->assertStatus(403);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function status_badges_display_correct_colors()
     {
         Attendance::factory()->create([
@@ -205,7 +205,7 @@ class StudentDashboardTest extends TestCase
             ->assertSee('LATE');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function attendance_history_shows_latest_first()
     {
         // Create 3 records on different dates
@@ -232,7 +232,7 @@ class StudentDashboardTest extends TestCase
             ->assertViewHas('recentAttendance');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function student_dashboard_handles_null_student_record()
     {
         // Create a user without student record

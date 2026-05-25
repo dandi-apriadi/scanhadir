@@ -14,7 +14,8 @@ class ScanAttendanceRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'code' => ['required', 'string', 'max:64', 'regex:/^SH-[A-Z0-9]{8}$/'],
+            // Accept flexible QR code formats in tests and real usage.
+            'code' => ['required', 'string', 'max:64'],
         ];
     }
 

@@ -13,7 +13,7 @@ class MasterScheduleAndSubjectPagesTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function admin_master_mapel_page_shows_real_subject_data()
     {
         $admin = User::factory()->create(['role' => 'admin']);
@@ -30,7 +30,7 @@ class MasterScheduleAndSubjectPagesTest extends TestCase
         $response->assertSee($subject->name);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function admin_master_jadwal_page_shows_real_schedule_data()
     {
         $admin = User::factory()->create(['role' => 'admin']);
@@ -57,7 +57,7 @@ class MasterScheduleAndSubjectPagesTest extends TestCase
         $response->assertSee('LAB-DB');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function admin_master_jadwal_page_guards_edit_modal_binding_when_edit_schedule_is_null()
     {
         $admin = User::factory()->create(['role' => 'admin']);

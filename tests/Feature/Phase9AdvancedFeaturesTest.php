@@ -29,8 +29,12 @@ class Phase9AdvancedFeaturesTest extends TestCase
         // Create class
         $this->class = StudentClass::factory()->create(['name' => 'XII IPA 1']);
 
-        // Create pivot relationship
-        $this->teacher->assignedClasses()->attach($this->class->id);
+        // Create schedule to assign teacher to class
+        \App\Models\Schedule::factory()->create([
+            'class_id' => $this->class->id,
+            'teacher_id' => $this->teacher->id,
+            'subject_id' => \App\Models\Subject::factory(),
+        ]);
 
         // Create student
         $this->student = Student::factory()->create([
@@ -41,7 +45,7 @@ class Phase9AdvancedFeaturesTest extends TestCase
 
     // ============ XLSX EXPORT TESTS (12 tests) ============
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function export_service_generates_xlsx_file()
     {
         $attendances = Attendance::factory()->count(5)->create([
@@ -57,7 +61,7 @@ class Phase9AdvancedFeaturesTest extends TestCase
         $this->assertStringEndsWith('.xlsx', $filePath);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function xlsx_export_includes_all_columns()
     {
         $attendance = Attendance::factory()->create([
@@ -75,7 +79,7 @@ class Phase9AdvancedFeaturesTest extends TestCase
         $this->assertTrue(is_readable($filePath));
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function xlsx_export_includes_metadata()
     {
         $attendances = Attendance::factory()->count(3)->create();
@@ -91,7 +95,7 @@ class Phase9AdvancedFeaturesTest extends TestCase
         $this->assertFileExists($filePath);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function xlsx_export_creates_summary_sheet()
     {
         $attendances = Attendance::factory()->count(10)->create([
@@ -105,7 +109,7 @@ class Phase9AdvancedFeaturesTest extends TestCase
         $this->assertFileExists($filePath);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function xlsx_export_handles_multiple_status_types()
     {
         $student2 = Student::factory()->create(['class_id' => $this->class->id]);
@@ -123,7 +127,7 @@ class Phase9AdvancedFeaturesTest extends TestCase
         $this->assertFileExists($filePath);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function xlsx_export_removes_file_after_download()
     {
         $attendances = Attendance::factory()->count(5)->create();
@@ -136,7 +140,7 @@ class Phase9AdvancedFeaturesTest extends TestCase
         $this->assertFileExists($filePath);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function xlsx_export_includes_student_details()
     {
         $attendance = Attendance::factory()->create([
@@ -150,7 +154,7 @@ class Phase9AdvancedFeaturesTest extends TestCase
         $this->assertFileExists($filePath);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function xlsx_export_handles_large_dataset()
     {
         $attendances = Attendance::factory()->count(200)->create([
@@ -163,7 +167,7 @@ class Phase9AdvancedFeaturesTest extends TestCase
         $this->assertFileExists($filePath);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function xlsx_export_class_specific_attendance()
     {
         Attendance::factory()->count(5)->create([
@@ -180,7 +184,7 @@ class Phase9AdvancedFeaturesTest extends TestCase
         $this->assertFileExists($filePath);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function xlsx_export_calculates_percentages_correctly()
     {
         // Create 10 present, 5 late, 5 absent
@@ -200,7 +204,7 @@ class Phase9AdvancedFeaturesTest extends TestCase
 
     // ============ ATTENDANCE ANALYTICS TESTS (10 tests) ============
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function teacher_can_access_analytics_dashboard()
     {
         $this->actingAs($this->teacher);
@@ -209,7 +213,7 @@ class Phase9AdvancedFeaturesTest extends TestCase
             ->assertStatus(200);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function analytics_displays_current_month_data()
     {
         $this->actingAs($this->teacher);
@@ -226,7 +230,7 @@ class Phase9AdvancedFeaturesTest extends TestCase
             ->assertSee('5');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function analytics_calculates_attendance_percentages()
     {
         $this->actingAs($this->teacher);
@@ -240,7 +244,7 @@ class Phase9AdvancedFeaturesTest extends TestCase
             });
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function analytics_shows_monthly_trend()
     {
         $this->actingAs($this->teacher);
@@ -249,7 +253,7 @@ class Phase9AdvancedFeaturesTest extends TestCase
             ->assertViewHas('monthlyTrend');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function analytics_shows_class_comparison()
     {
         $this->actingAs($this->teacher);
@@ -260,7 +264,7 @@ class Phase9AdvancedFeaturesTest extends TestCase
             ->assertViewHas('classComparison');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function analytics_shows_student_performance_ranking()
     {
         $this->actingAs($this->teacher);
@@ -269,7 +273,7 @@ class Phase9AdvancedFeaturesTest extends TestCase
             ->assertViewHas('studentPerformance');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function analytics_filters_by_year()
     {
         $this->actingAs($this->teacher);
@@ -279,7 +283,7 @@ class Phase9AdvancedFeaturesTest extends TestCase
             ->assertStatus(200);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function analytics_filters_by_month()
     {
         $this->actingAs($this->teacher);
@@ -289,7 +293,7 @@ class Phase9AdvancedFeaturesTest extends TestCase
             ->assertStatus(200);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_teacher_cannot_access_analytics()
     {
         $student = User::factory()->create(['role' => 'student']);
@@ -301,7 +305,7 @@ class Phase9AdvancedFeaturesTest extends TestCase
 
     // ============ ATTENDANCE REPORTS TESTS (12 tests) ============
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function teacher_can_access_reports()
     {
         $this->actingAs($this->teacher);
@@ -310,7 +314,7 @@ class Phase9AdvancedFeaturesTest extends TestCase
             ->assertStatus(200);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function reports_displays_default_date_range()
     {
         $this->actingAs($this->teacher);
@@ -320,7 +324,7 @@ class Phase9AdvancedFeaturesTest extends TestCase
         $this->assertNotNull($component->get('dateTo'));
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function reports_filters_by_date_range()
     {
         $this->actingAs($this->teacher);
@@ -336,7 +340,7 @@ class Phase9AdvancedFeaturesTest extends TestCase
             ->assertViewHas('reports');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function reports_filters_by_class()
     {
         $this->actingAs($this->teacher);
@@ -346,7 +350,7 @@ class Phase9AdvancedFeaturesTest extends TestCase
             ->assertViewHas('reports');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function reports_filters_by_status()
     {
         $this->actingAs($this->teacher);
@@ -360,7 +364,7 @@ class Phase9AdvancedFeaturesTest extends TestCase
             ->assertSee('Present');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function reports_searches_by_student_name()
     {
         $this->actingAs($this->teacher);
@@ -370,7 +374,7 @@ class Phase9AdvancedFeaturesTest extends TestCase
             ->assertViewHas('reports');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function reports_displays_statistics()
     {
         $this->actingAs($this->teacher);
@@ -379,7 +383,7 @@ class Phase9AdvancedFeaturesTest extends TestCase
             ->assertViewHas('stats');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function reports_exports_to_xlsx()
     {
         $this->actingAs($this->teacher);
@@ -393,7 +397,7 @@ class Phase9AdvancedFeaturesTest extends TestCase
             ->assertHasNoErrors();
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function reports_resets_filters()
     {
         $this->actingAs($this->teacher);
@@ -407,7 +411,7 @@ class Phase9AdvancedFeaturesTest extends TestCase
             ->assertSet('selectedStatus', null);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function reports_paginates_results()
     {
         $this->actingAs($this->teacher);
@@ -424,7 +428,7 @@ class Phase9AdvancedFeaturesTest extends TestCase
 
     // ============ BULK ATTENDANCE UPDATE TESTS (15 tests) ============
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function teacher_can_access_bulk_update()
     {
         $this->actingAs($this->teacher);
@@ -433,7 +437,7 @@ class Phase9AdvancedFeaturesTest extends TestCase
             ->assertStatus(200);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function bulk_update_requires_class_selection()
     {
         $this->actingAs($this->teacher);
@@ -443,7 +447,7 @@ class Phase9AdvancedFeaturesTest extends TestCase
             ->assertHasErrors();
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function bulk_update_loads_students_by_class()
     {
         $this->actingAs($this->teacher);
@@ -453,7 +457,7 @@ class Phase9AdvancedFeaturesTest extends TestCase
             ->assertViewHas('students');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function bulk_update_displays_attendance_summary()
     {
         $this->actingAs($this->teacher);
@@ -470,7 +474,7 @@ class Phase9AdvancedFeaturesTest extends TestCase
             ->assertViewHas('attendanceSummary');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function bulk_update_can_select_all_students()
     {
         $this->actingAs($this->teacher);
@@ -483,7 +487,7 @@ class Phase9AdvancedFeaturesTest extends TestCase
             ->assertCount('selectedStudents', 6); // 5 + 1 from setUp
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function bulk_update_can_deselect_all_students()
     {
         $this->actingAs($this->teacher);
@@ -495,7 +499,7 @@ class Phase9AdvancedFeaturesTest extends TestCase
             ->assertCount('selectedStudents', 0);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function bulk_update_can_toggle_individual_student()
     {
         $this->actingAs($this->teacher);
@@ -506,7 +510,7 @@ class Phase9AdvancedFeaturesTest extends TestCase
             ->assertCount('selectedStudents', 1);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function bulk_update_requires_student_selection()
     {
         $this->actingAs($this->teacher);
@@ -519,7 +523,7 @@ class Phase9AdvancedFeaturesTest extends TestCase
             ->assertSet('message', 'Please select at least one student');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function bulk_update_shows_confirmation_modal()
     {
         $this->actingAs($this->teacher);
@@ -533,7 +537,7 @@ class Phase9AdvancedFeaturesTest extends TestCase
             ->assertSet('showConfirmation', true);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function bulk_update_confirms_and_updates_attendance()
     {
         $this->actingAs($this->teacher);
@@ -552,7 +556,7 @@ class Phase9AdvancedFeaturesTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function bulk_update_creates_or_updates_record()
     {
         $this->actingAs($this->teacher);
@@ -580,7 +584,7 @@ class Phase9AdvancedFeaturesTest extends TestCase
         $this->assertDatabaseHas('attendances', ['status' => 'late']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function bulk_update_respects_class_access_control()
     {
         $otherTeacher = User::factory()->create(['role' => 'teacher']);
@@ -596,7 +600,7 @@ class Phase9AdvancedFeaturesTest extends TestCase
             ->assertSet('message', 'You do not have access to this class');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function bulk_update_can_cancel_operation()
     {
         $this->actingAs($this->teacher);

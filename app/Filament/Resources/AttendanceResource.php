@@ -23,7 +23,7 @@ class AttendanceResource extends Resource
     protected static ?string $pluralModelLabel = 'Data Presensi';
     public static function canAccess(): bool
     {
-        return auth()->check() && (auth()->user()->isAdmin() || auth()->user()->isTeacher());
+        return auth()->check() && auth()->user()->can('viewAny', Attendance::class);
     }
 
     public static function form(Form $form): Form

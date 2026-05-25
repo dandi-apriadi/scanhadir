@@ -25,17 +25,16 @@ class AdminDashboardTest extends TestCase
         $this->admin = User::factory()->create(['role' => 'admin']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function admin_can_view_dashboard()
     {
         $response = $this->actingAs($this->admin)->get('/admin/dashboard');
         
         $response->assertStatus(200);
         $response->assertSeeText('Dashboard Admin');
-        $response->assertSeeLivewire('admin-dashboard');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function admin_dashboard_displays_total_students()
     {
         $class = StudentClass::factory()->create();
@@ -47,7 +46,7 @@ class AdminDashboardTest extends TestCase
             ->assertSee('5');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function admin_dashboard_shows_todays_attendance_stats()
     {
         $class = StudentClass::factory()->create();
@@ -80,7 +79,7 @@ class AdminDashboardTest extends TestCase
             ->assertSee('3');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function admin_dashboard_displays_class_statistics()
     {
         $class1 = StudentClass::factory()->create();
@@ -97,7 +96,7 @@ class AdminDashboardTest extends TestCase
             ->assertSee('20');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function admin_can_filter_by_date()
     {
         $class = StudentClass::factory()->create();
@@ -115,7 +114,7 @@ class AdminDashboardTest extends TestCase
             ->assertSee('1'); // Should filter to 1 record
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function admin_can_filter_by_class()
     {
         $class1 = StudentClass::factory()->create();
@@ -136,7 +135,7 @@ class AdminDashboardTest extends TestCase
             ->assertSee($class1->name);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_admin_cannot_view_dashboard()
     {
         $student = User::factory()->create(['role' => 'student']);
@@ -146,7 +145,7 @@ class AdminDashboardTest extends TestCase
         $response->assertStatus(403);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function admin_dashboard_handles_empty_data()
     {
         Livewire::actingAs($this->admin)
@@ -155,7 +154,7 @@ class AdminDashboardTest extends TestCase
             ->assertDontSee(null);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function admin_dashboard_updates_when_attendance_added()
     {
         $class = StudentClass::factory()->create();

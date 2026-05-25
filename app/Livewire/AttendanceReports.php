@@ -7,6 +7,7 @@ use App\Models\Schedule;
 use App\Models\StudentClass;
 use App\Services\AttendanceExportService;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -14,13 +15,13 @@ class AttendanceReports extends Component
 {
     use WithPagination;
 
-    public $dateFrom;
-    public $dateTo;
-    public $selectedClass = null;
-    public $selectedStatus = null;
-    public $searchStudent = '';
-    public $sortBy = 'date';
-    public $sortOrder = 'desc';
+    public string $dateFrom;
+    public string $dateTo;
+    public ?int $selectedClass = null;
+    public ?string $selectedStatus = null;
+    public string $searchStudent = '';
+    public string $sortBy = 'date';
+    public string $sortOrder = 'desc';
 
     protected $listeners = ['exportXLSX'];
 
@@ -168,7 +169,7 @@ class AttendanceReports extends Component
         $this->resetPage();
     }
 
-    private function getStatistics($classIds)
+    private function getStatistics(Collection $classIds): array
     {
         if ($classIds->isEmpty()) {
             return [

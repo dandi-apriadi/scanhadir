@@ -5,18 +5,19 @@ namespace App\Livewire;
 use App\Models\Attendance;
 use App\Models\Schedule;
 use App\Models\StudentClass;
+use App\Models\User;
 use Illuminate\Support\Carbon;
 use Livewire\Component;
 
 class BulkAttendanceUpdate extends Component
 {
-    public $selectedClass = null;
-    public $selectedDate = null;
-    public $selectedStatus = null;
-    public $bulkAction = null;
-    public $selectedStudents = [];
-    public $showConfirmation = false;
-    public $message = '';
+    public ?int $selectedClass = null;
+    public ?string $selectedDate = null;
+    public ?string $selectedStatus = null;
+    public ?string $bulkAction = null;
+    public array $selectedStudents = [];
+    public bool $showConfirmation = false;
+    public string $message = '';
 
     protected $listeners = ['confirmUpdate'];
 
@@ -79,7 +80,7 @@ class BulkAttendanceUpdate extends Component
         ])->layout('layouts.teacher', ['title' => 'Bulk Attendance Update']);
     }
 
-    public function selectAllStudents()
+    public function selectAllStudents(): void
     {
         $teacher = auth()->user();
         $isAdmin = $teacher && $teacher->role === 'admin';
@@ -95,12 +96,12 @@ class BulkAttendanceUpdate extends Component
         }
     }
 
-    public function deselectAllStudents()
+    public function deselectAllStudents(): void
     {
         $this->selectedStudents = [];
     }
 
-    public function toggleStudent($studentId)
+    public function toggleStudent(int $studentId): void
     {
         if (in_array($studentId, $this->selectedStudents)) {
             $this->selectedStudents = array_diff($this->selectedStudents, [$studentId]);
@@ -109,7 +110,7 @@ class BulkAttendanceUpdate extends Component
         }
     }
 
-    public function updateStatus()
+    public function updateStatus(): void
     {
         if (!$this->selectedStatus || !$this->selectedDate || !$this->selectedClass) {
             $this->message = 'Please select class, date, and status';
@@ -124,7 +125,7 @@ class BulkAttendanceUpdate extends Component
         $this->showConfirmation = true;
     }
 
-    public function confirmUpdate()
+    public function confirmUpdate(): void
     {
         $teacher = auth()->user();
         $assignedClassIds = Schedule::query()
@@ -171,12 +172,12 @@ class BulkAttendanceUpdate extends Component
         $this->dispatch('studentUpdated');
     }
 
-    public function cancel()
+    public function cancel(): void
     {
         $this->showConfirmation = false;
     }
 
-    private function resolveSelectedSchedule($teacher, bool $isAdmin): ?Schedule
+    private function resolveSelectedSchedule(?User $teacher, bool $isAdmin): ?Schedule
     {
         if (! $this->selectedClass || ! $this->selectedDate) {
             return null;

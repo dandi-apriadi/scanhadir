@@ -6,7 +6,7 @@ use App\Models\Subject;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<Subject>
+ * @extends Factory<\App\Models\Subject>
  */
 class SubjectFactory extends Factory
 {

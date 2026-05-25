@@ -160,7 +160,12 @@ class ReportServiceTest extends TestCase
     {
         $class = StudentClass::factory()->create();
         $teacher = User::factory()->create(['role' => 'teacher']);
-        $teacher->assignedClasses()->attach($class->id);
+        // Create a schedule to represent the teacher assigned to the class
+        \App\Models\Schedule::factory()->create([
+            'class_id' => $class->id,
+            'teacher_id' => $teacher->id,
+            'subject_id' => \App\Models\Subject::factory(),
+        ]);
 
         $date = now()->toDateString();
         $user = User::factory()->create();
@@ -200,7 +205,17 @@ class ReportServiceTest extends TestCase
         $class1 = StudentClass::factory()->create();
         $class2 = StudentClass::factory()->create();
         $teacher = User::factory()->create(['role' => 'teacher']);
-        $teacher->assignedClasses()->attach([$class1->id, $class2->id]);
+        // Create schedules for both classes assigned to the teacher
+        \App\Models\Schedule::factory()->create([
+            'class_id' => $class1->id,
+            'teacher_id' => $teacher->id,
+            'subject_id' => \App\Models\Subject::factory(),
+        ]);
+        \App\Models\Schedule::factory()->create([
+            'class_id' => $class2->id,
+            'teacher_id' => $teacher->id,
+            'subject_id' => \App\Models\Subject::factory(),
+        ]);
 
         $date = now()->toDateString();
 

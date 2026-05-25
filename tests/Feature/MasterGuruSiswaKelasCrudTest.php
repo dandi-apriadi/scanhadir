@@ -13,7 +13,7 @@ class MasterGuruSiswaKelasCrudTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function admin_can_create_update_and_delete_teacher(): void
     {
         $admin = User::factory()->admin()->create();
@@ -47,14 +47,18 @@ class MasterGuruSiswaKelasCrudTest extends TestCase
         $this->assertDatabaseMissing('users', ['id' => $teacher->id]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function admin_cannot_delete_teacher_when_still_attached_to_class(): void
     {
         $admin = User::factory()->admin()->create();
         $teacher = User::factory()->teacher()->create();
         $class = StudentClass::factory()->create();
 
-        $teacher->assignedClasses()->attach($class->id);
+        \App\Models\Schedule::factory()->create([
+            'class_id' => $class->id,
+            'teacher_id' => $teacher->id,
+            'subject_id' => \App\Models\Subject::factory(),
+        ]);
 
         $response = $this->actingAs($admin)->delete(route('admin.master.guru.destroy', $teacher));
 
@@ -63,7 +67,7 @@ class MasterGuruSiswaKelasCrudTest extends TestCase
         $this->assertDatabaseHas('users', ['id' => $teacher->id]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function admin_can_create_update_and_delete_student_with_linked_user(): void
     {
         $admin = User::factory()->admin()->create();
@@ -107,7 +111,7 @@ class MasterGuruSiswaKelasCrudTest extends TestCase
         $this->assertDatabaseMissing('users', ['id' => $student->user_id]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function admin_cannot_delete_student_when_has_attendance_history(): void
     {
         $admin = User::factory()->admin()->create();
@@ -124,7 +128,7 @@ class MasterGuruSiswaKelasCrudTest extends TestCase
         $this->assertDatabaseHas('students', ['id' => $student->id]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function admin_can_create_update_and_delete_class_and_export_students_excel(): void
     {
         $admin = User::factory()->admin()->create();

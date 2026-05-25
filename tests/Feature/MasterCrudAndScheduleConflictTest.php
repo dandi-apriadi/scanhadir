@@ -13,7 +13,7 @@ class MasterCrudAndScheduleConflictTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function admin_can_create_and_delete_subject()
     {
         $admin = User::factory()->create(['role' => 'admin']);
@@ -38,7 +38,7 @@ class MasterCrudAndScheduleConflictTest extends TestCase
         $this->assertDatabaseMissing('subjects', ['id' => $subject->id]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function admin_cannot_create_schedule_when_teacher_or_class_conflicts()
     {
         $admin = User::factory()->create(['role' => 'admin']);
@@ -73,7 +73,7 @@ class MasterCrudAndScheduleConflictTest extends TestCase
         $this->assertDatabaseCount('schedules', 1);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function admin_can_update_subject()
     {
         $admin = User::factory()->create(['role' => 'admin']);
@@ -98,7 +98,7 @@ class MasterCrudAndScheduleConflictTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function admin_can_update_schedule()
     {
         $admin = User::factory()->create(['role' => 'admin']);
@@ -138,7 +138,7 @@ class MasterCrudAndScheduleConflictTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function admin_cannot_update_schedule_with_conflict()
     {
         $admin = User::factory()->create(['role' => 'admin']);
@@ -181,7 +181,7 @@ class MasterCrudAndScheduleConflictTest extends TestCase
         $response->assertSessionHasErrors('schedule');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function schedule_validation_requires_teacher_role()
     {
         $admin = User::factory()->create(['role' => 'admin']);

@@ -26,8 +26,8 @@ class Holiday extends Model
     // Check if a specific date is a holiday
     public static function isHoliday($date)
     {
-        return static::where('start_date', '<=', $date)
-            ->where('end_date', '>=', $date)
+        return static::whereDate('start_date', '<=', $date)
+            ->whereDate('end_date', '>=', $date)
             ->exists();
     }
 

@@ -13,7 +13,7 @@ class QrScannerTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function admin_can_scan_student_attendance()
     {
         $admin = User::factory()->create(['role' => 'admin']);
@@ -51,7 +51,7 @@ class QrScannerTest extends TestCase
         $this->assertNotNull($attendance);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function scanner_returns_error_for_invalid_nisn()
     {
         $admin = User::factory()->create(['role' => 'admin']);
@@ -67,7 +67,7 @@ class QrScannerTest extends TestCase
         );
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function scanner_updates_checkout_on_second_scan()
     {
         $admin = User::factory()->create(['role' => 'admin']);
@@ -109,7 +109,7 @@ class QrScannerTest extends TestCase
         $this->assertNotNull($updatedAttendance->check_out);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function scanner_sets_status_based_on_time()
     {
         $admin = User::factory()->create(['role' => 'admin']);
@@ -129,7 +129,7 @@ class QrScannerTest extends TestCase
         $this->assertTrue(in_array($status, ['Hadir', 'Telat']), "Status should be 'Hadir' or 'Telat' but got '$status'");
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function scanner_requires_authentication()
     {
         $response = $this->postJson(route('admin.attendance.scan'), [
@@ -139,7 +139,7 @@ class QrScannerTest extends TestCase
         $response->assertStatus(401);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function scanner_requires_admin_role()
     {
         $student = User::factory()->create(['role' => 'student']);

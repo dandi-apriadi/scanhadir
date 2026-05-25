@@ -1,5 +1,7 @@
 # Backend Implementation Task Checklist
 
+> Status note: policy classes and registration already exist in the repo. The remaining work here is consistency checks, denied-access tests, and aligning Filament resources with the policy layer.
+
 ## 🔴 CRITICAL PATH (Complete ASAP - 4-5 hours total)
 
 ### Batch 1: Holiday Management (30 min)
@@ -11,11 +13,11 @@
 - [ ] Test scan rejection on holiday date
 
 ### Batch 2: Authorization & Policies (45 min)
-- [ ] Create StudentPolicy with viewAny, view, create, update, delete, forceDelete methods
-- [ ] Create AttendancePolicy (same methods)
-- [ ] Create StudentClassPolicy (same methods)
-- [ ] Create HolidayPolicy (same methods)
-- [ ] Register all policies in AuthServiceProvider
+- [x] Create StudentPolicy with viewAny, view, create, update, delete, forceDelete methods
+- [x] Create AttendancePolicy (same methods)
+- [x] Create StudentClassPolicy (same methods)
+- [x] Create HolidayPolicy (same methods)
+- [x] Register all policies in AuthServiceProvider
 - [ ] Test policy checks prevent unauthorized access
 - [ ] Apply authorization checks to all Filament Resources
 

@@ -15,11 +15,16 @@ class StudentVerificationFeatureTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function student_verification_modal_shows_on_scan()
     {
         $teacher = User::factory()->create(['role' => 'teacher']);
         $class = StudentClass::factory()->create();
+        \App\Models\Schedule::factory()->create([
+            'class_id' => $class->id,
+            'teacher_id' => $teacher->id,
+            'subject_id' => \App\Models\Subject::factory(),
+        ]);
         $student = Student::factory()->create([
             'class_id' => $class->id,
             'qr_code' => 'TEST-QR-12345',
@@ -33,11 +38,16 @@ class StudentVerificationFeatureTest extends TestCase
             ->assertViewHas('pendingStudentDetails');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function pending_student_details_contains_required_fields()
     {
         $teacher = User::factory()->create(['role' => 'teacher']);
         $class = StudentClass::factory()->create();
+        \App\Models\Schedule::factory()->create([
+            'class_id' => $class->id,
+            'teacher_id' => $teacher->id,
+            'subject_id' => \App\Models\Subject::factory(),
+        ]);
         $student = Student::factory()->create([
             'class_id' => $class->id,
             'qr_code' => 'TEST-QR-67890',
@@ -54,11 +64,16 @@ class StudentVerificationFeatureTest extends TestCase
             );
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function confirm_student_processes_attendance()
     {
         $teacher = User::factory()->create(['role' => 'teacher']);
         $class = StudentClass::factory()->create();
+        \App\Models\Schedule::factory()->create([
+            'class_id' => $class->id,
+            'teacher_id' => $teacher->id,
+            'subject_id' => \App\Models\Subject::factory(),
+        ]);
         $student = Student::factory()->create([
             'class_id' => $class->id,
             'qr_code' => 'TEST-QR-CONFIRM',
@@ -79,11 +94,16 @@ class StudentVerificationFeatureTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function cancel_student_resets_state()
     {
         $teacher = User::factory()->create(['role' => 'teacher']);
         $class = StudentClass::factory()->create();
+        \App\Models\Schedule::factory()->create([
+            'class_id' => $class->id,
+            'teacher_id' => $teacher->id,
+            'subject_id' => \App\Models\Subject::factory(),
+        ]);
         $student = Student::factory()->create([
             'class_id' => $class->id,
             'qr_code' => 'TEST-QR-CANCEL',
@@ -105,11 +125,16 @@ class StudentVerificationFeatureTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function confirmation_creates_correct_attendance_status()
     {
         $teacher = User::factory()->create(['role' => 'teacher']);
         $class = StudentClass::factory()->create();
+        \App\Models\Schedule::factory()->create([
+            'class_id' => $class->id,
+            'teacher_id' => $teacher->id,
+            'subject_id' => \App\Models\Subject::factory(),
+        ]);
         $student = Student::factory()->create([
             'class_id' => $class->id,
             'qr_code' => 'TEST-QR-STATUS',
@@ -126,7 +151,7 @@ class StudentVerificationFeatureTest extends TestCase
         $this->assertTrue(in_array($attendance->status, ['present', 'late']));
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function invalid_qr_code_does_not_show_verification()
     {
         $teacher = User::factory()->create(['role' => 'teacher']);
@@ -139,11 +164,16 @@ class StudentVerificationFeatureTest extends TestCase
             ->assertSet('status', 'error');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function student_with_photo_includes_photo_url_in_verification()
     {
         $teacher = User::factory()->create(['role' => 'teacher']);
         $class = StudentClass::factory()->create();
+        \App\Models\Schedule::factory()->create([
+            'class_id' => $class->id,
+            'teacher_id' => $teacher->id,
+            'subject_id' => \App\Models\Subject::factory(),
+        ]);
         $student = Student::factory()->create([
             'class_id' => $class->id,
             'qr_code' => 'TEST-QR-PHOTO',
@@ -159,11 +189,16 @@ class StudentVerificationFeatureTest extends TestCase
             );
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function student_without_photo_has_has_photo_false()
     {
         $teacher = User::factory()->create(['role' => 'teacher']);
         $class = StudentClass::factory()->create();
+        \App\Models\Schedule::factory()->create([
+            'class_id' => $class->id,
+            'teacher_id' => $teacher->id,
+            'subject_id' => \App\Models\Subject::factory(),
+        ]);
         $student = Student::factory()->create([
             'class_id' => $class->id,
             'qr_code' => 'TEST-QR-NOPHOTO',
@@ -179,7 +214,7 @@ class StudentVerificationFeatureTest extends TestCase
             );
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function second_scan_during_verification_is_ignored()
     {
         $teacher = User::factory()->create(['role' => 'teacher']);
@@ -207,7 +242,7 @@ class StudentVerificationFeatureTest extends TestCase
             ->get()->data['pendingStudent']?->qr_code ?? null);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function scan_count_increments_after_confirmation()
     {
         $teacher = User::factory()->create(['role' => 'teacher']);
@@ -224,7 +259,7 @@ class StudentVerificationFeatureTest extends TestCase
             ->assertSet('scanCount', 1);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function scan_count_does_not_increment_on_cancel()
     {
         $teacher = User::factory()->create(['role' => 'teacher']);

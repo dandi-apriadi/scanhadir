@@ -55,10 +55,10 @@ class DevelopmentSeeder extends Seeder
             );
 
             Student::query()->updateOrCreate(
-                ['user_id' => $user->id],
+                ['nisn' => $data['nisn']],
                 [
+                    'user_id' => $user->id,
                     'class_id' => $classModels[$data['class']]->id,
-                    'nisn' => $data['nisn'],
                     'qr_code' => 'SH-' . strtoupper(\Illuminate\Support\Str::random(8)),
                 ]
             );

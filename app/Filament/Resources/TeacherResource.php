@@ -23,7 +23,7 @@ class TeacherResource extends Resource
 
     public static function canAccess(): bool
     {
-        return auth()->check() && auth()->user()->isAdmin();
+        return auth()->check() && auth()->user()->can('viewAny', User::class);
     }
 
     public static function getEloquentQuery(): Builder

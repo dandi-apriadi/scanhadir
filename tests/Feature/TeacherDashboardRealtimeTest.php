@@ -28,8 +28,12 @@ class TeacherDashboardRealtimeTest extends TestCase
         // Create class
         $this->class = StudentClass::factory()->create(['name' => 'XII IPA 1']);
 
-        // Create pivot relationship
-        $this->teacher->assignedClasses()->attach($this->class->id);
+        // Create schedule to assign teacher to class
+        \App\Models\Schedule::factory()->create([
+            'class_id' => $this->class->id,
+            'teacher_id' => $this->teacher->id,
+            'subject_id' => \App\Models\Subject::factory(),
+        ]);
 
         // Create student
         $this->student = Student::factory()->create([
@@ -38,7 +42,7 @@ class TeacherDashboardRealtimeTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function teacher_can_access_dashboard_with_polling()
     {
         $this->actingAs($this->teacher);
@@ -47,7 +51,7 @@ class TeacherDashboardRealtimeTest extends TestCase
             ->assertStatus(200);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function dashboard_displays_live_scan_session_when_attendance_exists()
     {
         $this->actingAs($this->teacher);
@@ -65,7 +69,7 @@ class TeacherDashboardRealtimeTest extends TestCase
             ->assertSee('Sesi Scan QR Aktif');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function dashboard_shows_scan_count_correctly()
     {
         $this->actingAs($this->teacher);
@@ -81,7 +85,7 @@ class TeacherDashboardRealtimeTest extends TestCase
             ->assertSee('5 siswa telah dipindai hari ini');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function dashboard_displays_latest_scanned_student()
     {
         $this->actingAs($this->teacher);
@@ -108,7 +112,7 @@ class TeacherDashboardRealtimeTest extends TestCase
             ->assertSee($student2->user->name);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function refresh_attendance_method_updates_component()
     {
         $this->actingAs($this->teacher);
@@ -125,7 +129,7 @@ class TeacherDashboardRealtimeTest extends TestCase
             ->assertStatus(200);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function polling_directive_enabled_in_template()
     {
         $this->actingAs($this->teacher);
@@ -134,7 +138,7 @@ class TeacherDashboardRealtimeTest extends TestCase
             ->assertViewIs('livewire.teacher-dashboard');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function dashboard_hides_scan_session_when_no_attendance()
     {
         $this->actingAs($this->teacher);
@@ -143,7 +147,7 @@ class TeacherDashboardRealtimeTest extends TestCase
             ->assertDontSee('Sesi Scan QR Aktif');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function scan_session_shows_live_indicator()
     {
         $this->actingAs($this->teacher);
@@ -158,7 +162,7 @@ class TeacherDashboardRealtimeTest extends TestCase
             ->assertSee('LIVE (1)');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function dashboard_shows_offline_indicator_when_no_scans()
     {
         $this->actingAs($this->teacher);
@@ -167,7 +171,7 @@ class TeacherDashboardRealtimeTest extends TestCase
             ->assertSee('OFFLINE');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function recent_logs_display_includes_scan_count()
     {
         $this->actingAs($this->teacher);
@@ -183,7 +187,7 @@ class TeacherDashboardRealtimeTest extends TestCase
             ->assertSee('Log Presensi Terbaru');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function latest_scanned_student_shows_time()
     {
         $this->actingAs($this->teacher);
@@ -199,7 +203,7 @@ class TeacherDashboardRealtimeTest extends TestCase
             ->assertSee($checkInTime->format('H:i:s'));
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function dashboard_updates_when_new_attendance_created()
     {
         $this->actingAs($this->teacher);
@@ -218,7 +222,7 @@ class TeacherDashboardRealtimeTest extends TestCase
             ->assertSee('Sesi Scan QR Aktif');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_teacher_cannot_see_live_scan_session()
     {
         $student = User::factory()->create(['role' => 'student']);
@@ -229,7 +233,7 @@ class TeacherDashboardRealtimeTest extends TestCase
         $this->assertEquals(403, $response->status());
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function scan_session_shows_only_assigned_classes()
     {
         $this->actingAs($this->teacher);
@@ -254,7 +258,7 @@ class TeacherDashboardRealtimeTest extends TestCase
             ->assertSee('1 siswa telah dipindai');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function live_indicator_pulsates_when_active()
     {
         $this->actingAs($this->teacher);
@@ -268,7 +272,7 @@ class TeacherDashboardRealtimeTest extends TestCase
             ->assertSee('animate-pulse');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function dashboard_handles_multiple_scans_per_student()
     {
         $this->actingAs($this->teacher);
@@ -295,7 +299,7 @@ class TeacherDashboardRealtimeTest extends TestCase
             ->assertSee('2 siswa telah dipindai');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function refresh_attendance_updates_last_refresh_timestamp()
     {
         $this->actingAs($this->teacher);
@@ -311,7 +315,7 @@ class TeacherDashboardRealtimeTest extends TestCase
         $this->assertNotEquals($before, $after);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function scan_session_banner_includes_videocam_icon()
     {
         $this->actingAs($this->teacher);
@@ -325,7 +329,7 @@ class TeacherDashboardRealtimeTest extends TestCase
             ->assertSee('videocam');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function polling_interval_is_3_seconds()
     {
         $this->actingAs($this->teacher);

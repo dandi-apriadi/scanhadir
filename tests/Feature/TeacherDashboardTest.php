@@ -23,7 +23,7 @@ class TeacherDashboardTest extends TestCase
         $this->teacher = User::factory()->create(['role' => 'teacher']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function teacher_can_view_dashboard()
     {
         $response = $this->actingAs($this->teacher)->get('/teacher/dashboard');
@@ -32,14 +32,23 @@ class TeacherDashboardTest extends TestCase
         $response->assertSeeLivewire('teacher-dashboard');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function teacher_dashboard_displays_assigned_classes()
     {
         $class1 = StudentClass::factory()->create();
         $class2 = StudentClass::factory()->create();
         
-        // Assign classes to teacher
-        $this->teacher->assignedClasses()->attach([$class1->id, $class2->id]);
+        // Assign classes to teacher via schedules
+        \App\Models\Schedule::factory()->create([
+            'class_id' => $class1->id,
+            'teacher_id' => $this->teacher->id,
+            'subject_id' => \App\Models\Subject::factory(),
+        ]);
+        \App\Models\Schedule::factory()->create([
+            'class_id' => $class2->id,
+            'teacher_id' => $this->teacher->id,
+            'subject_id' => \App\Models\Subject::factory(),
+        ]);
         
         Livewire::actingAs($this->teacher)
             ->test('teacher-dashboard')
@@ -47,14 +56,18 @@ class TeacherDashboardTest extends TestCase
             ->assertSee($class2->name);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function teacher_dashboard_shows_only_assigned_classes()
     {
         $assignedClass = StudentClass::factory()->create();
         $unassignedClass = StudentClass::factory()->create();
         
-        // Only assign one class
-        $this->teacher->assignedClasses()->attach($assignedClass->id);
+        // Only assign one class via schedule
+        \App\Models\Schedule::factory()->create([
+            'class_id' => $assignedClass->id,
+            'teacher_id' => $this->teacher->id,
+            'subject_id' => \App\Models\Subject::factory(),
+        ]);
         
         Livewire::actingAs($this->teacher)
             ->test('teacher-dashboard')
@@ -62,13 +75,17 @@ class TeacherDashboardTest extends TestCase
             ->assertDontSee($unassignedClass->name);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function teacher_dashboard_displays_todays_attendance_stats()
     {
         $class = StudentClass::factory()->create();
         $students = Student::factory(10)->create(['class_id' => $class->id]);
         
-        $this->teacher->assignedClasses()->attach($class->id);
+        \App\Models\Schedule::factory()->create([
+            'class_id' => $class->id,
+            'teacher_id' => $this->teacher->id,
+            'subject_id' => \App\Models\Subject::factory(),
+        ]);
         
         // Create attendance for 6 present, 2 late, 2 absent
         for ($i = 0; $i < 6; $i++) {
@@ -104,7 +121,7 @@ class TeacherDashboardTest extends TestCase
             ->assertSee('2');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function teacher_dashboard_shows_student_count_per_class()
     {
         $class1 = StudentClass::factory()->create();
@@ -113,7 +130,16 @@ class TeacherDashboardTest extends TestCase
         Student::factory(15)->create(['class_id' => $class1->id]);
         Student::factory(20)->create(['class_id' => $class2->id]);
         
-        $this->teacher->assignedClasses()->attach([$class1->id, $class2->id]);
+        \App\Models\Schedule::factory()->create([
+            'class_id' => $class1->id,
+            'teacher_id' => $this->teacher->id,
+            'subject_id' => \App\Models\Subject::factory(),
+        ]);
+        \App\Models\Schedule::factory()->create([
+            'class_id' => $class2->id,
+            'teacher_id' => $this->teacher->id,
+            'subject_id' => \App\Models\Subject::factory(),
+        ]);
         
         Livewire::actingAs($this->teacher)
             ->test('teacher-dashboard')
@@ -121,7 +147,7 @@ class TeacherDashboardTest extends TestCase
             ->assertSee('20');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function teacher_dashboard_only_counts_assigned_classes_attendance()
     {
         $assignedClass = StudentClass::factory()->create();
@@ -130,7 +156,11 @@ class TeacherDashboardTest extends TestCase
         $assignedStudent = Student::factory()->create(['class_id' => $assignedClass->id]);
         $unassignedStudent = Student::factory()->create(['class_id' => $unassignedClass->id]);
         
-        $this->teacher->assignedClasses()->attach($assignedClass->id);
+        \App\Models\Schedule::factory()->create([
+            'class_id' => $assignedClass->id,
+            'teacher_id' => $this->teacher->id,
+            'subject_id' => \App\Models\Subject::factory(),
+        ]);
         
         // Create attendance for both
         Attendance::factory()->create([
@@ -150,13 +180,17 @@ class TeacherDashboardTest extends TestCase
             ->assertSee('1'); // Should only see 1 from assigned class
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function teacher_dashboard_displays_attendance_percentage()
     {
         $class = StudentClass::factory()->create();
         $students = Student::factory(10)->create(['class_id' => $class->id]);
         
-        $this->teacher->assignedClasses()->attach($class->id);
+        \App\Models\Schedule::factory()->create([
+            'class_id' => $class->id,
+            'teacher_id' => $this->teacher->id,
+            'subject_id' => \App\Models\Subject::factory(),
+        ]);
         
         // 8 present out of 10
         for ($i = 0; $i < 8; $i++) {
@@ -172,7 +206,7 @@ class TeacherDashboardTest extends TestCase
             ->assertSee('80'); // 8/10 = 80%
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function teacher_without_assigned_classes_sees_empty_state()
     {
         Livewire::actingAs($this->teacher)
@@ -180,7 +214,7 @@ class TeacherDashboardTest extends TestCase
             ->assertSee('Belum ada data kelas');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_teacher_cannot_access_dashboard()
     {
         $student = User::factory()->create(['role' => 'student']);
@@ -190,7 +224,7 @@ class TeacherDashboardTest extends TestCase
         $response->assertStatus(403);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function teacher_dashboard_shows_class_statistics()
     {
         $class1 = StudentClass::factory()->create();
@@ -209,7 +243,7 @@ class TeacherDashboardTest extends TestCase
             ->assertSee('15');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function teacher_dashboard_handles_empty_attendance()
     {
         $class = StudentClass::factory()->create();
@@ -222,7 +256,7 @@ class TeacherDashboardTest extends TestCase
             ->assertSee('0'); // No attendance yet
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function teacher_dashboard_updates_with_new_attendance()
     {
         $class = StudentClass::factory()->create();

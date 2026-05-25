@@ -27,7 +27,7 @@ class StudentResource extends Resource
     protected static ?string $pluralModelLabel = 'Data Siswa';
     public static function canAccess(): bool
     {
-        return auth()->check() && (auth()->user()->isAdmin() || auth()->user()->isTeacher());
+        return auth()->check() && auth()->user()->can('viewAny', Student::class);
     }
 
     public static function form(Form $form): Form
