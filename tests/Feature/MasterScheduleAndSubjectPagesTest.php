@@ -31,6 +31,20 @@ class MasterScheduleAndSubjectPagesTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
+    public function admin_master_mapel_edit_modal_preserves_semester_and_sks_fields()
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        Subject::factory()->create();
+
+        $response = $this->actingAs($admin)->get(route('admin.master.mapel'));
+
+        $response->assertOk();
+        $response->assertSee('x-data="{ editSubject: null }"', false);
+        $response->assertSee('name="semester_akademik_id" x-model.number="editSubject.semester_akademik_id"', false);
+        $response->assertSee('name="sks" x-model.number="editSubject.sks"', false);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
     public function admin_master_jadwal_page_shows_real_schedule_data()
     {
         $admin = User::factory()->create(['role' => 'admin']);
@@ -77,7 +91,7 @@ class MasterScheduleAndSubjectPagesTest extends TestCase
         $response = $this->actingAs($admin)->get(route('admin.master.jadwal'));
 
         $response->assertOk();
-        $response->assertSee('template x-if="editSchedule"', false);
+        $response->assertSee('template x-if="showEdit"', false);
         $response->assertDontSee('form method="POST" x-show="editSchedule"', false);
     }
 }

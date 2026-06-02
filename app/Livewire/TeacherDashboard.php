@@ -85,6 +85,7 @@ class TeacherDashboard extends Component
         $assignedClassIds = Schedule::whereIn('subject_id', $assignedSubjectIds)
             ->orWhere('teacher_id', $teacher?->id)
             ->pluck('class_id')
+            ->merge($teacher?->assignedClasses()->pluck('classes.id') ?? collect())
             ->unique();
         
         $date = Carbon::parse($this->selectedDate)->toDateString();
@@ -104,11 +105,11 @@ class TeacherDashboard extends Component
                 ->whereHas('student', fn ($query) => $query->whereIn('class_id', $assignedClassIds));
 
             $stats = [
-                'hadir' => (clone $attendanceQuery)->where('status', 'Hadir')->count(),
-                'telat' => (clone $attendanceQuery)->where('status', 'Telat')->count(),
-                'sakit' => (clone $attendanceQuery)->where('status', 'Sakit')->count(),
-                'izin' => (clone $attendanceQuery)->where('status', 'Izin')->count(),
-                'alpa' => (clone $attendanceQuery)->where('status', 'Alpa')->count(),
+                'hadir' => (clone $attendanceQuery)->whereIn('status', Attendance::statusAliases('Hadir'))->count(),
+                'telat' => (clone $attendanceQuery)->whereIn('status', Attendance::statusAliases('Telat'))->count(),
+                'sakit' => (clone $attendanceQuery)->whereIn('status', Attendance::statusAliases('Sakit'))->count(),
+                'izin' => (clone $attendanceQuery)->whereIn('status', Attendance::statusAliases('Izin'))->count(),
+                'alpa' => (clone $attendanceQuery)->whereIn('status', Attendance::statusAliases('Alpa'))->count(),
             ];
         }
 
@@ -123,9 +124,9 @@ class TeacherDashboard extends Component
                     ->whereHas('student', fn ($query) => $query->where('class_id', $class->id))
                     ->selectRaw('
                         COUNT(*) as total,
-                        SUM(CASE WHEN status = "Hadir" THEN 1 ELSE 0 END) as hadir,
-                        SUM(CASE WHEN status = "Telat" THEN 1 ELSE 0 END) as telat,
-                        SUM(CASE WHEN status = "Alpa" THEN 1 ELSE 0 END) as alpa
+                        SUM(CASE WHEN status IN ("Hadir", "present") THEN 1 ELSE 0 END) as hadir,
+                        SUM(CASE WHEN status IN ("Telat", "late") THEN 1 ELSE 0 END) as telat,
+                        SUM(CASE WHEN status IN ("Alpa", "absent") THEN 1 ELSE 0 END) as alpa
                     ')
                     ->first();
 
@@ -193,6 +194,7 @@ class TeacherDashboard extends Component
             'stats' => $stats,
             'classes' => $classes,
             'recentLogs' => $recentLogs,
+            'totalScans' => $totalTodayScans,
             'activeSessionInfo' => $this->activeSessionInfo,
         ]);
     }

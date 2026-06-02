@@ -559,7 +559,7 @@ class DashboardController extends Controller
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
-            'role' => 'dosen',
+            'role' => 'teacher',
         ]);
 
         return redirect()->route('admin.master.guru')->with('status', 'Guru berhasil ditambahkan.');
@@ -1149,8 +1149,12 @@ class DashboardController extends Controller
             'code' => $validated['code'],
             'name' => $validated['name'],
             'group' => $validated['group'],
-            'semester_akademik_id' => $validated['semester_akademik_id'] ?? null,
-            'sks' => $validated['sks'] ?? 3,
+            'semester_akademik_id' => $request->exists('semester_akademik_id')
+                ? ($validated['semester_akademik_id'] ?? null)
+                : $subject->semester_akademik_id,
+            'sks' => $request->exists('sks')
+                ? ($validated['sks'] ?? 3)
+                : $subject->sks,
         ]);
 
         return redirect()->route('admin.master.mapel')->with('status', 'Mapel berhasil diperbarui.');
@@ -1222,13 +1226,6 @@ class DashboardController extends Controller
         $date = now()->toDateString();
         $checkInTime = now()->format('H:i:s');
         $scheduleId = $this->resolveAttendanceScheduleId($student, $date);
-
-        if (! $scheduleId) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Jadwal aktif tidak ditemukan untuk siswa ini.',
-            ], 404);
-        }
 
         // Calculate status based on system settings
         $settings = SystemSetting::query()->first();
@@ -1422,7 +1419,14 @@ class DashboardController extends Controller
 
         $schedules = $this->resolveSchedulesForStudentDate($student, $date);
 
-        return $schedules->first()?->id;
+        if ($schedules->isNotEmpty()) {
+            return $schedules->first()?->id;
+        }
+
+        return Schedule::query()
+            ->where('class_id', $student->class_id)
+            ->orderBy('start_time')
+            ->first()?->id;
     }
 
     private function resolveSchedulesForStudentDate(Student $student, string $date)

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 class Attendance extends Model
 {
@@ -36,6 +37,37 @@ class Attendance extends Model
         'approved_at' => 'datetime',
         'rejected_at' => 'datetime',
     ];
+
+    public static function normalizeStatus(?string $status): ?string
+    {
+        return match ($status) {
+            'present' => 'Hadir',
+            'late' => 'Telat',
+            'sick' => 'Sakit',
+            'excused' => 'Izin',
+            'absent' => 'Alpa',
+            default => $status,
+        };
+    }
+
+    public static function statusAliases(string $status): array
+    {
+        $normalized = self::normalizeStatus($status);
+
+        return match ($normalized) {
+            'Hadir' => ['Hadir', 'present'],
+            'Telat' => ['Telat', 'late'],
+            'Sakit' => ['Sakit', 'sick'],
+            'Izin' => ['Izin', 'excused'],
+            'Alpa' => ['Alpa', 'absent'],
+            default => [$status],
+        };
+    }
+
+    public function setDateAttribute($value): void
+    {
+        $this->attributes['date'] = Carbon::parse($value)->toDateString();
+    }
 
     public function student(): BelongsTo
     {

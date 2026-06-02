@@ -158,7 +158,7 @@ class ReportService
             return [];
         }
 
-        $assignedClassIds = $teacher->assignedClasses()->pluck('classes.id')->toArray();
+        $assignedClassIds = $this->assignedClassIdsForTeacher($teacher);
 
         $records = Attendance::query()
             ->whereHas('student', fn ($q) => $q->whereIn('class_id', $assignedClassIds))
@@ -203,7 +203,7 @@ class ReportService
             return collect();
         }
 
-        $assignedClassIds = $teacher->assignedClasses()->pluck('classes.id')->toArray();
+        $assignedClassIds = $this->assignedClassIdsForTeacher($teacher);
 
         $query = Attendance::query()
             ->with(['student.user', 'student.class'])
@@ -237,6 +237,15 @@ class ReportService
     public function isHolidayDate(string $date): bool
     {
         return Holiday::isHoliday($date);
+    }
+
+    private function assignedClassIdsForTeacher(User $teacher): array
+    {
+        return collect($teacher->assignedClasses()->pluck('classes.id'))
+            ->merge($teacher->teachingSchedules()->pluck('class_id'))
+            ->unique()
+            ->values()
+            ->all();
     }
 
     /**

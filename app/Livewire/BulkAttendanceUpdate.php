@@ -34,6 +34,7 @@ class BulkAttendanceUpdate extends Component
         $assignedClassIds = Schedule::query()
             ->when(! $isAdmin, fn ($query) => $query->where('teacher_id', $teacher?->id))
             ->pluck('class_id')
+            ->merge($isAdmin ? collect() : ($teacher?->assignedClasses()->pluck('classes.id') ?? collect()))
             ->unique();
 
         // Get classes
@@ -88,6 +89,7 @@ class BulkAttendanceUpdate extends Component
         $assignedClassIds = Schedule::query()
             ->when(! $isAdmin, fn ($query) => $query->where('teacher_id', $teacher?->id))
             ->pluck('class_id')
+            ->merge($isAdmin ? collect() : ($teacher?->assignedClasses()->pluck('classes.id') ?? collect()))
             ->unique();
 
         if ($this->selectedClass && $assignedClassIds->contains($this->selectedClass)) {
@@ -113,6 +115,15 @@ class BulkAttendanceUpdate extends Component
     public function updateStatus(): void
     {
         if (!$this->selectedStatus || !$this->selectedDate || !$this->selectedClass) {
+            if (!$this->selectedClass) {
+                $this->addError('selectedClass', 'Please select class');
+            }
+            if (!$this->selectedDate) {
+                $this->addError('selectedDate', 'Please select date');
+            }
+            if (!$this->selectedStatus) {
+                $this->addError('selectedStatus', 'Please select status');
+            }
             $this->message = 'Please select class, date, and status';
             return;
         }
@@ -131,18 +142,18 @@ class BulkAttendanceUpdate extends Component
         $assignedClassIds = Schedule::query()
             ->when($teacher && $teacher->role !== 'admin', fn ($query) => $query->where('teacher_id', $teacher->id))
             ->pluck('class_id')
+            ->merge($teacher && $teacher->role !== 'admin' ? ($teacher->assignedClasses()->pluck('classes.id') ?? collect()) : collect())
             ->unique();
+
+        if (!$assignedClassIds->contains($this->selectedClass)) {
+            $this->message = 'You do not have access to this class';
+            return;
+        }
 
         $selectedSchedule = $this->resolveSelectedSchedule($teacher, $teacher && $teacher->role === 'admin');
 
         if (! $selectedSchedule) {
             $this->message = 'Tidak ada jadwal yang cocok untuk kelas dan tanggal ini';
-            return;
-        }
-
-        // Verify teacher has access to this class
-        if (!$assignedClassIds->contains($this->selectedClass)) {
-            $this->message = 'You do not have access to this class';
             return;
         }
 
@@ -204,6 +215,11 @@ class BulkAttendanceUpdate extends Component
             ->where('day', $dayName)
             ->when(! $isAdmin, fn ($query) => $query->where('teacher_id', $teacher?->id))
             ->orderBy('start_time')
-            ->first();
+            ->first()
+            ?? Schedule::query()
+                ->where('class_id', $this->selectedClass)
+                ->when(! $isAdmin, fn ($query) => $query->where('teacher_id', $teacher?->id))
+                ->orderBy('start_time')
+                ->first();
     }
 }

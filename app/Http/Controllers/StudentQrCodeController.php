@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Student;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use BaconQrCode\Renderer\Image\SvgImageBackEnd;
 use BaconQrCode\Renderer\ImageRenderer;
 use BaconQrCode\Renderer\RendererStyle\RendererStyle;
@@ -19,6 +20,23 @@ class StudentQrCodeController extends Controller
         $student->loadMissing('user');
 
         try {
+            if (! $request->boolean('download')) {
+                $content = $this->generateBrandedSvg(
+                    $student->qr_code,
+                    $student->user?->name,
+                    $student->nisn
+                );
+                $filename = 'student-' . $student->id . '.svg';
+                Storage::disk('local')->put('qrcodes/' . $filename, $content);
+
+                return response($content, 200, [
+                    'Content-Type' => 'image/svg+xml',
+                    'Content-Disposition' => 'inline; filename="' . $filename . '"',
+                    'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+                    'X-Content-Type-Options' => 'nosniff',
+                ]);
+            }
+
             $asset = $this->buildQrAsset($student, 'qr-siswa-' . ($student->nisn ?? $student->id));
 
             if ($request->boolean('download')) {
@@ -34,13 +52,6 @@ class StudentQrCodeController extends Controller
                     ]
                 );
             }
-
-            return response($asset['content'], 200, [
-                'Content-Type' => $asset['content_type'],
-                'Content-Disposition' => 'inline; filename="' . $asset['filename'] . '"',
-                'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
-                'X-Content-Type-Options' => 'nosniff',
-            ]);
 
         } catch (\Throwable $e) {
             report($e);

@@ -39,7 +39,7 @@ class AttendanceScanner extends Component
         $this->loadActiveSession();
         // Restore any pending verification for the current user from cache or session
         if (auth()->check()) {
-            $pending = Cache::store('file')->get('attendance_pending_' . auth()->id()) ?? session('attendance_pending_' . auth()->id());
+            $pending = Cache::get('attendance_pending_' . auth()->id()) ?? session('attendance_pending_' . auth()->id());
             if ($pending && isset($pending['student_id'])) {
                 $student = Student::with('user', 'class')->find($pending['student_id']);
                 if ($student) {
@@ -48,15 +48,6 @@ class AttendanceScanner extends Component
                     $this->awaitingConfirmation = true;
                 }
             }
-        }
-        // debug dump
-        try {
-            file_put_contents(storage_path('logs/pending_debug.txt'), json_encode([
-                'mount_pending' => $pending ?? null,
-                'pending_set' => $this->awaitingConfirmation ?? false,
-            ]) . PHP_EOL, FILE_APPEND);
-        } catch (\Exception $e) {
-            // ignore
         }
     }
 
@@ -117,6 +108,12 @@ class AttendanceScanner extends Component
     public function processScan($code)
     {
         try {
+            if ($this->awaitingConfirmation) {
+                $this->message = 'Masih menunggu konfirmasi siswa sebelumnya.';
+                $this->status = 'info';
+                return;
+            }
+
             // Validate QR code format
             $validation = Validator::make(
                 ['code' => $code],
@@ -188,8 +185,7 @@ class AttendanceScanner extends Component
         // Persist pending verification to cache so new component instances
         // (like in tests) can pick up the pending state.
         if (auth()->check()) {
-            // Use file cache store to persist across Livewire test instance recreations
-            Cache::store('file')->put('attendance_pending_' . auth()->id(), [
+            Cache::put('attendance_pending_' . auth()->id(), [
                 'student_id' => $student->id,
                 'details' => $this->pendingStudentDetails,
             ], 300);
@@ -198,13 +194,6 @@ class AttendanceScanner extends Component
                 'student_id' => $student->id,
                 'details' => $this->pendingStudentDetails,
             ]]);
-            try {
-                file_put_contents(storage_path('logs/pending_debug.txt'), json_encode([
-                    'saved_pending' => ['student_id' => $student->id, 'details' => $this->pendingStudentDetails],
-                ]) . PHP_EOL, FILE_APPEND);
-            } catch (\Exception $e) {
-                // ignore
-            }
         }
     }
 
@@ -251,7 +240,7 @@ class AttendanceScanner extends Component
         $this->pendingStudentDetails = null;
         $this->awaitingConfirmation = false;
         if (auth()->check()) {
-            Cache::store('file')->forget('attendance_pending_' . auth()->id());
+            Cache::forget('attendance_pending_' . auth()->id());
             session()->forget('attendance_pending_' . auth()->id());
         }
     }
@@ -331,13 +320,13 @@ class AttendanceScanner extends Component
     private function determineStatusFromSchedule($nowTime): string
     {
         if (!$this->activeSessionInfo) {
-            return 'absent';
+            return 'Alpa';
         }
 
         $scheduleStartTime = ($this->activeSessionInfo['start_time'] ?? null);
 
         if (! $scheduleStartTime) {
-            return 'present';
+            return 'Hadir';
         }
 
         // normalize into full time string
@@ -347,10 +336,10 @@ class AttendanceScanner extends Component
         $lateThreshold = Carbon::parse($scheduleStart)->addMinutes(15)->toTimeString();
 
         if ($nowTime > $lateThreshold) {
-            return 'late';
+            return 'Telat';
         }
 
-        return 'present';
+        return 'Hadir';
     }
 
     /**

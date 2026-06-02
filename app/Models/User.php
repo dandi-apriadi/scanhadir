@@ -43,7 +43,7 @@ class User extends Authenticatable
 
     public function assignedClasses(): BelongsToMany
     {
-        return $this->belongsToMany(StudentClass::class, 'schedules', 'teacher_id', 'class_id')->distinct();
+        return $this->belongsToMany(StudentClass::class, 'class_teacher', 'teacher_id', 'class_id')->distinct();
     }
 
     public function getAssignedClassesCountAttribute(): int

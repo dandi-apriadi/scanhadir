@@ -34,7 +34,7 @@ class StudentVerificationTest extends TestCase
             ->test(AttendanceScanner::class)
             ->call('processScan', 'TEST-QR-12345')
             ->assertSet('awaitingConfirmation', true)
-            ->assertNotNull('pendingStudent');
+            ->assertSet('pendingStudent', fn ($pendingStudent) => $pendingStudent !== null);
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
@@ -56,7 +56,7 @@ class StudentVerificationTest extends TestCase
         Livewire::actingAs($teacher)
             ->test(AttendanceScanner::class)
             ->call('processScan', 'TEST-QR-67890')
-            ->assertViewHas('pendingStudentDetails', function ($details) {
+            ->assertViewHas('pendingStudentDetails', function ($details) use ($student, $class) {
                 return $details['name'] === $student->user->name &&
                        $details['class'] === $class->name &&
                        $details['nisn'] === 'NISN-2024-001';
@@ -142,10 +142,10 @@ class StudentVerificationTest extends TestCase
             ->call('processScan', 'TEST-QR-STATUS')
             ->call('confirmStudent');
 
-        // Status should be 'present' or 'late' depending on current time
+        // Status should be 'Hadir' or 'Telat' depending on current time
         $attendance = Attendance::where('student_id', $student->id)->first();
         $this->assertNotNull($attendance);
-        $this->assertTrue(in_array($attendance->status, ['present', 'late']));
+        $this->assertTrue(in_array($attendance->status, ['Hadir', 'Telat']));
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
@@ -189,6 +189,11 @@ class StudentVerificationTest extends TestCase
     {
         $teacher = User::factory()->create(['role' => 'teacher']);
         $class = StudentClass::factory()->create();
+        \App\Models\Schedule::factory()->create([
+            'class_id' => $class->id,
+            'teacher_id' => $teacher->id,
+            'subject_id' => \App\Models\Subject::factory(),
+        ]);
         $student = Student::factory()->create([
             'class_id' => $class->id,
             'qr_code' => 'TEST-QR-NO-CONFIRM',

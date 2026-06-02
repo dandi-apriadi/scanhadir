@@ -37,15 +37,15 @@ class StudentDashboard extends Component
             ->whereBetween('date', [$monthStart, $monthEnd])
             ->selectRaw('
                 COUNT(*) as total,
-                SUM(CASE WHEN status = "Hadir" THEN 1 ELSE 0 END) as present,
-                SUM(CASE WHEN status = "Telat" THEN 1 ELSE 0 END) as late,
-                SUM(CASE WHEN status = "Sakit" THEN 1 ELSE 0 END) as sick,
-                SUM(CASE WHEN status = "Izin" THEN 1 ELSE 0 END) as excused,
-                SUM(CASE WHEN status = "Alpa" THEN 1 ELSE 0 END) as absent
+                SUM(CASE WHEN status IN ("Hadir", "present") THEN 1 ELSE 0 END) as present,
+                SUM(CASE WHEN status IN ("Telat", "late") THEN 1 ELSE 0 END) as late,
+                SUM(CASE WHEN status IN ("Sakit", "sick") THEN 1 ELSE 0 END) as sick,
+                SUM(CASE WHEN status IN ("Izin", "excused") THEN 1 ELSE 0 END) as excused,
+                SUM(CASE WHEN status IN ("Alpa", "absent") THEN 1 ELSE 0 END) as absent
             ')
             ->first();
 
-        $workdaysCount = max(1, $monthAttendance->total ?? 1);
+        $workdaysCount = max(10, $monthAttendance->total ?? 0);
 
         $attendanceStats = [
             'total_days' => $workdaysCount,

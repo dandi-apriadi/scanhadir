@@ -99,6 +99,31 @@ class MasterCrudAndScheduleConflictTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
+    public function admin_update_subject_without_curriculum_fields_preserves_existing_semester_and_sks()
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $subject = Subject::factory()->create([
+            'code' => 'MP-101',
+            'name' => 'Original Name',
+            'group' => 'Kejuruan',
+            'sks' => 5,
+        ]);
+
+        $response = $this->actingAs($admin)->put(route('admin.master.mapel.update', $subject), [
+            'code' => 'MP-101',
+            'name' => 'Updated Name',
+            'group' => 'Umum',
+        ]);
+
+        $response->assertRedirect(route('admin.master.mapel'));
+        $this->assertDatabaseHas('subjects', [
+            'id' => $subject->id,
+            'semester_akademik_id' => $subject->semester_akademik_id,
+            'sks' => 5,
+        ]);
+    }
+
+    #[\PHPUnit\Framework\Attributes\Test]
     public function admin_can_update_schedule()
     {
         $admin = User::factory()->create(['role' => 'admin']);

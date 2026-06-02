@@ -29,8 +29,8 @@ class AttendanceFactory extends Factory
 
         return [
             'student_id' => Student::query()->inRandomOrder()->value('id') ?? Student::factory(),
-            'schedule_id' => \App\Models\Schedule::query()->inRandomOrder()->value('id') ?? \App\Models\Schedule::factory(),
-            'date' => $this->faker->dateTimeBetween('-30 days', 'now')->format('Y-m-d'),
+            'schedule_id' => null,
+            'date' => $this->faker->unique()->dateTimeBetween('-365 days', 'now')->format('Y-m-d'),
             'status' => $status,
             'check_in' => $checkIn,
             'check_out' => $checkOut,

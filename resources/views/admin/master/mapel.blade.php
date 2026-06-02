@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 
 @section('content')
-<div class="p-8 max-w-7xl mx-auto" x-data="{ editSubject: null }\">
+<div class="p-8 max-w-7xl mx-auto" x-data="{ editSubject: null }">
     <!-- Breadcrumbs -->
     <nav class="flex items-center gap-2 text-xs font-black text-slate-400 mb-6 tracking-[0.2em] uppercase">
         <a class="hover:text-primary transition-colors" href="{{ route('admin.dashboard') }}">Dashboard</a>
@@ -195,6 +195,19 @@
                             <option value="Kejuruan">Kejuruan</option>
                             <option value="Umum">Umum</option>
                         </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-2">Semester</label>
+                        <select name="semester_akademik_id" x-model.number="editSubject.semester_akademik_id" class="appearance-none w-full bg-slate-50 border-none rounded-2xl py-3 px-4 text-sm font-bold text-slate-600 focus:ring-2 focus:ring-primary/20">
+                            <option value="">Pilih Semester</option>
+                            @foreach($semesterList as $sem)
+                                <option value="{{ $sem->id }}">{{ $sem->display_name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-2">SKS</label>
+                        <input type="number" name="sks" x-model.number="editSubject.sks" min="1" max="10" class="w-full bg-slate-50 border-none rounded-2xl py-3 px-4 text-sm font-semibold focus:ring-2 focus:ring-primary/20" required>
                     </div>
                 </div>
                 <div class="flex gap-3 mt-8">

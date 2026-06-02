@@ -24,16 +24,27 @@ class AuthController extends Controller
         $credentials = $request->validate([
             'email' => ['required', 'email'],
             'password' => ['required', 'string'],
+            'role' => ['required', 'in:admin,teacher,dosen,student'],
         ], [
             'email.required' => 'Email harus diisi',
             'email.email' => 'Format email tidak valid',
             'password.required' => 'Password harus diisi',
+            'role.required' => 'Role harus dipilih',
+            'role.in' => 'Role tidak valid',
         ]);
 
 
         // Attempt authentication
         if (Auth::attempt(['email' => $credentials['email'], 'password' => $credentials['password']])) {
             $user = Auth::user();
+
+            if (!$this->roleMatchesLoginSelection($user->role, $credentials['role'])) {
+                Auth::logout();
+
+                throw ValidationException::withMessages([
+                    'email' => 'Email atau password tidak valid.',
+                ]);
+            }
 
             // Remember me functionality
             if ($request->filled('remember')) {
@@ -60,6 +71,16 @@ class AuthController extends Controller
             'student' => redirect()->route('student.dashboard'),
             default => redirect()->route('landing'),
         };
+    }
+
+    private function roleMatchesLoginSelection(string $actualRole, string $selectedRole): bool
+    {
+        if ($actualRole === $selectedRole) {
+            return true;
+        }
+
+        return in_array($actualRole, ['teacher', 'dosen'], true)
+            && in_array($selectedRole, ['teacher', 'dosen'], true);
     }
 
     /**
