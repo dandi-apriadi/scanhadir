@@ -33,6 +33,21 @@ class AuthenticationTest extends TestCase
         $this->assertAuthenticatedAs($admin);
     }
 
+    public function test_admin_can_login_without_role_field_from_current_form(): void
+    {
+        $admin = User::factory()->admin()->withPassword('admin123')->create([
+            'email' => 'admin@test.com',
+        ]);
+
+        $response = $this->post('/auth/login', [
+            'email' => 'admin@test.com',
+            'password' => 'admin123',
+        ]);
+
+        $response->assertRedirect('/admin/dashboard');
+        $this->assertAuthenticatedAs($admin);
+    }
+
     public function test_teacher_can_login(): void
     {
         $teacher = User::factory()->teacher()->withPassword('guru123')->create([
@@ -102,10 +117,9 @@ class AuthenticationTest extends TestCase
         $response = $this->post('/auth/login', [
             'email' => '',
             'password' => '',
-            'role' => '',
         ]);
 
-        $response->assertSessionHasErrors(['email', 'password', 'role']);
+        $response->assertSessionHasErrors(['email', 'password']);
     }
 
     public function test_can_logout(): void

@@ -17,19 +17,19 @@ class AuthController extends Controller
     }
 
     /**
-     * Handle login request with role validation
+     * Handle login request. Role is optional for the current login form, but
+     * still validated when clients submit it explicitly.
      */
     public function processLogin(Request $request)
     {
         $credentials = $request->validate([
             'email' => ['required', 'email'],
             'password' => ['required', 'string'],
-            'role' => ['required', 'in:admin,teacher,dosen,student'],
+            'role' => ['nullable', 'in:admin,teacher,dosen,student'],
         ], [
             'email.required' => 'Email harus diisi',
             'email.email' => 'Format email tidak valid',
             'password.required' => 'Password harus diisi',
-            'role.required' => 'Role harus dipilih',
             'role.in' => 'Role tidak valid',
         ]);
 
@@ -38,7 +38,7 @@ class AuthController extends Controller
         if (Auth::attempt(['email' => $credentials['email'], 'password' => $credentials['password']])) {
             $user = Auth::user();
 
-            if (!$this->roleMatchesLoginSelection($user->role, $credentials['role'])) {
+            if (!empty($credentials['role']) && !$this->roleMatchesLoginSelection($user->role, $credentials['role'])) {
                 Auth::logout();
 
                 throw ValidationException::withMessages([

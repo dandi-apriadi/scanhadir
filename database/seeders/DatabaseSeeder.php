@@ -31,6 +31,8 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
+        $this->call(DemoLoginSeeder::class);
+
         $schedules = \App\Models\Schedule::query()
             ->with(['class', 'subject'])
             ->orderBy('class_id')
@@ -107,4 +109,3 @@ class DatabaseSeeder extends Seeder
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n";
     }
 }
-
