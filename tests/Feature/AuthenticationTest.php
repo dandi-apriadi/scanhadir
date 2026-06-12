@@ -2,9 +2,12 @@
 
 namespace Tests\Feature;
 
+use App\Models\Student;
 use App\Models\User;
-use Tests\TestCase;
+use Database\Seeders\DemoLoginSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
+use Tests\TestCase;
 
 class AuthenticationTest extends TestCase
 {
@@ -15,6 +18,31 @@ class AuthenticationTest extends TestCase
         $response = $this->get('/auth/login');
         $response->assertStatus(200);
         $response->assertViewIs('auth.login');
+        $response->assertSee('admin@scanhadir.com / admin123');
+        $response->assertSee('guru@scanhadir.com / guru123');
+        $response->assertSee('siswa@scanhadir.com / siswa123');
+    }
+
+    public function test_demo_login_seeder_provisions_displayed_credentials(): void
+    {
+        $this->seed(DemoLoginSeeder::class);
+
+        $accounts = [
+            'admin@scanhadir.com' => ['password' => 'admin123', 'role' => 'admin'],
+            'guru@scanhadir.com' => ['password' => 'guru123', 'role' => 'teacher'],
+            'siswa@scanhadir.com' => ['password' => 'siswa123', 'role' => 'student'],
+        ];
+
+        foreach ($accounts as $email => $expected) {
+            $user = User::query()->where('email', $email)->first();
+
+            $this->assertNotNull($user, "Missing demo user {$email}");
+            $this->assertSame($expected['role'], $user->role);
+            $this->assertTrue(Hash::check($expected['password'], $user->password));
+        }
+
+        $studentUser = User::query()->where('email', 'siswa@scanhadir.com')->firstOrFail();
+        $this->assertNotNull(Student::query()->where('user_id', $studentUser->id)->first());
     }
 
     public function test_admin_can_login(): void

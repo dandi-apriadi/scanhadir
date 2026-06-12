@@ -20,17 +20,7 @@ class DatabaseSeeder extends Seeder
         $structure = app(SchoolTimetableSeeder::class)->seedStructure();
         $classes = $structure['classes'];
 
-        // 1. Create Admin
-        User::query()->updateOrCreate(
-            ['email' => 'admin@scanhadir.com'],
-            [
-                'name' => 'Admin ScanHadir',
-                'password' => bcrypt('admin123'),
-                'role' => 'admin',
-                'email_verified_at' => now(),
-            ]
-        );
-
+        // 1. Create shared demo login accounts shown on the login page.
         $this->call(DemoLoginSeeder::class);
 
         $schedules = \App\Models\Schedule::query()
@@ -104,8 +94,8 @@ class DatabaseSeeder extends Seeder
         echo "\n✅ Database seeding completed successfully!\n";
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
         echo "Admin: admin@scanhadir.com / admin123\n";
-        echo "Teacher: akun guru mengikuti struktur jadwal sekolah\n";
-        echo "Student: rizki@sekolah.sch.id / siswa123\n";
+        echo "Guru: guru@scanhadir.com / guru123\n";
+        echo "Siswa: siswa@scanhadir.com / siswa123\n";
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n";
     }
 }
