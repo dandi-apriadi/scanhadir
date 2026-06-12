@@ -88,8 +88,13 @@ class User extends Authenticatable
     /** A teacher who is assigned as a homeroom teacher (wali kelas) of any class. */
     public function isWaliKelas(): bool
     {
-        return $this->isTeacher()
-            && StudentClass::where('homeroom_teacher_id', $this->id)->exists();
+        if (! $this->isTeacher()) {
+            return false;
+        }
+
+        // Cache per-request so layout calls don't repeat the query.
+        static $cache = [];
+        return $cache[$this->id] ??= StudentClass::where('homeroom_teacher_id', $this->id)->exists();
     }
 
     /** Human-friendly role label: Admin / Wali Kelas / Guru / Dosen / Siswa. */

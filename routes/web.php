@@ -34,7 +34,10 @@ Route::redirect('/login', '/auth/login');
 Route::redirect('/login/student', '/auth/login');
 Route::redirect('/login/admin', '/auth/login');
 
-Route::get('/forgot-password', [DashboardController::class, 'forgotPassword'])->name('password.request');
+Route::get('/forgot-password', [AuthController::class, 'showForgotPassword'])->name('password.request');
+Route::post('/forgot-password', [AuthController::class, 'sendResetLink'])->name('password.email');
+Route::get('/reset-password/{token}', [AuthController::class, 'showResetPassword'])->name('password.reset');
+Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('password.update');
 
 // Student Routes
 Route::prefix('student')->name('student.')->middleware(['auth', 'role:student'])->group(function () {
