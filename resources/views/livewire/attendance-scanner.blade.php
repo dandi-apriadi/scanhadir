@@ -39,6 +39,7 @@
 
         <!-- Header -->
         <div class="text-center mb-8">
+            <x-app-logo size="w-24 h-24" class="mx-auto mb-5 ring-4 ring-white/10 shadow-2xl shadow-indigo-500/20" />
             <h1 class="text-5xl font-bold text-white tracking-tight mb-2">ScanHadir</h1>
             <p class="text-slate-400 text-lg">Sistem Presensi QR Sekolah Pintar</p>
             <div class="mt-4 flex items-center justify-center gap-4 text-sm text-slate-400">

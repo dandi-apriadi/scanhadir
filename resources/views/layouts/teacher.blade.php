@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $title ?? 'ScanHadir Teacher' }}</title>
+    <link rel="icon" type="image/jpeg" href="{{ asset('images/logo.jpeg') }}">
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
@@ -72,9 +73,7 @@
             <div class="mb-2 flex flex-col items-center gap-4" :class="sidebarCollapsed ? 'p-2' : 'p-4 items-stretch'">
                 <div class="flex items-center justify-between w-full" :class="sidebarCollapsed ? 'flex-col gap-4' : ''">
                     <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-primary flex-shrink-0 rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
-                            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">qr_code_scanner</span>
-                        </div>
+                        <x-app-logo size="w-10 h-10" class="flex-shrink-0 ring-indigo-100" />
                         <div x-show="!sidebarCollapsed" x-transition.opacity class="flex-1">
                             <h1 class="text-xl font-bold text-indigo-700 font-headline whitespace-nowrap">ScanHadir</h1>
                             <p class="text-[10px] uppercase tracking-widest text-slate-400 font-bold whitespace-nowrap">Teacher Portal</p>

@@ -4,8 +4,9 @@
 <!-- TopNavBar Implementation -->
 <nav class="fixed top-0 w-full z-50 bg-white/60 backdrop-blur-xl shadow-sm">
     <div class="flex justify-between items-center max-w-7xl mx-auto px-8 py-4">
-        <div class="text-2xl font-extrabold tracking-tighter text-indigo-700 font-headline">
-            ScanHadir
+        <div class="flex items-center gap-3">
+            <x-app-logo size="w-10 h-10" class="ring-indigo-100" />
+            <span class="text-2xl font-extrabold tracking-tighter text-indigo-700 font-headline">ScanHadir</span>
         </div>
         <div class="hidden md:flex items-center space-x-8">
             <a class="text-sm font-semibold text-indigo-700 border-b-2 border-indigo-600 font-label" href="#">Home</a>
@@ -130,7 +131,10 @@
     <div class="max-w-7xl mx-auto px-8 py-12">
         <div class="flex flex-col md:flex-row justify-between gap-8">
             <div>
-                <div class="text-xl font-bold text-slate-900 mb-4 font-headline">ScanHadir</div>
+                <div class="flex items-center gap-3 mb-4">
+                    <x-app-logo size="w-9 h-9" class="ring-indigo-100" />
+                    <span class="text-xl font-bold text-slate-900 font-headline">ScanHadir</span>
+                </div>
                 <p class="text-slate-500 text-sm font-body max-w-md mb-6">
                     © {{ date('Y') }} ScanHadir. The Digital Pulse for Precision Attendance. Solusi terintegrasi untuk manajemen kehadiran masa depan.
                 </p>

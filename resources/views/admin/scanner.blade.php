@@ -4,6 +4,7 @@
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title>ScanHadir - QR Scanner Console</title>
+    <link rel="icon" type="image/jpeg" href="{{ asset('images/logo.jpeg') }}"/>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
@@ -46,6 +47,7 @@
             <a href="{{ route('admin.dashboard') }}" class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors">
                 <span class="material-symbols-outlined text-white">arrow_back</span>
             </a>
+            <x-app-logo size="w-11 h-11" class="ring-white/10" />
             <div>
                 <h1 class="text-xl font-bold font-headline tracking-tighter leading-none">ScanHadir</h1>
                 <p class="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mt-1">Scanner Engine v2.0</p>

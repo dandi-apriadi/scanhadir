@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ScanHadir - Solusi Presensi Modern</title>
+    <link rel="icon" type="image/jpeg" href="{{ asset('images/logo.jpeg') }}">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
@@ -17,6 +18,7 @@
         <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-fuchsia-600/20 rounded-full blur-[120px] -z-10 animate-pulse delay-1000"></div>
 
         <div class="max-w-4xl w-full text-center z-10">
+            <x-app-logo size="w-24 h-24" class="mx-auto mb-8 ring-4 ring-white/10 shadow-2xl shadow-indigo-500/20" />
             <div class="inline-flex items-center px-4 py-2 bg-indigo-500/10 border border-indigo-500/20 rounded-full text-indigo-400 text-sm font-semibold mb-8 backdrop-blur-sm animate-bounce">
                 🚀 Versi 1.0 Baru Saja Rilis
             </div>

@@ -11,9 +11,7 @@
 
         {{-- Logo --}}
         <div class="relative z-10 flex items-center gap-3">
-            <div class="w-11 h-11 rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-primary/30">
-                <span class="material-symbols-outlined text-white" style="font-variation-settings:'FILL' 1;">qr_code_scanner</span>
-            </div>
+            <x-app-logo size="w-11 h-11" class="ring-white/80 shadow-lg shadow-primary/20" />
             <span class="text-2xl font-extrabold text-indigo-900 font-headline tracking-tight">ScanHadir</span>
         </div>
 
@@ -74,9 +72,7 @@
 
             {{-- Mobile logo --}}
             <div class="flex items-center gap-3 mb-8 lg:hidden">
-                <div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/30">
-                    <span class="material-symbols-outlined text-white text-xl" style="font-variation-settings:'FILL' 1;">qr_code_scanner</span>
-                </div>
+                <x-app-logo size="w-10 h-10" class="ring-white/80 shadow-lg shadow-primary/20" />
                 <span class="text-xl font-extrabold text-indigo-900 font-headline">ScanHadir</span>
             </div>
 

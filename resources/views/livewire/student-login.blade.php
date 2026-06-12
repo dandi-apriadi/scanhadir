@@ -6,6 +6,7 @@
 
     <div class="w-full max-w-md">
         <div class="text-center mb-8 animate-fadeIn">
+            <x-app-logo size="w-20 h-20" class="mx-auto mb-5 ring-white/10 shadow-2xl shadow-indigo-500/20" />
             <h1 class="text-4xl font-extrabold text-white tracking-tight mb-2">Masuk</h1>
             <p class="text-slate-400">Portal ScanHadir</p>
         </div>
@@ -93,8 +94,8 @@
         <div class="mt-8 p-4 bg-slate-800/50 rounded-2xl border border-slate-700/50 text-xs text-slate-400">
             <p class="font-semibold text-slate-300 mb-2">📝 Akun Uji Coba:</p>
             <p class="mb-1"><span class="text-indigo-400">Admin:</span> admin@scanhadir.com / admin123</p>
-            <p class="mb-1"><span class="text-indigo-400">Guru:</span> guru1@sekolah.sch.id / guru123</p>
-            <p><span class="text-indigo-400">Siswa:</span> rizki@sekolah.sch.id / siswa123</p>
+            <p class="mb-1"><span class="text-indigo-400">Guru:</span> guru@scanhadir.com / guru123</p>
+            <p><span class="text-indigo-400">Siswa:</span> siswa@scanhadir.com / siswa123</p>
         </div>
     </div>
 
@@ -113,4 +114,3 @@
         .animation-delay-500 { animation-delay: 0.5s; }
     </style>
 </div>
-

@@ -4,6 +4,7 @@
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title>{{ $title ?? 'Admin Console' }} - ScanHadir</title>
+    <link rel="icon" type="image/jpeg" href="{{ asset('images/logo.jpeg') }}"/>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
@@ -79,9 +80,7 @@
         <div class="mb-10 flex flex-col items-center gap-6" :class="sidebarCollapsed ? 'px-2' : 'px-6 items-stretch'">
             <div class="flex items-center justify-between w-full" :class="sidebarCollapsed ? 'flex-col gap-4' : ''">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-primary-container flex-shrink-0 flex items-center justify-center text-white shadow-inner">
-                        <span class="material-symbols-outlined text-2xl">admin_panel_settings</span>
-                    </div>
+                    <x-app-logo size="w-10 h-10" class="flex-shrink-0 ring-white/20" />
                     <div x-show="!sidebarCollapsed" x-transition.opacity class="flex-1">
                         <h1 class="text-xl font-extrabold text-white font-headline leading-tight whitespace-nowrap">ScanHadir</h1>
                         <p class="text-[10px] uppercase tracking-widest text-indigo-300 font-bold whitespace-nowrap">Admin Console</p>
