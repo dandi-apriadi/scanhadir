@@ -98,6 +98,12 @@
                             <span class="material-symbols-outlined">dashboard</span>
                             <span class="text-xs uppercase tracking-wider font-semibold whitespace-nowrap" x-show="!sidebarCollapsed">Dashboard</span>
                         </a>
+                        @if(auth()->user()->isWaliKelas())
+                        <a href="{{ route('teacher.wali-kelas') }}" class="flex items-center gap-3 px-4 py-3 {{ Request::routeIs('teacher.wali-kelas') ? 'bg-emerald-50 text-emerald-700 font-bold border-l-4 border-emerald-600' : 'text-slate-600 hover:bg-slate-50' }} rounded-xl transition-all mb-1">
+                            <span class="material-symbols-outlined">supervisor_account</span>
+                            <span class="text-xs uppercase tracking-wider font-semibold whitespace-nowrap" x-show="!sidebarCollapsed">Kelas Saya</span>
+                        </a>
+                        @endif
                         <a href="{{ route('teacher.bulk-update') }}" class="flex items-center gap-3 px-4 py-3 {{ Request::routeIs('teacher.bulk-update') ? 'bg-indigo-50 text-indigo-700 font-bold border-l-4 border-indigo-600' : 'text-slate-600 hover:bg-slate-50' }} rounded-xl transition-all mb-1">
                             <span class="material-symbols-outlined">group</span>
                             <span class="text-xs uppercase tracking-wider font-semibold whitespace-nowrap" x-show="!sidebarCollapsed">Bulk Update</span>
@@ -134,7 +140,7 @@
                     </div>
                     <div class="overflow-hidden" x-show="!sidebarCollapsed">
                         <p class="text-sm font-bold truncate">{{ auth()->user()->name }}</p>
-                        <p class="text-[10px] text-slate-500 uppercase font-bold">{{ auth()->user()->role === 'dosen' ? 'Dosen' : 'Guru' }}</p>
+                        <p class="text-[10px] text-slate-500 uppercase font-bold">{{ auth()->user()->role_label }}</p>
                     </div>
                 </div>
                 <form action="{{ route('auth.logout') }}" method="POST" class="mt-4">
@@ -176,7 +182,7 @@
                         <div class="flex items-center gap-3 pl-2">
                             <div class="text-right hidden sm:block">
                                 <p class="text-sm font-bold text-on-surface leading-tight">{{ auth()->user()->name }}</p>
-                                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{{ auth()->user()->role === 'dosen' ? 'Dosen' : 'Guru' }}</p>
+                                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{{ auth()->user()->role_label }}</p>
                             </div>
                             <div class="w-10 h-10 rounded-xl bg-primary/10 border border-primary/10 shadow-sm flex items-center justify-center text-primary font-bold text-xs">
                                 {{ collect(explode(' ', auth()->user()->name))->take(2)->map(fn($n) => strtoupper(substr($n, 0, 1)))->implode('') }}

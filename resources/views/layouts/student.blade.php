@@ -145,7 +145,7 @@
                         <span class="material-symbols-outlined">person</span>
                         <span class="font-medium text-sm whitespace-nowrap" x-show="!sidebarCollapsed">Profil</span>
                     </a>
-                    <a class="flex items-center gap-4 text-slate-500 px-6 py-4 mx-2 hover:bg-slate-100 rounded-2xl transition-all" href="{{ route('landing') }}">
+                    <a class="flex items-center gap-4 text-slate-500 px-6 py-4 mx-2 hover:bg-slate-100 rounded-2xl transition-all" href="mailto:admin@scanhadir.com">
                         <span class="material-symbols-outlined">help</span>
                         <span class="font-medium text-sm whitespace-nowrap" x-show="!sidebarCollapsed">Bantuan</span>
                     </a>

@@ -8,11 +8,12 @@ use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
-    /**
-     * Show the login form
-     */
     public function showLogin()
     {
+        if (Auth::check()) {
+            return $this->redirectByRole(Auth::user());
+        }
+
         return view('auth.login');
     }
 

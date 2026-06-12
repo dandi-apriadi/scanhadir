@@ -62,7 +62,11 @@
                             <td class="px-6 py-4 font-mono text-xs font-semibold text-slate-500">{{ str_pad((string) $teacher->id, 12, '0', STR_PAD_LEFT) }}</td>
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-9 h-9 rounded-full bg-indigo-50 flex items-center justify-center text-primary font-bold text-xs">{{ $initials ?: 'TG' }}</div>
+                                    @if($teacher->photo_path)
+                                        <img src="{{ $teacher->photo_url }}" alt="{{ $teacher->name }}" class="w-9 h-9 rounded-full object-cover ring-2 ring-indigo-100" />
+                                    @else
+                                        <div class="w-9 h-9 rounded-full bg-indigo-50 flex items-center justify-center text-primary font-bold text-xs">{{ $initials ?: 'TG' }}</div>
+                                    @endif
                                     <div>
                                         <p class="text-sm font-bold text-slate-900">{{ $teacher->name }}</p>
                                         <p class="text-[10px] text-slate-400 font-medium">{{ $teacher->email }}</p>
@@ -132,8 +136,18 @@
                 <h3 class="text-lg font-bold text-slate-900">Tambah Guru</h3>
                 <button type="button" @click="showCreateModal = false" class="text-slate-400 hover:text-slate-700"><span class="material-symbols-outlined">close</span></button>
             </div>
-            <form method="POST" action="{{ route('admin.master.guru.store') }}" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <form method="POST" action="{{ route('admin.master.guru.store') }}" enctype="multipart/form-data" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 @csrf
+                <div class="md:col-span-2 flex items-center gap-4" x-data="{ preview: null }">
+                    <div class="w-16 h-16 rounded-2xl bg-slate-100 ring-1 ring-slate-200 overflow-hidden flex items-center justify-center shrink-0">
+                        <template x-if="preview"><img :src="preview" class="w-full h-full object-cover" /></template>
+                        <template x-if="!preview"><span class="material-symbols-outlined text-slate-300">photo_camera</span></template>
+                    </div>
+                    <div class="flex-1">
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Foto Guru <span class="text-slate-300 normal-case">(opsional, maks 2MB)</span></label>
+                        <input type="file" name="photo" accept="image/*" @change="preview = $event.target.files[0] ? URL.createObjectURL($event.target.files[0]) : null" class="w-full text-sm text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-slate-900 file:text-white file:text-xs file:font-bold" />
+                    </div>
+                </div>
                 <div>
                     <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Nama</label>
                     <input type="text" name="name" value="{{ old('name') }}" required class="w-full px-4 py-2.5 rounded-lg bg-slate-50 border-none text-sm focus:ring-2 focus:ring-primary/20" placeholder="Nama guru" />
@@ -161,9 +175,19 @@
                     <h3 class="text-lg font-bold text-slate-900">Edit Guru</h3>
                     <a href="{{ route('admin.master.guru', request()->except('edit')) }}" class="text-slate-400 hover:text-slate-700"><span class="material-symbols-outlined">close</span></a>
                 </div>
-                <form method="POST" action="{{ route('admin.master.guru.update', $editTeacher->id) }}" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <form method="POST" action="{{ route('admin.master.guru.update', $editTeacher->id) }}" enctype="multipart/form-data" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     @csrf
                     @method('PUT')
+                    <div class="md:col-span-2 flex items-center gap-4" x-data="{ preview: '{{ $editTeacher->photo_path ? $editTeacher->photo_url : '' }}' }">
+                        <div class="w-16 h-16 rounded-2xl bg-slate-100 ring-1 ring-slate-200 overflow-hidden flex items-center justify-center shrink-0">
+                            <template x-if="preview"><img :src="preview" class="w-full h-full object-cover" /></template>
+                            <template x-if="!preview"><span class="material-symbols-outlined text-slate-300">photo_camera</span></template>
+                        </div>
+                        <div class="flex-1">
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Foto Guru <span class="text-slate-300 normal-case">(kosongkan jika tidak diubah)</span></label>
+                            <input type="file" name="photo" accept="image/*" @change="preview = $event.target.files[0] ? URL.createObjectURL($event.target.files[0]) : preview" class="w-full text-sm text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-slate-900 file:text-white file:text-xs file:font-bold" />
+                        </div>
+                    </div>
                     <div>
                         <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Nama</label>
                         <input type="text" name="name" value="{{ old('name', $editTeacher->name) }}" required class="w-full px-4 py-2.5 rounded-lg bg-slate-50 border-none text-sm focus:ring-2 focus:ring-primary/20" />

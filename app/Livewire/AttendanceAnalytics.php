@@ -69,6 +69,9 @@ class AttendanceAnalytics extends Component
         // Get student performance
         $studentPerformance = $this->getStudentPerformance($effectiveClassIds);
 
+        // Get late students ("Siswa Terlambat")
+        $lateStudents = $this->getLateStudents($effectiveClassIds);
+
         // Get semesters for filter
         $semesters = SemesterAkademik::orderByDesc('is_active')->orderByDesc('tanggal_mulai')->get();
 
@@ -81,6 +84,7 @@ class AttendanceAnalytics extends Component
             'monthlyTrend' => $monthlyTrend,
             'classComparison' => $classComparison,
             'studentPerformance' => $studentPerformance,
+            'lateStudents' => $lateStudents,
         ])->layout($layout, ['title' => 'Attendance Analytics']);
     }
 
@@ -98,11 +102,11 @@ class AttendanceAnalytics extends Component
             ->get();
 
         $total = $attendances->count();
-        $present = $attendances->where('status', 'Hadir')->count();
-        $late = $attendances->where('status', 'Telat')->count();
-        $sick = $attendances->where('status', 'Sakit')->count();
-        $excused = $attendances->where('status', 'Izin')->count();
-        $absent = $attendances->where('status', 'Alpa')->count();
+        $present = $attendances->whereIn('status', Attendance::statusAliases('Hadir'))->count();
+        $late = $attendances->whereIn('status', Attendance::statusAliases('Telat'))->count();
+        $sick = $attendances->whereIn('status', Attendance::statusAliases('Sakit'))->count();
+        $excused = $attendances->whereIn('status', Attendance::statusAliases('Izin'))->count();
+        $absent = $attendances->whereIn('status', Attendance::statusAliases('Alpa'))->count();
 
         return [
             'total' => $total,
@@ -133,9 +137,9 @@ class AttendanceAnalytics extends Component
 
             $data[] = [
                 'month' => $startDate->format('M'),
-                'present' => $attendances->where('status', 'present')->count(),
-                'late' => $attendances->where('status', 'late')->count(),
-                'absent' => $attendances->where('status', 'absent')->count(),
+                'present' => $attendances->whereIn('status', Attendance::statusAliases('Hadir'))->count(),
+                'late' => $attendances->whereIn('status', Attendance::statusAliases('Telat'))->count(),
+                'absent' => $attendances->whereIn('status', Attendance::statusAliases('Alpa'))->count(),
             ];
         }
 
@@ -161,10 +165,10 @@ class AttendanceAnalytics extends Component
             $classes->push([
                 'name' => $class->name,
                 'total' => $attendances->count(),
-                'present' => $attendances->where('status', 'present')->count(),
-                'late' => $attendances->where('status', 'late')->count(),
-                'absent' => $attendances->where('status', 'absent')->count(),
-                'presentPercentage' => $attendances->count() > 0 ? round(($attendances->where('status', 'present')->count() / $attendances->count()) * 100, 1) : 0,
+                'present' => $attendances->whereIn('status', Attendance::statusAliases('Hadir'))->count(),
+                'late' => $attendances->whereIn('status', Attendance::statusAliases('Telat'))->count(),
+                'absent' => $attendances->whereIn('status', Attendance::statusAliases('Alpa'))->count(),
+                'presentPercentage' => $attendances->count() > 0 ? round(($attendances->whereIn('status', Attendance::statusAliases('Hadir'))->count() / $attendances->count()) * 100, 1) : 0,
             ]);
         }
 
@@ -193,11 +197,12 @@ class AttendanceAnalytics extends Component
                 'name' => $record->student?->user?->name,
                 'nisn' => $record->student?->nisn,
                 'class' => $record->student?->class?->name,
+                'photo' => $record->student?->photo_url,
                 'total' => $records->count(),
-                'present' => $records->where('status', 'present')->count(),
-                'late' => $records->where('status', 'late')->count(),
-                'absent' => $records->where('status', 'absent')->count(),
-                'presentPercentage' => $records->count() > 0 ? round(($records->where('status', 'present')->count() / $records->count()) * 100, 1) : 0,
+                'present' => $records->whereIn('status', Attendance::statusAliases('Hadir'))->count(),
+                'late' => $records->whereIn('status', Attendance::statusAliases('Telat'))->count(),
+                'absent' => $records->whereIn('status', Attendance::statusAliases('Alpa'))->count(),
+                'presentPercentage' => $records->count() > 0 ? round(($records->whereIn('status', Attendance::statusAliases('Hadir'))->count() / $records->count()) * 100, 1) : 0,
             ];
         }
 
@@ -205,5 +210,38 @@ class AttendanceAnalytics extends Component
         usort($students, fn($a, $b) => $b['presentPercentage'] <=> $a['presentPercentage']);
 
         return array_slice($students, 0, 20); // Top 20 students
+    }
+
+    /**
+     * Students with the most lateness in the selected month — "Siswa Terlambat".
+     */
+    private function getLateStudents($classIds)
+    {
+        $startDate = Carbon::createFromDate($this->selectedYear, $this->selectedMonth, 1);
+        $endDate = $startDate->clone()->endOfMonth();
+
+        $grouped = Attendance::query()
+            ->with(['student.user', 'student.class'])
+            ->whereIn('status', Attendance::statusAliases('Telat'))
+            ->whereBetween('date', [$startDate, $endDate])
+            ->whereHas('student', fn($q) => $q->whereIn('class_id', $classIds))
+            ->get()
+            ->groupBy('student_id');
+
+        $students = [];
+        foreach ($grouped as $records) {
+            $record = $records->first();
+            $students[] = [
+                'name' => $record->student?->user?->name,
+                'nisn' => $record->student?->nisn,
+                'class' => $record->student?->class?->name,
+                'photo' => $record->student?->photo_url,
+                'lateCount' => $records->count(),
+            ];
+        }
+
+        usort($students, fn($a, $b) => $b['lateCount'] <=> $a['lateCount']);
+
+        return array_slice($students, 0, 10);
     }
 }

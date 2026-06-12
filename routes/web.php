@@ -8,6 +8,7 @@ use App\Http\Controllers\StudentQrCodeController;
 use App\Livewire\AttendanceAnalytics;
 use App\Livewire\AttendanceReports;
 use App\Livewire\BulkAttendanceUpdate;
+use App\Livewire\WaliKelasDashboard;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/admin', '/admin/dashboard');
@@ -17,8 +18,8 @@ Route::redirect('/dashboard', '/student/dashboard');
 Route::get('/student/{student}/qrcode', [StudentQrCodeController::class, 'show'])->name('students.qrcode');
 Route::get('/qr-download/{nisn}/{filename}.png', [StudentQrCodeController::class, 'downloadByNisn'])->name('students.qrcode.download');
 
-// Guest Routes
-Route::get('/', [DashboardController::class, 'landing'])->name('landing');
+// Root → login portal
+Route::redirect('/', '/auth/login')->name('landing');
 
 // Authentication Routes
 Route::redirect('/login', '/auth/login');
@@ -48,6 +49,7 @@ Route::prefix('student')->name('student.')->middleware(['auth', 'role:student'])
 // Admin Routes
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'adminDashboard'])->name('dashboard');
+    Route::get('/search', [DashboardController::class, 'globalSearch'])->name('search');
     Route::get('/analytics', AttendanceAnalytics::class)->name('analytics');
     Route::get('/logs', [DashboardController::class, 'adminLogs'])->name('logs');
     Route::get('/izin-approval', [DashboardController::class, 'adminIzinApproval'])->name('izin_approval');
@@ -95,6 +97,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
 // Teacher/Dosen Routes
 Route::prefix('teacher')->name('teacher.')->middleware(['auth', 'role:teacher,dosen'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'teacherDashboard'])->name('dashboard');
+    Route::get('/wali-kelas', WaliKelasDashboard::class)->name('wali-kelas');
     Route::get('/analytics', AttendanceAnalytics::class)->name('analytics');
     Route::get('/reports', AttendanceReports::class)->name('reports');
     Route::get('/bulk-update', BulkAttendanceUpdate::class)->name('bulk-update');

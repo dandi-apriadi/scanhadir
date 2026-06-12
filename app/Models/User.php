@@ -19,6 +19,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'photo_path',
     ];
 
     public function student()
@@ -69,6 +70,39 @@ class User extends Authenticatable
     public function isStudent(): bool
     {
         return $this->role === 'student';
+    }
+
+    public function getPhotoUrlAttribute(): string
+    {
+        if ($this->photo_path) {
+            return asset('storage/' . $this->photo_path);
+        }
+        return 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Crect fill="%23e0e7ff" width="100" height="100"/%3E%3Ctext x="50" y="50" font-size="40" fill="%234f46e5" text-anchor="middle" dy=".3em" font-weight="bold"%3E'.substr($this->name, 0, 1).'%3C/text%3E%3C/svg%3E';
+    }
+
+    public function homeroomClass()
+    {
+        return $this->hasOne(StudentClass::class, 'homeroom_teacher_id');
+    }
+
+    /** A teacher who is assigned as a homeroom teacher (wali kelas) of any class. */
+    public function isWaliKelas(): bool
+    {
+        return $this->isTeacher()
+            && StudentClass::where('homeroom_teacher_id', $this->id)->exists();
+    }
+
+    /** Human-friendly role label: Admin / Wali Kelas / Guru / Dosen / Siswa. */
+    public function getRoleLabelAttribute(): string
+    {
+        return match (true) {
+            $this->isAdmin() => 'Admin',
+            $this->isWaliKelas() => 'Wali Kelas',
+            $this->role === 'dosen' => 'Dosen',
+            $this->role === 'teacher' => 'Guru',
+            $this->isStudent() => 'Siswa',
+            default => ucfirst((string) $this->role),
+        };
     }
 
     /**

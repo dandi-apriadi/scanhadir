@@ -17,21 +17,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 
 class DashboardController extends Controller
 {
-    public function landing() {
-        return view('landing');
-    }
-
-    public function loginStudent() {
-        return view('auth.login_student');
-    }
-
-    public function loginAdmin() {
-        return view('auth.login_admin');
-    }
-
     public function forgotPassword() {
         return view('auth.forgot_password');
     }
@@ -132,7 +121,7 @@ class DashboardController extends Controller
         $student = $this->getAuthenticatedStudent();
 
         $validated = $request->validate([
-            'status' => ['required', 'in:present,late'],
+            'status' => ['required', 'in:Hadir,Telat,present,late'],
             'date' => ['required', 'date'],
             'check_in' => ['required', 'date_format:H:i'],
             'notes' => ['nullable', 'string', 'max:2000'],
@@ -151,7 +140,7 @@ class DashboardController extends Controller
                 'date' => $validated['date'],
             ],
             [
-                'status' => $validated['status'],
+                'status' => Attendance::normalizeStatus($validated['status']) ?? 'Hadir',
                 'approval_status' => 'approved',
                 'approved_by' => auth()->id(),
                 'approved_at' => now(),
@@ -514,6 +503,72 @@ class DashboardController extends Controller
             });
     }
 
+    public function globalSearch(Request $request)
+    {
+        $q = trim((string) $request->query('q', ''));
+
+        if (mb_strlen($q) < 1) {
+            return response()->json(['query' => $q, 'results' => []]);
+        }
+
+        $like = "%{$q}%";
+        $results = [];
+
+        // Siswa
+        $students = Student::query()
+            ->with(['user:id,name,email', 'class:id,name'])
+            ->where('nisn', 'like', $like)
+            ->orWhereHas('user', fn ($u) => $u->where('name', 'like', $like)->orWhere('email', 'like', $like))
+            ->limit(5)
+            ->get();
+
+        foreach ($students as $student) {
+            $results[] = [
+                'type' => 'Siswa',
+                'icon' => 'school',
+                'label' => $student->user?->name ?? 'Tanpa Nama',
+                'sublabel' => trim(($student->class?->name ?? '-') . ' · NISN ' . $student->nisn),
+                'url' => route('admin.master.siswa', ['edit' => $student->id], false),
+            ];
+        }
+
+        // Guru
+        $teachers = User::query()
+            ->whereIn('role', ['teacher', 'dosen'])
+            ->where(fn ($w) => $w->where('name', 'like', $like)->orWhere('email', 'like', $like))
+            ->limit(5)
+            ->get();
+
+        foreach ($teachers as $teacher) {
+            $results[] = [
+                'type' => 'Guru',
+                'icon' => 'record_voice_over',
+                'label' => $teacher->name,
+                'sublabel' => $teacher->email,
+                'url' => route('admin.master.guru', ['edit' => $teacher->id], false),
+            ];
+        }
+
+        // Mata Pelajaran
+        $subjects = Subject::query()
+            ->where('name', 'like', $like)
+            ->orWhere('code', 'like', $like)
+            ->limit(5)
+            ->get();
+
+        foreach ($subjects as $subject) {
+            $results[] = [
+                'type' => 'Mapel',
+                'icon' => 'library_books',
+                'label' => $subject->name,
+                'sublabel' => 'Kode ' . $subject->code,
+                'url' => route('admin.master.mapel', ['q' => $subject->code], false),
+            ];
+        }
+
+        return response()->json(['query' => $q, 'results' => $results]);
+    }
+
     public function masterGuru(Request $request)
     {
         $q = trim((string) $request->query('q', ''));
@@ -553,6 +608,7 @@ class DashboardController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'string', 'min:8'],
+            'photo' => ['nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:2048'],
         ]);
 
         User::create([
@@ -560,6 +616,9 @@ class DashboardController extends Controller
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
             'role' => 'teacher',
+            'photo_path' => $request->hasFile('photo')
+                ? $request->file('photo')->store('photos/guru', 'public')
+                : null,
         ]);
 
         return redirect()->route('admin.master.guru')->with('status', 'Guru berhasil ditambahkan.');
@@ -573,6 +632,7 @@ class DashboardController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email,' . $teacher->id],
             'password' => ['nullable', 'string', 'min:8'],
+            'photo' => ['nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:2048'],
         ]);
 
         $payload = [
@@ -582,6 +642,13 @@ class DashboardController extends Controller
 
         if (!empty($validated['password'])) {
             $payload['password'] = Hash::make($validated['password']);
+        }
+
+        if ($request->hasFile('photo')) {
+            if ($teacher->photo_path) {
+                Storage::disk('public')->delete($teacher->photo_path);
+            }
+            $payload['photo_path'] = $request->file('photo')->store('photos/guru', 'public');
         }
 
         $teacher->update($payload);
@@ -774,9 +841,14 @@ class DashboardController extends Controller
             'password' => ['required', 'string', 'min:8'],
             'nisn' => ['required', 'string', 'max:32', 'unique:students,nisn'],
             'class_id' => ['required', 'exists:classes,id'],
+            'photo' => ['nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:2048'],
         ]);
 
-        DB::transaction(function () use ($validated) {
+        $photoPath = $request->hasFile('photo')
+            ? $request->file('photo')->store('photos/siswa', 'public')
+            : null;
+
+        DB::transaction(function () use ($validated, $photoPath) {
             $user = User::create([
                 'name' => $validated['name'],
                 'email' => $validated['email'],
@@ -788,6 +860,7 @@ class DashboardController extends Controller
                 'user_id' => $user->id,
                 'class_id' => (int) $validated['class_id'],
                 'nisn' => $validated['nisn'],
+                'photo_path' => $photoPath,
             ]);
         });
 
@@ -806,9 +879,18 @@ class DashboardController extends Controller
             'password' => ['nullable', 'string', 'min:8'],
             'nisn' => ['required', 'string', 'max:32', 'unique:students,nisn,' . $student->id],
             'class_id' => ['required', 'exists:classes,id'],
+            'photo' => ['nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:2048'],
         ]);
 
-        DB::transaction(function () use ($validated, $student) {
+        $photoPath = null;
+        if ($request->hasFile('photo')) {
+            if ($student->photo_path) {
+                Storage::disk('public')->delete($student->photo_path);
+            }
+            $photoPath = $request->file('photo')->store('photos/siswa', 'public');
+        }
+
+        DB::transaction(function () use ($validated, $student, $photoPath) {
             $userPayload = [
                 'name' => $validated['name'],
                 'email' => $validated['email'],
@@ -820,10 +902,16 @@ class DashboardController extends Controller
 
             $student->user->update($userPayload);
 
-            $student->update([
+            $studentPayload = [
                 'class_id' => (int) $validated['class_id'],
                 'nisn' => $validated['nisn'],
-            ]);
+            ];
+
+            if ($photoPath !== null) {
+                $studentPayload['photo_path'] = $photoPath;
+            }
+
+            $student->update($studentPayload);
         });
 
         return redirect()->route('admin.master.siswa')->with('status', 'Data siswa berhasil diperbarui.');
@@ -857,9 +945,12 @@ class DashboardController extends Controller
 
         $classes = StudentClass::query()
             ->withCount('students')
-            ->with(['teachers' => function ($query) {
-                $query->select('users.id', 'users.name');
-            }])
+            ->with([
+                'teachers' => function ($query) {
+                    $query->select('users.id', 'users.name');
+                },
+                'homeroomTeacher:id,name,photo_path',
+            ])
             ->when($q !== '', function ($query) use ($q) {
                 $query->where(function ($inner) use ($q) {
                     $inner->where('name', 'like', "%{$q}%")
@@ -880,6 +971,7 @@ class DashboardController extends Controller
             'title' => 'Manajemen Kelas',
             'classes' => $classes,
             'q' => $q,
+            'teacherOptions' => User::whereIn('role', ['teacher', 'dosen'])->orderBy('name')->get(['id', 'name']),
             'editClass' => $editId > 0 ? StudentClass::query()->find($editId) : null,
             'classStats' => [
                 'total' => StudentClass::count(),
@@ -898,6 +990,7 @@ class DashboardController extends Controller
             'name' => ['required', 'string', 'max:255', 'unique:classes,name'],
             'level' => ['required', 'in:X,XI,XII'],
             'major' => ['required', 'string', 'max:100'],
+            'homeroom_teacher_id' => ['nullable', 'exists:users,id'],
         ]);
 
         StudentClass::create($validated);
@@ -911,6 +1004,7 @@ class DashboardController extends Controller
             'name' => ['required', 'string', 'max:255', 'unique:classes,name,' . $class->id],
             'level' => ['required', 'in:X,XI,XII'],
             'major' => ['required', 'string', 'max:100'],
+            'homeroom_teacher_id' => ['nullable', 'exists:users,id'],
         ]);
 
         $class->update($validated);

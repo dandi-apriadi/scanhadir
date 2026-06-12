@@ -137,7 +137,11 @@
                         <tr class="hover:bg-slate-50/50 transition-colors group">
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center text-primary font-bold text-xs">{{ $initials ?: 'SW' }}</div>
+                                    @if($student->photo_url)
+                                        <img src="{{ $student->photo_url }}" alt="{{ $student->user?->name }}" class="w-10 h-10 rounded-full object-cover ring-2 ring-indigo-100" />
+                                    @else
+                                        <div class="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center text-primary font-bold text-xs">{{ $initials ?: 'SW' }}</div>
+                                    @endif
                                     <div>
                                         <p class="text-sm font-bold text-on-surface">{{ $student->user?->name ?? '-' }}</p>
                                         <p class="text-[10px] text-slate-400 uppercase tracking-tighter">{{ $student->user?->email ?? '-' }}</p>
@@ -188,8 +192,18 @@
                 <h3 class="text-lg font-bold text-slate-900">Tambah Siswa</h3>
                 <button type="button" @click="showCreateModal = false" class="text-slate-400 hover:text-slate-700"><span class="material-symbols-outlined">close</span></button>
             </div>
-            <form method="POST" action="{{ route('admin.master.siswa.store') }}" class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+            <form method="POST" action="{{ route('admin.master.siswa.store') }}" enctype="multipart/form-data" class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
                 @csrf
+                <div class="md:col-span-5 flex items-center gap-4" x-data="{ preview: null }">
+                    <div class="w-16 h-16 rounded-2xl bg-slate-100 ring-1 ring-slate-200 overflow-hidden flex items-center justify-center shrink-0">
+                        <template x-if="preview"><img :src="preview" class="w-full h-full object-cover" /></template>
+                        <template x-if="!preview"><span class="material-symbols-outlined text-slate-300">photo_camera</span></template>
+                    </div>
+                    <div class="flex-1">
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Foto Siswa <span class="text-slate-300 normal-case">(opsional, maks 2MB)</span></label>
+                        <input type="file" name="photo" accept="image/*" @change="preview = $event.target.files[0] ? URL.createObjectURL($event.target.files[0]) : null" class="w-full text-sm text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-slate-900 file:text-white file:text-xs file:font-bold" />
+                    </div>
+                </div>
                 <div>
                     <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Nama</label>
                     <input type="text" name="name" value="{{ old('name') }}" required class="w-full bg-slate-50 border-none rounded-2xl py-3 px-4 text-sm focus:ring-2 focus:ring-indigo-500/10" />
@@ -230,9 +244,19 @@
                     <h3 class="text-lg font-bold text-slate-900">Edit Siswa</h3>
                     <a href="{{ route('admin.master.siswa', request()->except('edit')) }}" class="text-slate-400 hover:text-slate-700"><span class="material-symbols-outlined">close</span></a>
                 </div>
-                <form method="POST" action="{{ route('admin.master.siswa.update', $editStudent->id) }}" class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+                <form method="POST" action="{{ route('admin.master.siswa.update', $editStudent->id) }}" enctype="multipart/form-data" class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
                     @csrf
                     @method('PUT')
+                    <div class="md:col-span-5 flex items-center gap-4" x-data="{ preview: '{{ $editStudent->photo_url }}' }">
+                        <div class="w-16 h-16 rounded-2xl bg-slate-100 ring-1 ring-slate-200 overflow-hidden flex items-center justify-center shrink-0">
+                            <template x-if="preview"><img :src="preview" class="w-full h-full object-cover" /></template>
+                            <template x-if="!preview"><span class="material-symbols-outlined text-slate-300">photo_camera</span></template>
+                        </div>
+                        <div class="flex-1">
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Foto Siswa <span class="text-slate-300 normal-case">(kosongkan jika tidak diubah)</span></label>
+                            <input type="file" name="photo" accept="image/*" @change="preview = $event.target.files[0] ? URL.createObjectURL($event.target.files[0]) : preview" class="w-full text-sm text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-slate-900 file:text-white file:text-xs file:font-bold" />
+                        </div>
+                    </div>
                     <div>
                         <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Nama</label>
                         <input type="text" name="name" value="{{ old('name', $editStudent->user?->name) }}" required class="w-full bg-slate-50 border-none rounded-2xl py-3 px-4 text-sm focus:ring-2 focus:ring-indigo-500/10" />

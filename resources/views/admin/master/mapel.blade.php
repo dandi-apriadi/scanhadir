@@ -132,7 +132,7 @@
                         <td class="px-6 py-4 font-mono font-bold text-indigo-700">{{ $subject->code }}</td>
                         <td class="px-6 py-4 text-on-surface">{{ $subject->name }}</td>
                         <td class="px-6 py-4">
-                            <span class="px-2 py-1 bg-indigo-50 text-primary rounded text-[10px] font-bold">{{ $subject->semesterAkademik?->display_name ?? '-' }}</span>
+                            <x-semester-badge :semester="$subject->semesterAkademik" />
                         </td>
                         <td class="px-6 py-4 text-center">
                             <span class="px-2 py-1 bg-slate-100 text-slate-600 rounded text-xs font-bold">{{ $subject->sks ?? 3 }}</span>

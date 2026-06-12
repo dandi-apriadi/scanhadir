@@ -41,6 +41,7 @@
         }
     </script>
     <style>
+        [x-cloak] { display: none !important; }
         .material-symbols-outlined {
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
         }
@@ -201,10 +202,46 @@
             </div>
             
             <div class="flex items-center gap-6">
-                <!-- Modern Search Bar Placeholder -->
-                <div class="hidden lg:flex items-center gap-3 px-4 py-2 bg-slate-100/50 border border-slate-200/50 rounded-2xl w-64 focus-within:w-80 focus-within:bg-white focus-within:border-primary/20 transition-all duration-300 group shadow-inner">
-                    <span class="material-symbols-outlined text-slate-400 text-xl group-focus-within:text-primary transition-colors">search</span>
-                    <input type="text" placeholder="Cari data atau fitur..." class="bg-transparent border-none text-sm outline-none w-full font-medium placeholder:text-slate-400 focus:ring-0 shadow-none"/>
+                <!-- Functional Global Search -->
+                <div class="hidden lg:block relative" x-data="adminSearch()" @keydown.escape="open=false" @click.away="open=false">
+                    <div class="flex items-center gap-3 px-4 py-2 bg-slate-100/50 border border-slate-200/50 rounded-2xl w-72 focus-within:w-96 focus-within:bg-white focus-within:border-primary/20 transition-all duration-300 group shadow-inner">
+                        <span class="material-symbols-outlined text-slate-400 text-xl group-focus-within:text-primary transition-colors">search</span>
+                        <input x-model="q" @input.debounce.250ms="search()" @focus="open=true" type="text" placeholder="Cari siswa, guru, mapel..." class="bg-transparent border-none text-sm outline-none w-full font-medium placeholder:text-slate-400 focus:ring-0 shadow-none"/>
+                        <span x-show="loading" class="material-symbols-outlined animate-spin text-slate-300 text-base">progress_activity</span>
+                        <kbd x-show="!loading && q.length===0" class="text-[10px] font-bold text-slate-300 border border-slate-200 rounded px-1.5 py-0.5">/</kbd>
+                    </div>
+                    <div x-show="open" x-transition x-cloak class="absolute mt-2 w-96 right-0 bg-white rounded-2xl shadow-xl shadow-indigo-100/40 border border-slate-100 overflow-hidden z-50 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                        <template x-if="q.length===0">
+                            <div class="p-2">
+                                <p class="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">Quick Navigation</p>
+                                <template x-for="nav in quickNav" :key="nav.url">
+                                    <a :href="nav.url" class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-slate-50 transition-colors">
+                                        <span class="material-symbols-outlined text-slate-400 text-[20px]" x-text="nav.icon"></span>
+                                        <span class="text-sm font-semibold text-on-surface" x-text="nav.label"></span>
+                                    </a>
+                                </template>
+                            </div>
+                        </template>
+                        <template x-if="q.length>0">
+                            <div class="p-2">
+                                <template x-if="!loading && results.length===0">
+                                    <p class="px-3 py-6 text-center text-sm text-slate-400">Tidak ada hasil untuk "<span x-text="q" class="font-bold"></span>"</p>
+                                </template>
+                                <template x-for="r in results" :key="r.type + r.url">
+                                    <a :href="r.url" class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-indigo-50/50 transition-colors">
+                                        <span class="w-9 h-9 rounded-lg bg-indigo-50 flex items-center justify-center text-primary shrink-0">
+                                            <span class="material-symbols-outlined text-[20px]" x-text="r.icon"></span>
+                                        </span>
+                                        <div class="flex-1 min-w-0">
+                                            <p class="text-sm font-bold text-on-surface truncate" x-text="r.label"></p>
+                                            <p class="text-[11px] text-slate-400 truncate" x-text="r.sublabel"></p>
+                                        </div>
+                                        <span class="text-[10px] font-bold uppercase text-slate-300 shrink-0" x-text="r.type"></span>
+                                    </a>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
                 </div>
 
                 <div class="flex items-center gap-4">
@@ -218,11 +255,15 @@
                     <div class="flex items-center gap-3 pl-2">
                         <div class="text-right hidden sm:block">
                             <p class="text-sm font-bold text-on-surface leading-tight">{{ auth()->user()->name }}</p>
-                            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{{ auth()->user()->role === 'admin' ? 'Administrator' : 'Staf' }}</p>
+                            <p class="text-[10px] text-primary font-bold uppercase tracking-wider">{{ auth()->user()->role_label }}</p>
                         </div>
-                        <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold shadow-inner border border-primary/5">
-                            {{ collect(explode(' ', auth()->user()->name))->take(2)->map(fn($n) => strtoupper(substr($n, 0, 1)))->implode('') }}
-                        </div>
+                        @if(auth()->user()->photo_path)
+                            <img src="{{ auth()->user()->photo_url }}" alt="{{ auth()->user()->name }}" class="w-10 h-10 rounded-xl object-cover shadow-inner border border-primary/5" />
+                        @else
+                            <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold shadow-inner border border-primary/5">
+                                {{ collect(explode(' ', auth()->user()->name))->take(2)->map(fn($n) => strtoupper(substr($n, 0, 1)))->implode('') }}
+                            </div>
+                        @endif
                     </div>
 
                     <form action="{{ route('auth.logout') }}" method="POST">
@@ -243,6 +284,39 @@
             @endif
         </div>
     </main>
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('adminSearch', () => ({
+                q: '',
+                open: false,
+                loading: false,
+                results: [],
+                quickNav: [
+                    { label: 'Dashboard', icon: 'dashboard', url: '{{ route('admin.dashboard') }}' },
+                    { label: 'Analytics', icon: 'analytics', url: '{{ route('admin.analytics') }}' },
+                    { label: 'Data Siswa', icon: 'group', url: '{{ route('admin.master.siswa') }}' },
+                    { label: 'Data Guru', icon: 'record_voice_over', url: '{{ route('admin.master.guru') }}' },
+                    { label: 'Mata Pelajaran', icon: 'library_books', url: '{{ route('admin.master.mapel') }}' },
+                    { label: 'Jadwal', icon: 'calendar_month', url: '{{ route('admin.master.jadwal') }}' },
+                    { label: 'Scanner', icon: 'qr_code_scanner', url: '{{ route('admin.scanner') }}' },
+                ],
+                async search() {
+                    if (this.q.trim().length === 0) { this.results = []; this.loading = false; return; }
+                    this.loading = true;
+                    this.open = true;
+                    try {
+                        const res = await fetch('{{ route('admin.search') }}?q=' + encodeURIComponent(this.q), { headers: { 'Accept': 'application/json' } });
+                        const data = await res.json();
+                        this.results = data.results || [];
+                    } catch (e) {
+                        this.results = [];
+                    }
+                    this.loading = false;
+                },
+            }));
+        });
+    </script>
+
     @livewireScripts
 
     <!-- Global Toast Container -->

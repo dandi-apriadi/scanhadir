@@ -44,4 +44,9 @@ class Student extends Model
     {
         return $this->hasMany(Attendance::class);
     }
+
+    public function getPhotoUrlAttribute(): ?string
+    {
+        return $this->photo_path ? asset('storage/' . $this->photo_path) : null;
+    }
 }

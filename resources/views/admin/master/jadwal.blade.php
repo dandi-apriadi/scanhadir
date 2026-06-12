@@ -168,7 +168,7 @@
                         @php($initials = collect(explode(' ', trim($schedule->teacher?->name ?? '')))->filter()->take(2)->map(fn($part) => strtoupper(substr($part, 0, 1)))->implode(''))
                         <tr class="hover:bg-indigo-50/30 transition-colors group">
                             <td class="px-6 py-4">
-                                <span class="px-2 py-1 bg-indigo-50 text-primary rounded text-[10px] font-bold">{{ $schedule->semesterAkademik?->display_name ?? '-' }}</span>
+                                <x-semester-badge :semester="$schedule->semesterAkademik" />
                             </td>
                             <td class="px-6 py-4">
                                 <div class="flex flex-col">

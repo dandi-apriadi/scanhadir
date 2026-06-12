@@ -44,7 +44,14 @@
             <!-- Selected Student Display -->
             <div class="bg-surface-container-highest rounded-xl p-8 flex flex-col items-center text-center gap-4 relative overflow-hidden group">
                 <div class="relative">
-                    <img alt="Student preview" class="w-24 h-24 rounded-2xl object-cover ring-4 ring-white shadow-lg" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDXlLwOeOVe1zP4wmCSIX50RAmUHP7v4fQHocUPNZdY7oXGTGWDPz2JF3In0KqPsW64TrnSyUSmcZS9Clpkik0PbaWJZ33m2hU3MvthipH1s2JVPfEgbyfYGcINArLmx0NtvT9laJSwm4TlEeHAm0ryhnfx4T09PCc58ZOHr2k1nIRVaLb34ADnoAuDB_cAJfhQ3J5bfxmJU5FNYJ3fGVHP99qszRckuTK_gh183GYy413aBjeI8tL308p0oanuid1FrKUJ0bguz8wS"/>
+                    @php $photoUrl = auth()->user()?->student?->photo_url; @endphp
+                    @if($photoUrl)
+                        <img alt="{{ $student_name }}" class="w-24 h-24 rounded-2xl object-cover ring-4 ring-white shadow-lg" src="{{ $photoUrl }}"/>
+                    @else
+                        <div class="w-24 h-24 rounded-2xl bg-primary/10 ring-4 ring-white shadow-lg flex items-center justify-center text-primary font-extrabold text-4xl font-headline">
+                            {{ strtoupper(substr($student_name, 0, 1)) }}
+                        </div>
+                    @endif
                     <div class="absolute -bottom-2 -right-2 bg-indigo-600 text-white p-1 rounded-lg">
                         <span class="material-symbols-outlined text-sm">verified_user</span>
                     </div>
@@ -65,14 +72,14 @@
                     <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-4">Status Kehadiran</label>
                     <div class="flex flex-wrap gap-4">
                         <label class="flex-1 min-w-[120px] relative group cursor-pointer">
-                            <input class="peer sr-only" name="status" type="radio" value="present" {{ old('status', 'present') === 'present' ? 'checked' : '' }}/>
+                            <input class="peer sr-only" name="status" type="radio" value="Hadir" {{ old('status', 'Hadir') === 'Hadir' ? 'checked' : '' }}/>
                             <div class="flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-slate-100 peer-checked:border-primary peer-checked:bg-primary/10 transition-all hover:bg-slate-50">
                                 <span class="material-symbols-outlined text-slate-400 peer-checked:text-primary">check_circle</span>
                                 <span class="text-xs font-bold text-slate-600 peer-checked:text-primary">Hadir</span>
                             </div>
                         </label>
                         <label class="flex-1 min-w-[120px] relative group cursor-pointer">
-                            <input class="peer sr-only" name="status" type="radio" value="late" {{ old('status') === 'late' ? 'checked' : '' }}/>
+                            <input class="peer sr-only" name="status" type="radio" value="Telat" {{ old('status') === 'Telat' ? 'checked' : '' }}/>
                             <div class="flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-slate-100 peer-checked:border-secondary peer-checked:bg-secondary/10 transition-all hover:bg-slate-50">
                                 <span class="material-symbols-outlined text-slate-400 peer-checked:text-secondary">history</span>
                                 <span class="text-xs font-bold text-slate-600 peer-checked:text-secondary">Terlambat</span>
